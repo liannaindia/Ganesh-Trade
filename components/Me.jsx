@@ -1,89 +1,98 @@
-import React, { useState } from "react";
-import { Globe, LogOut, Wallet, Settings, HelpCircle } from "lucide-react";
+import React from "react";
+import {
+  RefreshCw,
+  Eye,
+  Settings,
+  Wallet,
+  ArrowDownCircle,
+  FileText,
+  UserCheck,
+  Bell,
+  Download,
+} from "lucide-react";
 
 export default function Me() {
-  const [lang, setLang] = useState("en");
-  const user = {
-    name: "Ganesh Trader",
-    email: "user@example.com",
-    balance: 10012.06,
-  };
-
-  const T = {
-    en: {
-      title: "Account",
-      balance: "Total Balance",
-      settings: "Settings",
-      support: "Support Center",
-      language: "Switch Language",
-      logout: "Log Out",
-    },
-    hi: {
-      title: "खाता",
-      balance: "कुल शेष राशि",
-      settings: "सेटिंग्स",
-      support: "सहायता केंद्र",
-      language: "भाषा बदलें",
-      logout: "लॉग आउट",
-    },
-  };
-
-  const t = (k) => T[lang][k] || k;
-
   return (
-    <div className="p-4 pb-20">
-      {/* Header */}
-      <div className="text-center mb-6">
-        <img
-          src="https://cdn-icons-png.flaticon.com/512/147/147144.png"
-          alt="avatar"
-          className="w-20 h-20 rounded-full mx-auto mb-2 shadow"
-        />
-        <h2 className="font-bold text-slate-800 text-lg">{user.name}</h2>
-        <p className="text-slate-500 text-sm">{user.email}</p>
-      </div>
-
-      {/* Balance Card */}
-      <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-4 mb-4">
-        <div className="flex items-center justify-between mb-1">
-          <span className="text-slate-500 text-sm">{t("balance")}</span>
-          <Wallet className="h-4 w-4 text-amber-400" />
-        </div>
-        <div className="text-2xl font-extrabold text-slate-800 tracking-tight">
-          {user.balance.toLocaleString("en-US", {
-            minimumFractionDigits: 2,
-          })}{" "}
-          USDT
+    <div className="px-4 pb-24 max-w-md mx-auto">
+      {/* ===== Header ===== */}
+      <div className="flex justify-between items-center mt-4 mb-3">
+        <h2 className="text-lg font-bold text-slate-800">Me</h2>
+        <div className="flex items-center gap-3 text-slate-500">
+          <RefreshCw className="h-5 w-5 cursor-pointer" />
+          <Settings className="h-5 w-5 cursor-pointer" />
         </div>
       </div>
 
-      {/* Menu */}
-      <div className="bg-white border border-slate-200 rounded-2xl shadow-sm divide-y">
-        <button className="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50">
-          <Settings className="h-4 w-4 text-slate-600" />
-          <span className="text-sm font-semibold text-slate-700">
-            {t("settings")}
-          </span>
+      {/* ===== Assets Card ===== */}
+      <div className="rounded-2xl bg-gradient-to-r from-slate-50 to-slate-100 border border-slate-200 shadow-sm p-4 mb-5">
+        <div className="flex items-center justify-between text-sm text-slate-500 mb-1">
+          <span>Total Assets (USDT)</span>
+          <Eye className="h-4 w-4 text-slate-400 cursor-pointer" />
+        </div>
+        <div className="text-3xl font-extrabold tracking-tight text-slate-900">
+          10012.06
+        </div>
+        <div className="flex justify-between mt-3 text-[13px] text-slate-600">
+          <div>
+            <div>Available Balance</div>
+            <div className="font-bold text-slate-800">8912.06</div>
+          </div>
+          <div className="text-right">
+            <div>PnL Today</div>
+            <div className="font-bold text-slate-800">0.00 / 0%</div>
+          </div>
+        </div>
+      </div>
+
+      {/* ===== Recharge / Withdraw Buttons ===== */}
+      <div className="grid grid-cols-2 gap-3 mb-5">
+        <button className="flex flex-col items-center justify-center rounded-2xl bg-white border border-slate-200 py-4 shadow-sm hover:bg-slate-50">
+          <Wallet className="h-6 w-6 text-blue-500 mb-1" />
+          <span className="text-sm font-semibold text-slate-800">Recharge</span>
         </button>
-        <button className="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50">
-          <HelpCircle className="h-4 w-4 text-slate-600" />
-          <span className="text-sm font-semibold text-slate-700">
-            {t("support")}
-          </span>
+        <button className="flex flex-col items-center justify-center rounded-2xl bg-white border border-slate-200 py-4 shadow-sm hover:bg-slate-50">
+          <ArrowDownCircle className="h-6 w-6 text-orange-500 mb-1" />
+          <span className="text-sm font-semibold text-slate-800">Withdraw</span>
         </button>
-        <button
-          className="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50"
-          onClick={() => setLang(lang === "en" ? "hi" : "en")}
-        >
-          <Globe className="h-4 w-4 text-slate-600" />
-          <span className="text-sm font-semibold text-slate-700">
-            {t("language")}
-          </span>
-        </button>
-        <button className="w-full flex items-center gap-3 px-4 py-3 text-rose-600 hover:bg-rose-50">
-          <LogOut className="h-4 w-4" />
-          <span className="text-sm font-semibold">{t("logout")}</span>
-        </button>
+      </div>
+
+      {/* ===== Menu List ===== */}
+      <div className="space-y-2">
+        {[
+          {
+            icon: <FileText className="h-5 w-5 text-slate-600" />,
+            label: "Follow Order",
+          },
+          {
+            icon: <FileText className="h-5 w-5 text-slate-600" />,
+            label: "Transactions",
+          },
+          {
+            icon: <UserCheck className="h-5 w-5 text-yellow-600" />,
+            label: "Agent Center",
+          },
+          {
+            icon: <Bell className="h-5 w-5 text-slate-600" />,
+            label: "Notification",
+          },
+          {
+            icon: <Download className="h-5 w-5 text-slate-600" />,
+            label: "Download APP",
+          },
+        ].map((item, i) => (
+          <div
+            key={i}
+            className="flex items-center justify-between bg-white border border-slate-200 rounded-xl px-4 py-3 shadow-sm hover:bg-slate-50 cursor-pointer"
+          >
+            <div className="flex items-center gap-3">
+              {item.icon}
+              <span className="text-sm font-medium text-slate-800">
+                {item.label}
+              </span>
+            </div>
+            <span className="text-slate-400">{">"}</span>
+          </div>
+        ))}
       </div>
     </div>
   );
