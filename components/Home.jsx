@@ -11,14 +11,31 @@ import {
 export default function Home({ setTab }) {
   const [coins, setCoins] = useState([]);
   const [activeTab, setActiveTab] = useState("favorites");
+  const [bannerIndex, setBannerIndex] = useState(0);
 
+  // ===== 轮播图数组（可后台配置） =====
+  const banners = [
+    "https://public.bnbstatic.com/image/banner/binance-futures.jpg",
+    "https://public.bnbstatic.com/image/banner/spk-fixed-term.jpg",
+    "https://public.bnbstatic.com/image/banner/binance-earn.jpg",
+  ];
+
+  // ===== 自动轮播逻辑 =====
+  useEffect(() => {
+    const timer = setInterval(
+      () => setBannerIndex((prev) => (prev + 1) % banners.length),
+      4000
+    );
+    return () => clearInterval(timer);
+  }, []);
+
+  // ===== 获取币安实时数据 =====
   useEffect(() => {
     const fetchTopCoins = async () => {
       try {
         const res = await fetch("https://api.binance.com/api/v3/ticker/24hr");
         const data = await res.json();
 
-        // 按交易量排序，获取前 50，后面再分组使用
         const all = data
           .filter((i) => i.symbol.endsWith("USDT"))
           .sort((a, b) => parseFloat(b.quoteVolume) - parseFloat(a.quoteVolume))
@@ -40,7 +57,7 @@ export default function Home({ setTab }) {
     return () => clearInterval(timer);
   }, []);
 
-  // 四个标签数据切换
+  // ===== 标签过滤逻辑 =====
   const getFilteredCoins = () => {
     switch (activeTab) {
       case "favorites":
@@ -69,23 +86,41 @@ export default function Home({ setTab }) {
 
   return (
     <div className="max-w-md mx-auto bg-[#f5f7fb] pb-24 min-h-screen text-slate-900">
-      {/* ===== 顶部 ===== */}
-      <div className="flex justify-between items-center px-4 pt-3">
-        <h1 className="text-base font-semibold">Welcome</h1>
-        <div className="flex items-center gap-3">
-          <Search className="w-5 h-5 text-slate-500 cursor-pointer" />
-          <Mail className="w-5 h-5 text-slate-500 cursor-pointer" />
+      {/* ===== 顶部欢迎与搜索 ===== */}
+      <div className="px-4 pt-3">
+        <h1 className="text-base font-semibold text-center mb-2">Welcome</h1>
+
+        {/* 搜索栏 */}
+        <div className="flex items-center gap-2 bg-white rounded-full border border-slate-200 shadow-sm px-3 py-2">
+          <Search className="w-4 h-4 text-slate-400" />
+          <input
+            type="text"
+            placeholder="Enter the trading product name"
+            className="flex-1 text-sm text-slate-600 focus:outline-none"
+          />
+          <Mail className="w-4 h-4 text-slate-400" />
         </div>
       </div>
 
       {/* ===== 顶部 Banner ===== */}
-      <div className="px-4 mt-3">
+      <div className="px-4 mt-3 relative">
         <div className="rounded-xl overflow-hidden shadow-sm">
           <img
-            src="https://www.binance.com/banners/futures.jpg"
+            src={banners[bannerIndex]}
             alt="banner"
-            className="w-full object-cover"
+            className="w-full h-24 object-cover transition-all duration-700"
           />
+        </div>
+        {/* 小圆点指示器 */}
+        <div className="flex justify-center mt-1 gap-1">
+          {banners.map((_, i) => (
+            <span
+              key={i}
+              className={`w-2 h-2 rounded-full ${
+                i === bannerIndex ? "bg-yellow-500" : "bg-slate-300"
+              }`}
+            ></span>
+          ))}
         </div>
       </div>
 
@@ -107,7 +142,7 @@ export default function Home({ setTab }) {
           </button>
         </div>
 
-        {/* ===== 功能按钮 ===== */}
+        {/* 功能按钮 */}
         <div className="grid grid-cols-4 mt-4 text-center text-xs text-slate-700">
           <div
             onClick={() => setTab("recharge")}
@@ -142,9 +177,9 @@ export default function Home({ setTab }) {
         </div>
       </div>
 
-      {/* ===== 市场行情表 ===== */}
+      {/* ===== 市场行情 ===== */}
       <div className="bg-white rounded-2xl mx-4 mt-4 border border-slate-100 shadow-sm">
-        {/* Tabs */}
+        {/* 标签栏 */}
         <div className="flex text-sm border-b border-slate-100">
           {[
             { id: "favorites", label: "Favorites" },
@@ -166,7 +201,7 @@ export default function Home({ setTab }) {
           ))}
         </div>
 
-        {/* 表格 */}
+        {/* 数据表格 */}
         <div className="p-3">
           <div className="flex justify-between text-xs text-slate-400 mb-2">
             <span>Name</span>
@@ -185,7 +220,9 @@ export default function Home({ setTab }) {
                   key={i}
                   className="flex justify-between items-center py-2 text-sm"
                 >
-                  <span className="font-medium text-slate-800">{c.symbol}</span>
+                  <span className="font-medium text-slate-800">
+                    {c.symbol}
+                  </span>
                   <span className="text-slate-700">{c.price}</span>
                   <span
                     className={`font-semibold ${
