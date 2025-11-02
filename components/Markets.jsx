@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 
 export default function Markets() {
@@ -6,35 +6,43 @@ export default function Markets() {
   const [coins, setCoins] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredCoins, setFilteredCoins] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [page, setPage] = useState(1);
+  const listRef = useRef(null);
 
   // ===== 获取币安实时数据 =====
   useEffect(() => {
     const fetchTopCoins = async () => {
       try {
-        const res = await fetch("https://api.binance.com/api/v3/ticker/24hr");
+        setLoading(true);
+        const res = await fetch(
+          `https://api.binance.com/api/v3/ticker/24hr?limit=100&offset=${(page - 1) * 100}`
+        );
         const data = await res.json();
 
-        const all = data
+        const newCoins = data
           .filter((i) => i.symbol.endsWith("USDT"))
-          .sort((a, b) => parseFloat(b.quoteVolume) - parseFloat(a.quoteVolume))
-          .slice(0, 10) // 仅获取前10个
           .map((i) => ({
             symbol: i.symbol.replace("USDT", ""),
             price: parseFloat(i.lastPrice).toFixed(2),
             change: parseFloat(i.priceChangePercent).toFixed(2),
           }));
 
-        setCoins(all);
-        setFilteredCoins(all); // 默认显示前10
+        if (newCoins.length > 0) {
+          setCoins((prev) => [...prev, ...newCoins]);
+        } else {
+          setHasMore(false); // 如果没有更多数据了
+        }
+        setLoading(false);
       } catch (e) {
         console.error("Binance API Error:", e);
+        setLoading(false);
       }
     };
 
     fetchTopCoins();
-    const timer = setInterval(fetchTopCoins, 15000); // 每15秒更新一次
-    return () => clearInterval(timer);
-  }, []);
+  }, [page]);
 
   // ===== 搜索过滤 =====
   useEffect(() => {
@@ -49,8 +57,28 @@ export default function Markets() {
     }
   }, [searchQuery, coins]);
 
+  // ===== 滚动加载更多 =====
+  const handleScroll = () => {
+    if (listRef.current) {
+      const bottom =
+        listRef.current.scrollHeight === listRef.current.scrollTop + listRef.current.clientHeight;
+      if (bottom && !loading && hasMore) {
+        setPage((prevPage) => prevPage + 1);
+      }
+    }
+  };
+
+  // ===== 返回顶部按钮 =====
+  const scrollToTop = () => {
+    listRef.current.scrollTo(0, 0);
+  };
+
   return (
-    <div className="max-w-md mx-auto bg-[#f5f7fb] pb-24 min-h-screen text-slate-900">
+    <div
+      className="max-w-md mx-auto bg-[#f5f7fb] pb-24 min-h-screen text-slate-900"
+      ref={listRef}
+      onScroll={handleScroll}
+    >
       {/* ===== 搜索框 ===== */}
       <div className="px-4 pt-3">
         <div className="flex items-center gap-2 bg-white rounded-full border border-slate-200 shadow-sm px-3 py-2 cursor-pointer">
@@ -83,7 +111,7 @@ export default function Markets() {
                 <span className="text-slate-700">{c.price}</span>
                 <span
                   className={`font-semibold ${
-                    c.change >= 0 ? "text-emerald-600" : "text-rose-600"
+                    c.change.startsWith("+") ? "text-emerald-600" : "text-rose-600"
                   }`}
                 >
                   {c.change}%
@@ -92,17 +120,22 @@ export default function Markets() {
             ))
           )}
         </div>
+
+        {/* ===== 正在加载数据提示 ===== */}
+        {loading && (
+          <div className="text-center py-4 text-slate-400 text-sm">Loading more data...</div>
+        )}
       </div>
 
-      {/* ===== 返回按钮 ===== */}
-      <div className="px-4 mt-4">
+      {/* ===== 返回顶部按钮 ===== */}
+      {filteredCoins.length > 10 && (
         <button
-          className="w-full bg-yellow-400 hover:bg-yellow-500 text-slate-900 font-semibold py-2.5 rounded-xl transition"
-          onClick={() => navigate("/")} // 返回首页
+          className="fixed bottom-10 right-10 bg-yellow-400 text-white p-2 rounded-full"
+          onClick={scrollToTop}
         >
-          Back to Home
+          ↑
         </button>
-      </div>
+      )}
     </div>
   );
 }
