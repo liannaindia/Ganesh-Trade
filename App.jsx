@@ -4,13 +4,7 @@ import MarketsPage from "./components/Markets.jsx";
 import TradePage from "./components/Trade.jsx";
 import PositionsPage from "./components/Positions.jsx";
 import MePage from "./components/Me.jsx";
-import {
-  Home,
-  BarChart2,
-  PlusCircle,
-  ClipboardList,
-  User,
-} from "lucide-react";
+import { Home, BarChart2, PlusCircle, ClipboardList, User } from "lucide-react";
 
 export default function App() {
   const [tab, setTab] = useState("home");
@@ -18,15 +12,15 @@ export default function App() {
   const renderPage = () => {
     switch (tab) {
       case "markets":
-        return <MarketsPage />;
+        return <MarketsPage setTab={setTab} />;
       case "trade":
-        return <TradePage />;
+        return <TradePage setTab={setTab} />;
       case "positions":
-        return <PositionsPage />;
+        return <PositionsPage setTab={setTab} />;
       case "me":
-        return <MePage />;
+        return <MePage setTab={setTab} />;
       default:
-        return <HomePage />;
+        return <HomePage setTab={setTab} />;
     }
   };
 
