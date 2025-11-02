@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import {
   Search,
-  Mail,
   Wallet,
   Send,
   Headphones,
@@ -90,15 +89,15 @@ export default function Home({ setTab }) {
       <div className="px-4 pt-3">
         <h1 className="text-base font-semibold text-center mb-2">Welcome</h1>
 
-        {/* 搜索栏 */}
-        <div className="flex items-center gap-2 bg-white rounded-full border border-slate-200 shadow-sm px-3 py-2">
+        {/* ✅ 修改后的搜索栏 */}
+        <div
+          onClick={() => setTab("markets")}
+          className="flex items-center gap-2 bg-white rounded-full border border-slate-200 shadow-sm px-3 py-2 cursor-pointer"
+        >
           <Search className="w-4 h-4 text-slate-400" />
-          <input
-            type="text"
-            placeholder="Enter the trading product name"
-            className="flex-1 text-sm text-slate-600 focus:outline-none"
-          />
-          <Mail className="w-4 h-4 text-slate-400" />
+          <span className="text-sm text-slate-400 select-none">
+            Enter the trading product name
+          </span>
         </div>
       </div>
 
@@ -111,7 +110,6 @@ export default function Home({ setTab }) {
             className="w-full h-24 object-cover transition-all duration-700"
           />
         </div>
-        {/* 小圆点指示器 */}
         <div className="flex justify-center mt-1 gap-1">
           {banners.map((_, i) => (
             <span
@@ -142,7 +140,6 @@ export default function Home({ setTab }) {
           </button>
         </div>
 
-        {/* 功能按钮 */}
         <div className="grid grid-cols-4 mt-4 text-center text-xs text-slate-700">
           <div
             onClick={() => setTab("recharge")}
@@ -179,7 +176,6 @@ export default function Home({ setTab }) {
 
       {/* ===== 市场行情 ===== */}
       <div className="bg-white rounded-2xl mx-4 mt-4 border border-slate-100 shadow-sm">
-        {/* 标签栏 */}
         <div className="flex text-sm border-b border-slate-100">
           {[
             { id: "favorites", label: "Favorites" },
@@ -201,7 +197,6 @@ export default function Home({ setTab }) {
           ))}
         </div>
 
-        {/* 数据表格 */}
         <div className="p-3">
           <div className="flex justify-between text-xs text-slate-400 mb-2">
             <span>Name</span>
