@@ -1,116 +1,142 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { Search, Bell, Globe, Send, UserPlus, Headphones } from "lucide-react";
 
-export default function Markets() {
+export default function Home() {
   const navigate = useNavigate();
   const [coins, setCoins] = useState([]);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [filteredCoins, setFilteredCoins] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [hasMore, setHasMore] = useState(true);
-  const [page, setPage] = useState(1);
-  const listRef = useRef(null);
 
-  // ===== 获取币安实时数据 =====
   useEffect(() => {
     const fetchTopCoins = async () => {
+      const proxyUrl = "https://cors-anywhere.herokuapp.com/";
+      const targetUrl = "https://api.binance.com/api/v3/ticker/24hr?limit=10";
+      
       try {
-        setLoading(true);
-        const res = await fetch(
-          `https://api.binance.com/api/v3/ticker/24hr?limit=100&offset=${(page - 1) * 100}`
-        );
+        const res = await fetch(proxyUrl + targetUrl);
         const data = await res.json();
-
-        const newCoins = data
-          .filter((i) => i.symbol.endsWith("USDT"))
-          .map((i) => ({
-            symbol: i.symbol.replace("USDT", ""),
-            price: parseFloat(i.lastPrice).toFixed(2),
-            change: parseFloat(i.priceChangePercent).toFixed(2),
-          }));
-
-        if (newCoins.length > 0) {
-          setCoins((prev) => [...prev, ...newCoins]);
-        } else {
-          setHasMore(false); // 如果没有更多数据了
-        }
-        setLoading(false);
+        const topCoins = data.map((coin) => ({
+          name: coin.symbol.replace("USDT", ""),
+          price: parseFloat(coin.lastPrice).toFixed(2),
+          change: parseFloat(coin.priceChangePercent).toFixed(2),
+        }));
+        setCoins(topCoins);
       } catch (e) {
-        console.error("Binance API Error:", e);
-        setLoading(false);
+        console.error("Error fetching Binance data:", e);
       }
     };
 
     fetchTopCoins();
-  }, [page]);
+    const interval = setInterval(fetchTopCoins, 15000);
+    return () => clearInterval(interval);
+  }, []);
 
-  // ===== 搜索过滤 =====
-  useEffect(() => {
-    if (searchQuery) {
-      setFilteredCoins(
-        coins.filter((coin) =>
-          coin.symbol.toLowerCase().includes(searchQuery.toLowerCase())
-        )
-      );
-    } else {
-      setFilteredCoins(coins); // 如果没有搜索，则显示所有
-    }
-  }, [searchQuery, coins]);
-
-  // ===== 滚动加载更多 =====
-  const handleScroll = () => {
-    if (listRef.current) {
-      const bottom =
-        listRef.current.scrollHeight === listRef.current.scrollTop + listRef.current.clientHeight;
-      if (bottom && !loading && hasMore) {
-        setPage((prevPage) => prevPage + 1);
-      }
-    }
-  };
-
-  // ===== 返回顶部按钮 =====
-  const scrollToTop = () => {
-    listRef.current.scrollTo(0, 0);
-  };
+  const banners = [
+    { id: 1, img: "https://i.imgur.com/4ZQZ4qG.png", link: "/trade" },
+    { id: 2, img: "https://i.imgur.com/EBUSlqk.png", link: "/trade" },
+  ];
 
   return (
-    <div
-      className="max-w-md mx-auto bg-[#f5f7fb] pb-24 min-h-screen text-slate-900"
-      ref={listRef}
-      onScroll={handleScroll}
-    >
-      {/* ===== 搜索框 ===== */}
-      <div className="px-4 pt-3">
-        <div className="flex items-center gap-2 bg-white rounded-full border border-slate-200 shadow-sm px-3 py-2 cursor-pointer">
-          <input
-            type="text"
-            className="w-full text-sm text-slate-500 outline-none"
-            placeholder="Enter the trading product name"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)} // 更新搜索框内容
-          />
+    <div className="px-4 pb-24 max-w-md mx-auto">
+      {/* Search Bar */}
+      <div className="flex items-center gap-2 mt-3 mb-3">
+        <div
+          onClick={() => navigate("/markets")}
+          className="flex items-center flex-1 bg-slate-100 border border-slate-200 rounded-full pl-3 pr-3 py-2 text-slate-500 cursor-pointer"
+        >
+          <Search className="h-4 w-4 mr-2" />
+          <span className="text-sm text-slate-400">Search assets</span>
+        </div>
+        <div className="flex gap-2">
+          <div className="w-9 h-9 flex items-center justify-center rounded-full border border-slate-200 bg-white shadow-sm cursor-pointer">
+            <Bell className="h-5 w-5 text-slate-500" />
+          </div>
+          <div className="w-9 h-9 flex items-center justify-center rounded-full border border-slate-200 bg-white shadow-sm cursor-pointer">
+            <Globe className="h-5 w-5 text-slate-500" />
+          </div>
         </div>
       </div>
 
-      {/* ===== 市场数据表格 ===== */}
-      <div className="px-4 mt-4 bg-white rounded-2xl border border-slate-200 shadow-sm">
-        <div className="flex justify-between items-center mb-3">
-          <h2 className="text-xl font-semibold text-slate-700">Markets</h2>
+      {/* Banners */}
+      <div className="relative overflow-hidden rounded-2xl mb-4">
+        <div className="flex gap-2 overflow-x-auto scrollbar-hide snap-x snap-mandatory">
+          {banners.map((b) => (
+            <img
+              key={b.id}
+              src={b.img}
+              alt="banner"
+              className="snap-center min-w-full object-cover cursor-pointer"
+              onClick={() => navigate(b.link)}
+            />
+          ))}
         </div>
+      </div>
 
-        {/* ===== 虚拟货币列表 ===== */}
+      {/* Ganesh Futures */}
+      <div className="rounded-2xl bg-gradient-to-r from-orange-400 to-pink-400 text-white px-4 py-3 mb-4 shadow">
+        <div className="flex justify-between items-center">
+          <h2 className="text-lg font-semibold">Ganesh Futures</h2>
+          <span className="text-sm opacity-90">India • IST</span>
+        </div>
+      </div>
+
+      {/* Total Assets */}
+      <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm mb-4">
+        <div className="text-sm text-slate-500">Total Assets (USDT)</div>
+        <div className="text-3xl font-bold text-slate-900 mt-1">10012.06</div>
+        <div className="text-xs text-slate-500 mt-1">Today's P&L: +0.00 / 0%</div>
+
+        <button className="mt-3 w-full bg-yellow-400 hover:bg-yellow-500 text-slate-900 font-semibold py-2.5 rounded-xl transition">
+          Start Trading
+        </button>
+      </div>
+
+      {/* Functional Buttons */}
+      <div className="grid grid-cols-4 gap-2 text-center text-sm text-slate-700 mb-5">
+        <div onClick={() => navigate("/recharge")} className="cursor-pointer">
+          <Send className="h-6 w-6 mx-auto text-yellow-500 mb-1" />
+          <div>Recharge</div>
+        </div>
+        <div onClick={() => navigate("/withdraw")} className="cursor-pointer">
+          <Send className="h-6 w-6 mx-auto text-orange-500 mb-1 rotate-180" />
+          <div>Withdraw</div>
+        </div>
+        <div onClick={() => navigate("/invite")} className="cursor-pointer">
+          <UserPlus className="h-6 w-6 mx-auto text-blue-500 mb-1" />
+          <div>Invite</div>
+        </div>
+        <div
+          onClick={() =>
+            (window.location.href =
+              "https://t.me/ganeshsupport" /* 或 WhatsApp 链接 */)
+          }
+          className="cursor-pointer"
+        >
+          <Headphones className="h-6 w-6 mx-auto text-green-500 mb-1" />
+          <div>Support</div>
+        </div>
+      </div>
+
+      {/* Market Data */}
+      <div className="bg-white border border-slate-200 rounded-2xl p-3 shadow-sm">
+        <div className="flex justify-between items-center mb-2">
+          <h3 className="font-semibold text-slate-800">Market Overview</h3>
+          <button
+            onClick={() => navigate("/markets")}
+            className="text-sm text-yellow-600 font-medium"
+          >
+            View All
+          </button>
+        </div>
         <div className="divide-y divide-slate-100">
-          {filteredCoins.length === 0 ? (
-            <div className="text-center py-4 text-slate-400 text-sm">
-              Loading market data...
-            </div>
+          {coins.length === 0 ? (
+            <div className="text-center py-3 text-slate-500">Loading market data...</div>
           ) : (
-            filteredCoins.map((c, i) => (
-              <div key={i} className="flex justify-between items-center py-3 text-sm">
-                <span className="font-medium text-slate-800">{c.symbol}</span>
-                <span className="text-slate-700">{c.price}</span>
+            coins.map((c, i) => (
+              <div key={i} className="flex justify-between items-center py-2 text-sm">
+                <span className="font-medium text-slate-700">{c.name}</span>
+                <span className="text-slate-800 font-semibold">{c.price}</span>
                 <span
-                  className={`font-semibold ${
+                  className={`font-medium ${
                     c.change.startsWith("+") ? "text-emerald-600" : "text-rose-600"
                   }`}
                 >
@@ -120,22 +146,7 @@ export default function Markets() {
             ))
           )}
         </div>
-
-        {/* ===== 正在加载数据提示 ===== */}
-        {loading && (
-          <div className="text-center py-4 text-slate-400 text-sm">Loading more data...</div>
-        )}
       </div>
-
-      {/* ===== 返回顶部按钮 ===== */}
-      {filteredCoins.length > 10 && (
-        <button
-          className="fixed bottom-10 right-10 bg-yellow-400 text-white p-2 rounded-full"
-          onClick={scrollToTop}
-        >
-          ↑
-        </button>
-      )}
     </div>
   );
 }
