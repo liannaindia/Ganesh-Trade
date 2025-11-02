@@ -4,11 +4,21 @@ import MarketsPage from "./components/Markets.jsx";
 import TradePage from "./components/Trade.jsx";
 import PositionsPage from "./components/Positions.jsx";
 import MePage from "./components/Me.jsx";
-import { Home, BarChart2, PlusCircle, ClipboardList, User } from "lucide-react";
+import RechargePage from "./components/Recharge.jsx";
+import WithdrawPage from "./components/Withdraw.jsx";
+import InvitePage from "./components/Invite.jsx";
+import {
+  Home,
+  BarChart2,
+  PlusCircle,
+  ClipboardList,
+  User,
+} from "lucide-react";
 
 export default function App() {
   const [tab, setTab] = useState("home");
 
+  // 页面渲染逻辑
   const renderPage = () => {
     switch (tab) {
       case "markets":
@@ -19,11 +29,18 @@ export default function App() {
         return <PositionsPage setTab={setTab} />;
       case "me":
         return <MePage setTab={setTab} />;
+      case "recharge":
+        return <RechargePage setTab={setTab} />;
+      case "withdraw":
+        return <WithdrawPage setTab={setTab} />;
+      case "invite":
+        return <InvitePage setTab={setTab} />;
       default:
         return <HomePage setTab={setTab} />;
     }
   };
 
+  // 底部导航栏
   const tabs = [
     { id: "home", icon: <Home size={20} />, label: "Home" },
     { id: "markets", icon: <BarChart2 size={20} />, label: "Markets" },
