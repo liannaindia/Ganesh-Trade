@@ -12,12 +12,28 @@ export default function Home() {
   ];
 
   // ===== 模拟市场行情（Binance API 后续替换）=====
-  const coins = [
-    { name: "BTC/USDT", price: "110395.60", change: "+0.29%" },
-    { name: "ETH/USDT", price: "3892.53", change: "+0.76%" },
-    { name: "BNB/USDT", price: "1091.46", change: "+0.40%" },
-    { name: "LTC/USDT", price: "100.05", change: "+4.27%" },
-  ];
+  useEffect(() => {
+  const fetchTopCoins = async () => {
+    try {
+      const res = await fetch("https://api.binance.com/api/v3/ticker/24hr");
+      const data = await res.json();
+      const top = data
+        .filter((i) => ["BTCUSDT", "ETHUSDT", "BNBUSDT"].includes(i.symbol))
+        .map((i) => ({
+          name: i.symbol.replace("USDT", ""),
+          price: parseFloat(i.lastPrice).toFixed(2),
+          change: parseFloat(i.priceChangePercent).toFixed(2),
+        }));
+      setCoins(top);
+    } catch (e) {
+      console.error("Binance Error", e);
+    }
+  };
+  fetchTopCoins();
+  const t = setInterval(fetchTopCoins, 15000);
+  return () => clearInterval(t);
+}, []);
+
 
   return (
     <div className="px-4 pb-24 max-w-md mx-auto">
