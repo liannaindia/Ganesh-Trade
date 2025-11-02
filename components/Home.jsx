@@ -59,7 +59,7 @@ export default function Home() {
 
   return (
     <div className="px-4 pb-20">
-      {/* Top bar */}
+      {/* Header */}
       <header className="sticky top-0 z-40 bg-white/90 backdrop-blur border-b border-slate-200">
         <div className="max-w-md mx-auto px-4 py-2 flex items-center">
           <div className="mx-auto font-black">{t("welcome")}</div>
@@ -89,81 +89,82 @@ export default function Home() {
 
       {/* Banner */}
       <div className="mt-3">
-        <div className="h-24 rounded-2xl bg-gradient-to-r from-orange-300 to-pink-400 flex items-center px-4 text-slate-900 shadow-md">
+        <div className="h-24 rounded-2xl bg-gradient-to-r from-orange-300 to-pink-400 flex items-center px-4 text-slate-900 shadow-md justify-between">
           <div className="font-extrabold text-lg">Ganesh Futures</div>
-          <div className="ml-auto text-xs font-semibold">India • IST</div>
+          <div className="text-xs font-semibold">India • IST</div>
         </div>
       </div>
 
       {/* Asset Card */}
       <div className="mt-4 rounded-2xl bg-white border border-slate-200 shadow-sm p-4">
-        <div className="flex items-center text-sm text-slate-500">
+        <div className="flex items-center text-sm text-slate-500 justify-between">
           <span>{t("totalAssets")}</span>
-          <button className="ml-2 text-slate-400" onClick={() => setHideBalance((v) => !v)}>
+          <button onClick={() => setHideBalance((v) => !v)} className="text-slate-400">
             {hideBalance ? "🙈" : "👁️"}
           </button>
         </div>
         <div className="mt-1 text-3xl font-extrabold tracking-tight">
           {hideBalance ? "•••••" : "10,012.06"}
         </div>
-        <div className="mt-1 text-xs text-slate-500 flex items-center gap-2">
+        <div className="mt-1 text-xs text-slate-500 flex items-center gap-1">
           <span>{t("todaysPnL")}:</span>
           <span className="font-semibold text-emerald-600">+0.00 / 0%</span>
         </div>
-        <div className="mt-3 flex items-center gap-2">
-          <button className="flex-1 rounded-xl bg-amber-400 text-slate-900 font-bold py-2">
-            {t("startTrading")}
-          </button>
-        </div>
 
-        {/* quick actions */}
-        <div className="mt-3 grid grid-cols-4 gap-2 text-center text-xs">
-          <div className="flex flex-col items-center gap-1">
-            <div className="h-10 w-10 rounded-xl bg-slate-100 grid place-items-center"><Wallet className="h-5 w-5" /></div>
+        <button className="w-full mt-3 rounded-xl bg-amber-400 text-slate-900 font-bold py-2">
+          {t("startTrading")}
+        </button>
+
+        {/* Quick actions */}
+        <div className="mt-3 grid grid-cols-4 text-center text-xs">
+          <div className="flex flex-col items-center">
+            <Wallet className="h-5 w-5 mb-1 text-slate-700" />
             <span>{t("deposit")}</span>
           </div>
-          <div className="flex flex-col items-center gap-1">
-            <div className="h-10 w-10 rounded-xl bg-slate-100 grid place-items-center"><IndianRupee className="h-5 w-5" /></div>
+          <div className="flex flex-col items-center">
+            <IndianRupee className="h-5 w-5 mb-1 text-slate-700" />
             <span>{t("withdraw")}</span>
           </div>
-          <div className="flex flex-col items-center gap-1">
-            <div className="h-10 w-10 rounded-xl bg-slate-100 grid place-items-center"><Users className="h-5 w-5" /></div>
+          <div className="flex flex-col items-center">
+            <Users className="h-5 w-5 mb-1 text-slate-700" />
             <span>{t("invite")}</span>
           </div>
-          <div className="flex flex-col items-center gap-1">
-            <div className="h-10 w-10 rounded-xl bg-slate-100 grid place-items-center"><MessageCircle className="h-5 w-5" /></div>
+          <div className="flex flex-col items-center">
+            <MessageCircle className="h-5 w-5 mb-1 text-slate-700" />
             <span>{t("support")}</span>
           </div>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="mt-2 border-b border-slate-200 flex items-center">
+      <div className="mt-3 flex items-center border-b border-slate-200 gap-4 text-sm font-semibold justify-around">
         {["watchlist", "hot", "topGainers", "topLosers"].map((key) => (
           <button
             key={key}
             onClick={() => setListTab(key)}
-            className={`px-3 py-3 text-sm font-semibold border-b-2 transition ${
+            className={`pb-2 transition ${
               listTab === key
-                ? "text-indigo-600 border-indigo-600"
-                : "text-slate-500 border-transparent"
+                ? "text-indigo-600 border-b-2 border-indigo-600"
+                : "text-slate-500"
             }`}
           >
             {t(key)}
           </button>
         ))}
-        <button className="ml-auto text-slate-500"><Settings className="h-4 w-4" /></button>
+        <Settings className="h-4 w-4 text-slate-500" />
       </div>
 
-      {/* Asset list */}
-      <div className="mt-1 rounded-2xl bg-white border border-slate-200 shadow-sm divide-y">
+      {/* Asset List */}
+      <div className="mt-2 bg-white border border-slate-200 rounded-2xl shadow-sm divide-y">
         {demoAssets.map((a) => (
           <div key={a.sym} className="grid grid-cols-12 items-center px-3 py-3">
             <div className="col-span-4">
               <div className="font-bold text-slate-900">{a.sym}</div>
               <div className="text-[11px] text-slate-500">{a.name}</div>
             </div>
-            <div className="col-span-4 text-right font-semibold">{a.price}</div>
+            <div className="col-span-4 text-right font-semibold">
+              {a.price.toLocaleString()}
+            </div>
             <div className="col-span-4 text-right">
               <span
                 className={`inline-flex px-2 py-1 rounded-full text-[11px] font-bold ${
