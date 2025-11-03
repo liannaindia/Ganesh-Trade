@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 
 // 使用币安 API 实时获取市场数据
 const Markets = () => {
   const [marketData, setMarketData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState(""); // 用于搜索的查询
+  const observer = useRef(null); // 用于 IntersectionObserver
+  const [page, setPage] = useState(1); // 页码控制，加载更多数据
 
   // 获取币安市场数据
   const fetchBinanceData = async () => {
@@ -12,7 +14,7 @@ const Markets = () => {
       const response = await fetch("https://api.binance.com/api/v3/ticker/24hr");
       const data = await response.json();
 
-      // 过滤出以 USDT 结尾的币种，并按照交易量从大到小排序
+      // 过滤出以 USDT 结尾的币种，并按照市值从大到小排序
       const filteredData = data
         .filter((coin) => coin.symbol.endsWith("USDT"))  // 只保留以 USDT 结尾的币种
         .sort((a, b) => parseFloat(b.marketCap) - parseFloat(a.marketCap));  // 按照市值从大到小排序
@@ -26,11 +28,16 @@ const Markets = () => {
 
   useEffect(() => {
     fetchBinanceData(); // 初次加载时获取数据
+    const interval = setInterval(() => {
+      fetchBinanceData(); // 每 10 秒请求一次数据
+    }, 10000);  // 每 10 秒请求一次数据
+
+    return () => clearInterval(interval);  // 清除定时器
   }, []);  // 空依赖数组，意味着只会在组件加载时启动一次
 
   // 处理币种名称：去除交易对后缀（如 USDT，BUSD，但保留 BTC 和 ETH）
   const getBaseCurrency = (symbol) => {
-    // 只去除 USDT 和 BUSD 等后缀，不去除 BTC 和 ETH
+    // 修改处理逻辑，确保能正确处理所有币种名称
     return symbol.replace(/(USDT|BUSD)$/g, '');
   };
 
@@ -45,7 +52,7 @@ const Markets = () => {
     coin.symbol.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  if (loading) {
+  if (loading && page === 1) {
     return <div>Loading market data...</div>;
   }
 
