@@ -15,7 +15,6 @@ export default function Recharge() {
 
   return (
     <div className="px-4 pb-24 max-w-md mx-auto">
-      {/* Header */}
       <div className="flex items-center gap-3 py-3">
         <ArrowLeft
           className="h-5 w-5 text-slate-700 cursor-pointer"
@@ -24,7 +23,6 @@ export default function Recharge() {
         <h2 className="font-semibold text-slate-800 text-lg">Recharge</h2>
       </div>
 
-      {/* Channel list */}
       <div className="space-y-2">
         {channels.map((c, i) => (
           <div
@@ -42,7 +40,6 @@ export default function Recharge() {
         ))}
       </div>
 
-      {/* Amount Input */}
       <div className="mt-5 bg-white rounded-xl border border-slate-200 shadow-sm p-4">
         <div className="text-sm text-slate-500 mb-1">
           Recharge Amount <span className="text-slate-400">1 USDT = 1 USDT</span>
@@ -54,7 +51,6 @@ export default function Recharge() {
         <div className="text-[12px] text-slate-500 mt-1 text-right">USDT</div>
       </div>
 
-      {/* Reminder */}
       <div className="mt-3 bg-yellow-50 border border-yellow-200 rounded-xl p-3 text-xs text-slate-700">
         <strong>Important Reminder:</strong>
         <br />
@@ -62,7 +58,6 @@ export default function Recharge() {
         contact customer service.
       </div>
 
-      {/* Button */}
       <button className="mt-4 w-full bg-yellow-400 hover:bg-yellow-500 text-slate-900 font-semibold py-3 rounded-xl">
         Continue
       </button>
