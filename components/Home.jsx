@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";  // 引入 useNavigate 用于页面跳转
+import { useNavigate } from "react-router-dom";
 import {
   Search,
   Wallet,
@@ -9,28 +9,28 @@ import {
 } from "lucide-react";
 
 export default function Home() {
-  const navigate = useNavigate();  // 初始化导航器
+  const navigate = useNavigate();
   const [coins, setCoins] = useState([]);
   const [activeTab, setActiveTab] = useState("favorites");
   const [bannerIndex, setBannerIndex] = useState(0);
 
-  // ===== 轮播图数组（可后台配置） =====
+  // /* 轮播图数组（可后台配置） */
   const banners = [
     "https://public.bnbstatic.com/image/banner/binance-futures.jpg",
     "https://public.bnbstatic.com/image/banner/spk-fixed-term.jpg",
     "https://public.bnbstatic.com/image/banner/binance-earn.jpg",
   ];
 
-  // ===== 自动轮播逻辑 =====
+  // /* 自动轮播逻辑 */
   useEffect(() => {
     const timer = setInterval(
       () => setBannerIndex((prev) => (prev + 1) % banners.length),
       4000
     );
-    return () => clearInterval(timer);
+    return () => clearInterval(timer); // /* 清除定时器 */
   }, []);
 
-  // ===== 获取币安实时数据 =====
+  // /* 获取币安实时数据 */
   useEffect(() => {
     const fetchTopCoins = async () => {
       try {
@@ -47,18 +47,18 @@ export default function Home() {
             change: parseFloat(i.priceChangePercent).toFixed(2),
           }));
 
-        setCoins(all);
+        setCoins(all); // /* 更新状态 */
       } catch (e) {
-        console.error("Binance API Error:", e);
+        console.error("Binance API Error:", e); // /* 捕获错误并打印 */
       }
     };
 
     fetchTopCoins();
-    const timer = setInterval(fetchTopCoins, 15000);
-    return () => clearInterval(timer);
+    const timer = setInterval(fetchTopCoins, 15000); // /* 每15秒重新获取数据 */
+    return () => clearInterval(timer); // /* 清除定时器 */
   }, []);
 
-  // ===== 标签过滤逻辑 =====
+  // /* 标签过滤逻辑 */
   const getFilteredCoins = () => {
     switch (activeTab) {
       case "favorites":
@@ -83,7 +83,7 @@ export default function Home() {
     }
   };
 
-  const displayed = getFilteredCoins();
+  const displayed = getFilteredCoins(); // /* 获取过滤后的数据 */
 
   return (
     <div className="max-w-md mx-auto bg-[#f5f7fb] pb-24 min-h-screen text-slate-900">
@@ -91,9 +91,9 @@ export default function Home() {
       <div className="px-4 pt-3">
         <h1 className="text-base font-semibold text-center mb-2">Welcome</h1>
 
-        {/* ✅ 修改后的搜索栏 */}
+        {/* 搜索栏 */}
         <div
-          onClick={() => navigate("/markets")}  {/* 跳转到Markets页面 */}
+          onClick={() => navigate("/markets")} /* 跳转到Markets页面 */
           className="flex items-center gap-2 bg-white rounded-full border border-slate-200 shadow-sm px-3 py-2 cursor-pointer"
         >
           <Search className="w-4 h-4 text-slate-400" />
@@ -103,7 +103,7 @@ export default function Home() {
         </div>
       </div>
 
-      {/* ===== 顶部 Banner ===== */}
+      {/* 顶部 Banner */}
       <div className="px-4 mt-3 relative">
         <div className="rounded-xl overflow-hidden shadow-sm">
           <img
@@ -124,7 +124,7 @@ export default function Home() {
         </div>
       </div>
 
-      {/* ===== 资产卡片 ===== */}
+      {/* 资产卡片 */}
       <div className="bg-white rounded-2xl shadow-sm mx-4 mt-3 p-4 border border-slate-100">
         <div className="flex justify-between items-center">
           <div>
@@ -135,7 +135,7 @@ export default function Home() {
             </div>
           </div>
           <button
-            onClick={() => navigate("/trade")}  {/* 跳转到Trade页面 */}
+            onClick={() => navigate("/trade")} /* 跳转到Trade页面 */
             className="bg-yellow-400 hover:bg-yellow-500 text-sm font-medium text-slate-900 rounded-full px-4 py-1.5 transition"
           >
             Go Trade
@@ -144,21 +144,21 @@ export default function Home() {
 
         <div className="grid grid-cols-4 mt-4 text-center text-xs text-slate-700">
           <div
-            onClick={() => navigate("/recharge")}  {/* 跳转到Recharge页面 */}
+            onClick={() => navigate("/recharge")} /* 跳转到Recharge页面 */
             className="cursor-pointer flex flex-col items-center gap-1"
           >
             <Wallet className="w-5 h-5 text-yellow-500" />
             <span>Recharge</span>
           </div>
           <div
-            onClick={() => navigate("/withdraw")}  {/* 跳转到Withdraw页面 */}
+            onClick={() => navigate("/withdraw")} /* 跳转到Withdraw页面 */
             className="cursor-pointer flex flex-col items-center gap-1"
           >
             <Send className="w-5 h-5 text-orange-500 rotate-180" />
             <span>Withdraw</span>
           </div>
           <div
-            onClick={() => navigate("/invite")}  {/* 跳转到Invite页面 */}
+            onClick={() => navigate("/invite")} /* 跳转到Invite页面 */
             className="cursor-pointer flex flex-col items-center gap-1"
           >
             <Gift className="w-5 h-5 text-indigo-500" />
@@ -166,7 +166,7 @@ export default function Home() {
           </div>
           <div
             onClick={() =>
-              window.open("https://t.me/ganeshsupport", "_blank")
+              window.open("https://t.me/ganeshsupport", "_blank") /* 跳转到Telegram支持 */
             }
             className="cursor-pointer flex flex-col items-center gap-1"
           >
@@ -176,7 +176,7 @@ export default function Home() {
         </div>
       </div>
 
-      {/* ===== 市场行情 ===== */}
+      {/* 市场行情 */}
       <div className="bg-white rounded-2xl mx-4 mt-4 border border-slate-100 shadow-sm">
         <div className="flex text-sm border-b border-slate-100">
           {[
