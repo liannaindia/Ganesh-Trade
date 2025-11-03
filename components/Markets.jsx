@@ -12,10 +12,12 @@ const Markets = () => {
       const response = await fetch("https://api.binance.com/api/v3/ticker/24hr");
       const data = await response.json();
 
-      // 按照涨跌幅进行排序，priceChangePercent 从大到小
-      const sortedData = data.sort((a, b) => {
-        return parseFloat(b.priceChangePercent) - parseFloat(a.priceChangePercent);
-      });
+      // 确保数据是有效的
+      const sortedData = data
+        .filter((coin) => coin.symbol && coin.lastPrice && coin.priceChangePercent)
+        .sort((a, b) => {
+          return parseFloat(b.priceChangePercent) - parseFloat(a.priceChangePercent);
+        });
 
       setMarketData(sortedData);  // 更新数据到状态
       setLoading(false);  // 停止加载状态
@@ -72,7 +74,7 @@ const Markets = () => {
                 <div className="flex items-center gap-2">
                   {/* 显示币种图标 */}
                   <img
-                    src={`https://cryptoicons.org/api/icon/${coin.symbol.toLowerCase()}/32`}
+                    src={`https://cryptologos.cc/logos/${coin.symbol.toLowerCase()}-logo.png`}
                     alt={coin.symbol}
                     className="w-5 h-5"
                   />
@@ -85,7 +87,7 @@ const Markets = () => {
                 {/* 24小时涨幅 */}
                 <span
                   className={`font-medium ${
-                    coin.priceChangePercent.startsWith("+")
+                    parseFloat(coin.priceChangePercent) >= 0
                       ? "text-emerald-600"  // Green for positive change
                       : "text-rose-600"  // Red for negative change
                   }`}
