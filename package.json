@@ -3,10 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "vite",               // 开发环境启动
-    "build": "vite build",       // 构建生产环境代码
-    "start": "vite preview",     // 启动生产环境预览
-    "preview": "vite preview"    // 生产环境预览（可以省略）
+    "dev": "vite",
+    "build": "vite build",
+    "start": "vite preview"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.0",
