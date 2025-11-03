@@ -70,7 +70,7 @@ const Markets = () => {
                 className="flex justify-between items-center py-2 text-sm"
               >
                 <div className="flex items-center gap-2">
-                  {/* Displaying Coin Icon */}
+                  {/* 显示币种图标 */}
                   <img
                     src={`https://cryptoicons.org/api/icon/${coin.symbol.toLowerCase()}/32`}
                     alt={coin.symbol}
@@ -79,8 +79,10 @@ const Markets = () => {
                   <span className="font-medium text-slate-700">{coin.symbol}</span>
                 </div>
 
+                {/* 最新价格 */}
                 <span className="text-slate-800 font-semibold">{coin.lastPrice}</span>
 
+                {/* 24小时涨幅 */}
                 <span
                   className={`font-medium ${
                     coin.priceChangePercent.startsWith("+")
