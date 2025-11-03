@@ -28,10 +28,10 @@ const Markets = () => {
     fetchBinanceData(); // 初次加载时获取数据
   }, []);  // 空依赖数组，意味着只会在组件加载时启动一次
 
-  // 处理币种名称：去除交易对后缀（如 USDT）
+  // 处理币种名称：去除交易对后缀（如 USDT，BUSD，但保留 BTC 和 ETH）
   const getBaseCurrency = (symbol) => {
-    // 修改处理逻辑，确保能正确处理所有币种名称
-    return symbol.replace(/USDT$/, '').replace(/BUSD$/, '').replace(/BTC$/, '').replace(/ETH$/, '');
+    // 只去除 USDT 和 BUSD 等后缀，不去除 BTC 和 ETH
+    return symbol.replace(/(USDT|BUSD)$/g, '');
   };
 
   // 获取 LogoKit 图标链接
