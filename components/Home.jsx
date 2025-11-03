@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";  // 引入 useNavigate 用于页面跳转
 import {
   Search,
   Wallet,
@@ -7,7 +8,8 @@ import {
   Gift,
 } from "lucide-react";
 
-export default function Home({ setTab }) {
+export default function Home() {
+  const navigate = useNavigate();  // 初始化导航器
   const [coins, setCoins] = useState([]);
   const [activeTab, setActiveTab] = useState("favorites");
   const [bannerIndex, setBannerIndex] = useState(0);
@@ -91,7 +93,7 @@ export default function Home({ setTab }) {
 
         {/* ✅ 修改后的搜索栏 */}
         <div
-          onClick={() => setTab("markets")}
+          onClick={() => navigate("/markets")}  {/* 修改为跳转到Markets页面 */}
           className="flex items-center gap-2 bg-white rounded-full border border-slate-200 shadow-sm px-3 py-2 cursor-pointer"
         >
           <Search className="w-4 h-4 text-slate-400" />
@@ -133,8 +135,8 @@ export default function Home({ setTab }) {
             </div>
           </div>
           <button
+            onClick={() => navigate("/trade")}  {/* 跳转到Trade页面 */}
             className="bg-yellow-400 hover:bg-yellow-500 text-sm font-medium text-slate-900 rounded-full px-4 py-1.5 transition"
-            onClick={() => setTab("trade")}
           >
             Go Trade
           </button>
@@ -142,21 +144,21 @@ export default function Home({ setTab }) {
 
         <div className="grid grid-cols-4 mt-4 text-center text-xs text-slate-700">
           <div
-            onClick={() => setTab("recharge")}
+            onClick={() => navigate("/recharge")}  {/* 跳转到Recharge页面 */}
             className="cursor-pointer flex flex-col items-center gap-1"
           >
             <Wallet className="w-5 h-5 text-yellow-500" />
             <span>Recharge</span>
           </div>
           <div
-            onClick={() => setTab("withdraw")}
+            onClick={() => navigate("/withdraw")}  {/* 跳转到Withdraw页面 */}
             className="cursor-pointer flex flex-col items-center gap-1"
           >
             <Send className="w-5 h-5 text-orange-500 rotate-180" />
             <span>Withdraw</span>
           </div>
           <div
-            onClick={() => setTab("invite")}
+            onClick={() => navigate("/invite")}  {/* 跳转到Invite页面 */}
             className="cursor-pointer flex flex-col items-center gap-1"
           >
             <Gift className="w-5 h-5 text-indigo-500" />
