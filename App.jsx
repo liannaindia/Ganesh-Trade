@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { BrowserRouter as Router, Routes, Route, useNavigate } from "react-router-dom"; // 引入路由组件
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom"; // 引入路由组件
 import HomePage from "./components/Home.jsx";
 import MarketsPage from "./components/Markets.jsx";
 import TradePage from "./components/Trade.jsx";
@@ -23,7 +23,7 @@ export default function App() {
   ];
 
   return (
-    <Router>
+    <Router> {/* 只在根组件中使用 BrowserRouter */}
       <div className="min-h-screen bg-slate-100 text-slate-900">
         {/* 页面内容 */}
         <div className="max-w-md mx-auto pb-20">
