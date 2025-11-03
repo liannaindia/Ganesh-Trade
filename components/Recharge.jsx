@@ -19,7 +19,7 @@ export default function Recharge() {
       <div className="flex items-center gap-3 py-3">
         <ArrowLeft
           className="h-5 w-5 text-slate-700 cursor-pointer"
-         onClick={() => navigate('/')}  {/* 修改为返回首页 */}
+         onClick={() => navigate('/')} 
         />
         <h2 className="font-semibold text-slate-800 text-lg">Recharge</h2>
       </div>
