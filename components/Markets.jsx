@@ -12,14 +12,14 @@ const Markets = () => {
       const response = await fetch("https://api.binance.com/api/v3/ticker/24hr");
       const data = await response.json();
 
-      // 确保数据是有效的
-      const sortedData = data
-        .filter((coin) => coin.symbol && coin.lastPrice && coin.volume)
+      // 过滤出以 USDT 结尾的币种，并按照交易量从大到小排序
+      const filteredData = data
+        .filter((coin) => coin.symbol.endsWith("USDT"))  // 只保留以 USDT 结尾的币种
         .sort((a, b) => {
           return parseFloat(b.volume) - parseFloat(a.volume);  // 按照交易量从大到小排序
         });
 
-      setMarketData(sortedData);  // 更新数据到状态
+      setMarketData(filteredData);  // 更新数据到状态
       setLoading(false);  // 停止加载状态
     } catch (error) {
       console.error("Error fetching data from Binance:", error);
@@ -66,7 +66,6 @@ const Markets = () => {
           <span className="font-medium text-slate-600">Name</span>
           <span className="font-medium text-slate-600">Last Price</span>
           <span className="font-medium text-slate-600">24chg%</span>
-          <span className="font-medium text-slate-600">Volume</span>
         </div>
 
         <div className="divide-y divide-slate-100">
@@ -76,8 +75,8 @@ const Markets = () => {
                 key={coin.symbol}
                 className="flex justify-between items-center py-2 text-sm"
               >
-                {/* 显示币种名称 */}
-                <span className="font-medium text-slate-700">{coin.symbol}</span>
+                {/* 显示币种名称（例如：BTC 而不是 BTCUSDT） */}
+                <span className="font-medium text-slate-700">{coin.symbol.slice(0, 3)}</span>
 
                 {/* 最新价格 */}
                 <span className="text-slate-800 font-semibold">{coin.lastPrice}</span>
@@ -92,9 +91,6 @@ const Markets = () => {
                 >
                   {coin.priceChangePercent}%
                 </span>
-
-                {/* 24小时交易量 */}
-                <span className="font-medium text-slate-600">{coin.volume}</span>
               </div>
             ))
           ) : (
@@ -102,14 +98,6 @@ const Markets = () => {
           )}
         </div>
       </div>
-
-      {/* ===== 悬浮返回顶部按钮 ===== */}
-      <button
-        onClick={() => window.scrollTo(0, 0)}
-        className="fixed bottom-10 right-10 p-3 bg-blue-500 text-white rounded-full shadow-lg hover:bg-blue-600"
-      >
-        ↑
-      </button>
     </div>
   );
 };
