@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { createClient } from '@supabase/supabase-js';
 
 // 使用你的 Supabase URL 和匿名密钥
-const supabase = createClient('https://your-project-id.supabase.co', 'your-anon-key');
+const supabase = createClient('https://gigzrgapctbdrbmbkcia.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdpZ3pyZ2FwY3RiZHJibWJrY2lhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIxNTI2NDIsImV4cCI6MjA3NzcyODY0Mn0.F6dnpa2--Q-xy1mlndbvsmKvvHN1hSKgh-kykCztNwQ');
 
 export default function Markets() {
   const [marketData, setMarketData] = useState([]);
