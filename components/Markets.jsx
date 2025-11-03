@@ -16,7 +16,7 @@ const Markets = () => {
 
       // 过滤出以 USDT 结尾的币种，并按照市值从大到小排序
       const filteredData = data
-        .filter((coin) => coin.symbol.endsWith("USDT"))  // 只保留以 USDT 结尾的币种
+        .filter((coin) => coin.symbol.endsWith("USDT") && parseFloat(coin.lastPrice) > 0) // 只保留以 USDT 结尾且价格大于0的币种
         .sort((a, b) => parseFloat(b.marketCap) - parseFloat(a.marketCap));  // 按照市值从大到小排序
 
       setMarketData(filteredData);  // 更新数据到状态
