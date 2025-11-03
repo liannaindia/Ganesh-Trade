@@ -29,21 +29,22 @@ body {
   padding-bottom: 60px; /* 留出空间给底部导航栏 */
 }
 
+/* 底部导航栏 */
 .bottom-nav {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  width: 100%;
   background-color: #ffffff;
   border-top: 1px solid #eaeaea;
   box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
   padding: 10px 0;
   z-index: 100;
+  width: 100%; /* 填满父容器的宽度 */
+  max-width: 1200px; /* 限制最大宽度，使其与内容宽度一致 */
+  margin: 0 auto; /* 水平居中 */
 }
 
+/* 导航栏按钮布局 */
 .nav-list {
   display: flex;
-  justify-content: space-around;
+  justify-content: space-around; /* 均匀分布 */
   list-style: none;
   margin: 0;
   padding: 0;
@@ -53,8 +54,43 @@ body {
   cursor: pointer;
   font-size: 14px;
   color: #333;
+  flex: 1;
+  text-align: center;
+  padding: 10px;
 }
 
 .nav-list li:hover {
   color: #ff9933;
+}
+
+/* 响应式设计：针对手机和桌面模式 */
+@media (max-width: 768px) {
+  .app-container {
+    padding: 10px;
+  }
+
+  .main-content {
+    padding-bottom: 60px; /* 保持底部导航栏的空间 */
+  }
+
+  .bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+  }
+}
+
+@media (min-width: 769px) {
+  .app-container {
+    padding: 0;
+  }
+
+  .main-content {
+    padding-bottom: 60px; /* 保持底部导航栏的空间 */
+  }
+
+  .bottom-nav {
+    position: relative; /* 让导航栏处于页面内容的底部 */
+  }
 }
