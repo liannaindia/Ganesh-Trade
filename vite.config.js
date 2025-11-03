@@ -5,7 +5,10 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   server: {
-    port: 3000,        // 使用端口 3000，可以选择 8080
-    host: '0.0.0.0'    // 确保应用监听所有网络接口，允许外部访问
+    port: 3000,        // 或者使用 8080，确保端口正常
+    host: '0.0.0.0',    // 监听所有网络接口
+  },
+  preview: {
+    allowedHosts: ['ganesh-trade.onrender.com']  // 允许指定的主机访问
   }
 })
