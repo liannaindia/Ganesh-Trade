@@ -93,7 +93,7 @@ export default function Home() {
 
         {/* ✅ 修改后的搜索栏 */}
         <div
-          onClick={() => navigate("/markets")}  {/* 修改为跳转到Markets页面 */}
+          onClick={() => navigate("/markets")}  {/* 跳转到Markets页面 */}
           className="flex items-center gap-2 bg-white rounded-full border border-slate-200 shadow-sm px-3 py-2 cursor-pointer"
         >
           <Search className="w-4 h-4 text-slate-400" />
