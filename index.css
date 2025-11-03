@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 /* ===== Ganesh Trade custom styles ===== */
 body {
   font-family: 'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -28,10 +32,8 @@ body {
 .bottom-nav {
   position: fixed;
   bottom: 0;
-  left: 50%; /* 使导航栏从中心开始 */
-  transform: translateX(-50%); /* 将导航栏居中 */
-  width: 100%; /* 填满父容器的宽度 */
-  max-width: 400px; /* 根据项目宽度限制最大宽度 */
+  left: 0;
+  width: 100%;
   background-color: #ffffff;
   border-top: 1px solid #eaeaea;
   box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
@@ -41,7 +43,7 @@ body {
 
 .nav-list {
   display: flex;
-  justify-content: space-around; /* 均匀分布 */
+  justify-content: space-around;
   list-style: none;
   margin: 0;
   padding: 0;
@@ -51,8 +53,6 @@ body {
   cursor: pointer;
   font-size: 14px;
   color: #333;
-  flex: 1;
-  text-align: center;
 }
 
 .nav-list li:hover {
