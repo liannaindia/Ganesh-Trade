@@ -32,7 +32,7 @@ body {
   padding: 10px 0;
   z-index: 100;
   width: 100%; /* 填满父容器的宽度 */
-  max-width: 1200px; /* 限制最大宽度，根据你的页面内容调整 */
+  max-width: 1200px; /* 限制最大宽度，使其与内容宽度一致 */
   margin: 0 auto; /* 水平居中 */
 }
 
