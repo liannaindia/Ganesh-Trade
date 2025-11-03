@@ -40,6 +40,12 @@ const Markets = () => {
     coin.symbol.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // 函数：从交易对名称中提取币种基础名称（去掉USDT等后缀）
+  const getBaseCurrency = (symbol) => {
+    // 去掉USDT及其他后缀，只保留币种名称（例如PEPE）
+    return symbol.replace(/USDT$/, '').replace(/BUSD$/, '').replace(/BTC$/, '').replace(/ETH$/, '');
+  };
+
   if (loading) {
     return <div>Loading market data...</div>;
   }
@@ -75,8 +81,10 @@ const Markets = () => {
                 key={coin.symbol}
                 className="flex justify-between items-center py-2 text-sm"
               >
-                {/* 显示币种名称（例如：BTC 而不是 BTCUSDT） */}
-                <span className="font-medium text-slate-700">{coin.symbol.slice(0, 3)}</span>
+                <div className="flex items-center gap-2">
+                  {/* 显示币种名称（去掉USDT等后缀） */}
+                  <span className="font-medium text-slate-700">{getBaseCurrency(coin.symbol)}</span>
+                </div>
 
                 {/* 最新价格 */}
                 <span className="text-slate-800 font-semibold">{coin.lastPrice}</span>
