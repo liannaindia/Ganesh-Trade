@@ -17,19 +17,23 @@ body {
   border-radius: 3px;
 }
 
-/* ===== 底部导航栏样式 ===== */
+/* ===== 页面内容容器 ===== */
 .app-container {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  max-width: 1200px; /* 固定宽度 */
+  margin: 0 auto; /* 居中对齐 */
+  padding: 0 15px; /* 给页面添加左右内边距 */
 }
 
+/* 主内容区域 */
 .main-content {
   flex: 1;
-  padding-bottom: 60px; /* 留出空间给底部导航栏 */
+  padding-bottom: 60px; /* 为底部导航栏留出空间 */
 }
 
-/* 底部导航栏 */
+/* ===== 底部导航栏样式 ===== */
 .bottom-nav {
   background-color: #ffffff;
   border-top: 1px solid #eaeaea;
@@ -37,11 +41,11 @@ body {
   padding: 10px 0;
   z-index: 100;
   width: 100%; /* 填满父容器的宽度 */
-  max-width: 1200px; /* 限制最大宽度，使其与内容宽度一致 */
+  max-width: 1200px; /* 确保导航栏与内容宽度一致 */
   margin: 0 auto; /* 水平居中 */
+  position: relative; /* 固定在内容区域底部 */
 }
 
-/* 导航栏按钮布局 */
 .nav-list {
   display: flex;
   justify-content: space-around; /* 均匀分布 */
@@ -63,10 +67,10 @@ body {
   color: #ff9933;
 }
 
-/* 响应式设计：针对手机和桌面模式 */
+/* 响应式设计 */
 @media (max-width: 768px) {
   .app-container {
-    padding: 10px;
+    padding: 0 10px; /* 在手机模式下减少内边距 */
   }
 
   .main-content {
@@ -78,19 +82,5 @@ body {
     bottom: 0;
     left: 0;
     width: 100%;
-  }
-}
-
-@media (min-width: 769px) {
-  .app-container {
-    padding: 0;
-  }
-
-  .main-content {
-    padding-bottom: 60px; /* 保持底部导航栏的空间 */
-  }
-
-  .bottom-nav {
-    position: relative; /* 让导航栏处于页面内容的底部 */
   }
 }
