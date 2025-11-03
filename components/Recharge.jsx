@@ -1,27 +1,26 @@
 import React from "react";
+import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 export default function Recharge() {
   const navigate = useNavigate();
 
   const channels = [
-    { name: "OKPay (Third-Party Wallet Recharge)", logo: "https://i.imgur.com/b5NYPsZ.png" },
-    { name: "AAPay (Third-Party Wallet Recharge)", logo: "https://i.imgur.com/ThAc0qB.png" },
-    { name: "KD (Third-Party Wallet Recharge)", logo: "https://i.imgur.com/DQb6LgZ.png" },
-    { name: "MPay (Third-Party Wallet Recharge)", logo: "https://i.imgur.com/W1P7VYx.png" },
-    { name: "TOPay (Third-Party Wallet Recharge)", logo: "https://i.imgur.com/Nq3FhUl.png" },
+    { name: "OKPay (三方钱包充值)", logo: "https://i.imgur.com/b5NYPsZ.png" },
+    { name: "AAPay (三方钱包充值)", logo: "https://i.imgur.com/ThAc0qB.png" },
+    { name: "KD (三方钱包充值)", logo: "https://i.imgur.com/DQb6LgZ.png" },
+    { name: "MPay (三方钱包充值)", logo: "https://i.imgur.com/W1P7VYx.png" },
+    { name: "TOPay (三方钱包充值)", logo: "https://i.imgur.com/Nq3FhUl.png" },
   ];
 
   return (
     <div className="px-4 pb-24 max-w-md mx-auto">
-      {/* New Home button */}
+      {/* Header */}
       <div className="flex items-center gap-3 py-3">
-        <button
+        <ArrowLeft
           className="h-5 w-5 text-slate-700 cursor-pointer"
-          onClick={() => navigate('/')}
-        >
-          <span>Back to Home</span>
-        </button>
+         onClick={() => navigate('/')} 
+        />
         <h2 className="font-semibold text-slate-800 text-lg">Recharge</h2>
       </div>
 
@@ -36,7 +35,7 @@ export default function Recharge() {
             <div>
               <div className="font-medium text-slate-800 text-sm">{c.name}</div>
               <div className="text-[12px] text-slate-500">
-                Fast, Instant Transactions
+                快捷到账，即时到账
               </div>
             </div>
           </div>
