@@ -14,9 +14,9 @@ const Markets = () => {
 
       // 确保数据是有效的
       const sortedData = data
-        .filter((coin) => coin.symbol && coin.lastPrice && coin.priceChangePercent)
+        .filter((coin) => coin.symbol && coin.lastPrice && coin.volume)
         .sort((a, b) => {
-          return parseFloat(b.priceChangePercent) - parseFloat(a.priceChangePercent);
+          return parseFloat(b.volume) - parseFloat(a.volume);  // 按照交易量从大到小排序
         });
 
       setMarketData(sortedData);  // 更新数据到状态
@@ -61,9 +61,14 @@ const Markets = () => {
 
       {/* ===== 市场行情表 ===== */}
       <div className="bg-white border border-slate-200 rounded-2xl p-3 shadow-sm">
+        {/* 标签行 */}
         <div className="flex justify-between items-center mb-2">
-          <h3 className="font-semibold text-slate-800">Market</h3>
+          <span className="font-medium text-slate-600">Name</span>
+          <span className="font-medium text-slate-600">Last Price</span>
+          <span className="font-medium text-slate-600">24chg%</span>
+          <span className="font-medium text-slate-600">Volume</span>
         </div>
+
         <div className="divide-y divide-slate-100">
           {filteredData.length > 0 ? (
             filteredData.map((coin) => (
@@ -71,15 +76,8 @@ const Markets = () => {
                 key={coin.symbol}
                 className="flex justify-between items-center py-2 text-sm"
               >
-                <div className="flex items-center gap-2">
-                  {/* 显示币种图标 */}
-                  <img
-                    src={`https://cryptologos.cc/logos/${coin.symbol.toLowerCase()}-logo.png`}
-                    alt={coin.symbol}
-                    className="w-5 h-5"
-                  />
-                  <span className="font-medium text-slate-700">{coin.symbol}</span>
-                </div>
+                {/* 显示币种名称 */}
+                <span className="font-medium text-slate-700">{coin.symbol}</span>
 
                 {/* 最新价格 */}
                 <span className="text-slate-800 font-semibold">{coin.lastPrice}</span>
@@ -94,6 +92,9 @@ const Markets = () => {
                 >
                   {coin.priceChangePercent}%
                 </span>
+
+                {/* 24小时交易量 */}
+                <span className="font-medium text-slate-600">{coin.volume}</span>
               </div>
             ))
           ) : (
