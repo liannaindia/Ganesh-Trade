@@ -3,6 +3,7 @@
 @tailwind utilities;
 
 /* ===== Ganesh Trade custom styles ===== */
+/* ===== Ganesh Trade custom styles ===== */
 body {
   font-family: 'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   background-color: #f5f7fb;
@@ -43,10 +44,8 @@ body {
   width: 100%; /* 填满父容器的宽度 */
   max-width: 1200px; /* 确保导航栏与内容宽度一致 */
   margin: 0 auto; /* 居中对齐 */
-  position: relative; /* 使导航栏位于灰色区域下方 */
 }
 
-/* 导航栏按钮布局 */
 .nav-list {
   display: flex;
   justify-content: space-around; /* 均匀分布 */
@@ -68,20 +67,3 @@ body {
   color: #ff9933;
 }
 
-/* 响应式设计 */
-@media (max-width: 768px) {
-  .app-container {
-    padding: 0 10px; /* 在手机模式下减少内边距 */
-  }
-
-  .main-content {
-    padding-bottom: 60px; /* 保持底部导航栏的空间 */
-  }
-
-  .bottom-nav {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-  }
-}
