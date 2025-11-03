@@ -42,8 +42,13 @@ const Markets = () => {
 
   // 函数：从交易对名称中提取币种基础名称（去掉USDT等后缀）
   const getBaseCurrency = (symbol) => {
-    // 去掉USDT及其他后缀，只保留币种名称（例如PEPE）
     return symbol.replace(/USDT$/, '').replace(/BUSD$/, '').replace(/BTC$/, '').replace(/ETH$/, '');
+  };
+
+  // 获取 LogoKit 图标链接
+  const getLogoUrl = (symbol) => {
+    const baseCurrency = getBaseCurrency(symbol);  // 提取币种名称
+    return `https://img.logokit.com/crypto/${baseCurrency}?token=pk_fr18743751bed15b82d28e`;
   };
 
   if (loading) {
@@ -82,7 +87,12 @@ const Markets = () => {
                 className="flex justify-between items-center py-2 text-sm"
               >
                 <div className="flex items-center gap-2">
-                  {/* 显示币种名称（去掉USDT等后缀） */}
+                  {/* 获取图标 */}
+                  <img
+                    src={getLogoUrl(coin.symbol)}
+                    alt={coin.symbol}
+                    className="w-5 h-5"
+                  />
                   <span className="font-medium text-slate-700">{getBaseCurrency(coin.symbol)}</span>
                 </div>
 
