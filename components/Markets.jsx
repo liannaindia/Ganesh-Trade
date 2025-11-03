@@ -11,7 +11,7 @@ const Markets = () => {
     try {
       const response = await fetch("https://api.binance.com/api/v3/ticker/24hr");
       const data = await response.json();
-      
+
       // 按照涨跌幅进行排序，priceChangePercent 从大到小
       const sortedData = data.sort((a, b) => {
         return parseFloat(b.priceChangePercent) - parseFloat(a.priceChangePercent);
@@ -49,7 +49,7 @@ const Markets = () => {
         <div className="flex items-center flex-1 bg-slate-100 border border-slate-200 rounded-full pl-3 pr-3 py-2 text-slate-500 cursor-pointer">
           <input
             type="text"
-            placeholder="输入交易对名称"
+            placeholder="Search for a coin"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full bg-slate-100 outline-none"
@@ -60,7 +60,7 @@ const Markets = () => {
       {/* ===== 市场行情表 ===== */}
       <div className="bg-white border border-slate-200 rounded-2xl p-3 shadow-sm">
         <div className="flex justify-between items-center mb-2">
-          <h3 className="font-semibold text-slate-800">市场</h3>
+          <h3 className="font-semibold text-slate-800">Market</h3>
         </div>
         <div className="divide-y divide-slate-100">
           {filteredData.length > 0 ? (
@@ -69,13 +69,23 @@ const Markets = () => {
                 key={coin.symbol}
                 className="flex justify-between items-center py-2 text-sm"
               >
-                <span className="font-medium text-slate-700">{coin.symbol}</span>
+                <div className="flex items-center gap-2">
+                  {/* Displaying Coin Icon */}
+                  <img
+                    src={`https://cryptoicons.org/api/icon/${coin.symbol.toLowerCase()}/32`}
+                    alt={coin.symbol}
+                    className="w-5 h-5"
+                  />
+                  <span className="font-medium text-slate-700">{coin.symbol}</span>
+                </div>
+
                 <span className="text-slate-800 font-semibold">{coin.lastPrice}</span>
+
                 <span
                   className={`font-medium ${
                     coin.priceChangePercent.startsWith("+")
-                      ? "text-emerald-600"
-                      : "text-rose-600"
+                      ? "text-emerald-600"  // Green for positive change
+                      : "text-rose-600"  // Red for negative change
                   }`}
                 >
                   {coin.priceChangePercent}%
@@ -88,15 +98,13 @@ const Markets = () => {
         </div>
       </div>
 
-      {/* ===== 返回顶部按钮 ===== */}
-      <div className="flex justify-center mt-4">
-        <button
-          onClick={() => window.scrollTo(0, 0)}
-          className="text-sm text-slate-600 hover:text-slate-800"
-        >
-          Back to top
-        </button>
-      </div>
+      {/* ===== 悬浮返回顶部按钮 ===== */}
+      <button
+        onClick={() => window.scrollTo(0, 0)}
+        className="fixed bottom-10 right-10 p-3 bg-blue-500 text-white rounded-full shadow-lg hover:bg-blue-600"
+      >
+        ↑
+      </button>
     </div>
   );
 };
