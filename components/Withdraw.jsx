@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 export default function Withdraw() {
@@ -7,14 +8,12 @@ export default function Withdraw() {
 
   return (
     <div className="px-4 pb-24 max-w-md mx-auto">
-      {/* New Home button */}
+      {/* Header */}
       <div className="flex items-center gap-3 py-3">
-        <button
+        <ArrowLeft
           className="h-5 w-5 text-slate-700 cursor-pointer"
-          onClick={() => navigate('/')}
-        >
-          <span>Back to Home</span>
-        </button>
+          onClick={() => navigate('/')} 
+        />
         <h2 className="font-semibold text-slate-800 text-lg">Withdraw</h2>
       </div>
 
@@ -59,7 +58,7 @@ export default function Withdraw() {
                 Withdraw Account
               </div>
               <select className="w-full border border-slate-200 rounded-lg p-2 text-sm">
-                <option>OKG Wallet: jljdjd***jjs</option>
+                <option>OKG 钱包: jljdjd***jjs</option>
               </select>
             </div>
 
