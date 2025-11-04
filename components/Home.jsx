@@ -122,7 +122,7 @@ export default function Home({ setTab }) {
       </div>
 
       {/* 显示登录按钮或资产信息模块 */}
-      <div className="text-center mt-4">
+      <div className="text-center mt-1">
         {!isLoggedIn ? (
           <>
             <div className="mb-4">
