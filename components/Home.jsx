@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Search, Wallet, Send, Headphones, Gift, ArrowLeft } from "lucide-react";
-import { supabase } from "../supabaseClient"; // 如果在 components 文件夹中
+import { supabase } from "./supabaseClient"; // 引入 Supabase 客户端
 
 export default function Home({ setTab }) {
   const [coins, setCoins] = useState([]);
@@ -8,6 +8,7 @@ export default function Home({ setTab }) {
   const [bannerIndex, setBannerIndex] = useState(0);
   const [isLoggedIn, setIsLoggedIn] = useState(false); // 用于判断登录状态
   const [user, setUser] = useState(null); // 保存用户信息
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false); // 控制登录提示弹窗的显示
 
   const banners = [
     "https://public.bnbstatic.com/image/banner/binance-futures.jpg",
@@ -85,6 +86,8 @@ export default function Home({ setTab }) {
       if (userSession.data.session) {
         setUser(userSession.data.session.user);
         setIsLoggedIn(true);
+      } else {
+        setShowLoginPrompt(true); // 如果未登录，显示弹窗
       }
     };
 
@@ -93,6 +96,24 @@ export default function Home({ setTab }) {
 
   return (
     <div className="max-w-md mx-auto bg-[#f5f7fb] pb-24 min-h-screen text-slate-900">
+      {/* ===== 登录提示弹窗 ===== */}
+      {showLoginPrompt && !isLoggedIn && (
+        <div className="fixed top-0 left-0 right-0 bg-gray-500 bg-opacity-50 z-50 p-6 flex justify-center items-center">
+          <div className="bg-white rounded-lg p-6 shadow-lg w-80 text-center">
+            <h3 className="font-semibold text-lg text-slate-800 mb-4">
+              You are not logged in
+            </h3>
+            <p className="text-slate-600 mb-4">Please log in to explore further.</p>
+            <button
+              onClick={() => setTab("login")} // 点击后跳转到登录页面
+              className="w-full bg-yellow-400 hover:bg-yellow-500 text-slate-900 font-semibold py-3 rounded-xl"
+            >
+              Go to Login
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* ===== 顶部欢迎与搜索 ===== */}
       {!isLoggedIn && (
         <div className="px-4 pt-3">
