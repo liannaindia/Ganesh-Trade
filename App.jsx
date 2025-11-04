@@ -39,11 +39,11 @@ export default function App() {
       {/* 页面内容 */}
       <div className="max-w-md mx-auto bg-[#f5f7fb] pb-24 min-h-screen text-slate-900">
         {renderPage()}
-        
-        {/* 底部导航栏固定并与内容对齐 */}
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 shadow-none">
-          <BottomNav tab={tab} setTab={setTab} />
-        </div>
+      </div>
+
+      {/* 固定底部导航栏，并对齐内容 */}
+      <div className="max-w-md mx-auto w-full fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 shadow-none">
+        <BottomNav tab={tab} setTab={setTab} />
       </div>
     </div>
   );
