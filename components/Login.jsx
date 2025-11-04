@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { supabase } from "./supabaseClient"; // 引入 supabase 客户端
+import { supabase } from "../supabaseClient"; // 引入supabase客户端
 
 export default function Login({ setTab }) {
   const [phoneNumber, setPhoneNumber] = useState("");
@@ -18,7 +18,7 @@ export default function Login({ setTab }) {
       if (error) {
         setError(error.message);
       } else if (data.length > 0) {
-        setTab("home"); // 登录成功后跳转到主页
+        setTab("home");  // 登录成功后跳转到主页
       } else {
         setError("Invalid credentials");
       }
@@ -68,18 +68,6 @@ export default function Login({ setTab }) {
         >
           Login
         </button>
-      </div>
-
-      <div className="mt-8 text-center text-sm text-slate-500">
-        <span>
-          Don't have an account?{" "}
-          <button
-            onClick={() => setTab("register")}
-            className="text-yellow-500 font-semibold"
-          >
-            Create new account
-          </button>
-        </span>
       </div>
     </div>
   );
