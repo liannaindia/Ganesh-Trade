@@ -15,22 +15,6 @@ export default function Home({ setTab }) {
 
   const navigate = useNavigate();  // 使用 navigate 钩子
 
-  // ===== 轮播图数组（可后台配置） =====
-  const banners = [
-    "https://public.bnbstatic.com/image/banner/binance-futures.jpg",
-    "https://public.bnbstatic.com/image/banner/spk-fixed-term.jpg",
-    "https://public.bnbstatic.com/image/banner/binance-earn.jpg",
-  ];
-
-  // ===== 自动轮播逻辑 =====
-  useEffect(() => {
-    const timer = setInterval(
-      () => setBannerIndex((prev) => (prev + 1) % banners.length),
-      4000
-    );
-    return () => clearInterval(timer);
-  }, []);
-
   // ===== 获取币安实时数据 =====
   useEffect(() => {
     const fetchTopCoins = async () => {
@@ -145,34 +129,25 @@ export default function Home({ setTab }) {
 
         <div className="grid grid-cols-4 mt-4 text-center text-xs text-slate-700">
           <div
-            onClick={() => setTab("recharge")}
+            onClick={() => navigate("/recharge")}  {/* 使用 navigate 跳转到 Recharge 页面 */}
             className="cursor-pointer flex flex-col items-center gap-1"
           >
             <Wallet className="w-5 h-5 text-yellow-500" />
             <span>Recharge</span>
           </div>
           <div
-            onClick={() => setTab("withdraw")}
+            onClick={() => navigate("/withdraw")}  {/* 使用 navigate 跳转到 Withdraw 页面 */}
             className="cursor-pointer flex flex-col items-center gap-1"
           >
             <Send className="w-5 h-5 text-orange-500 rotate-180" />
             <span>Withdraw</span>
           </div>
           <div
-            onClick={() => setTab("invite")}
+            onClick={() => navigate("/invite")}  {/* 使用 navigate 跳转到 Invite 页面 */}
             className="cursor-pointer flex flex-col items-center gap-1"
           >
             <Gift className="w-5 h-5 text-indigo-500" />
             <span>Invite</span>
-          </div>
-          <div
-            onClick={() =>
-              window.open("https://t.me/ganeshsupport", "_blank")
-            }
-            className="cursor-pointer flex flex-col items-center gap-1"
-          >
-            <Headphones className="w-5 h-5 text-green-500" />
-            <span>Support</span>
           </div>
         </div>
       </div>
