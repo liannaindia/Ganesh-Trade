@@ -1,10 +1,8 @@
 import React, { useState } from "react";
 import { ArrowLeft } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 
-export default function Withdraw() {
-  const navigate = useNavigate();
-  const [tab, setTab] = useState("request");
+export default function Withdraw({ setTab }) {
+  const [tab, setTabState] = useState("request");
 
   return (
     <div className="px-4 pb-24 max-w-md mx-auto">
@@ -12,7 +10,7 @@ export default function Withdraw() {
       <div className="flex items-center gap-3 py-3">
         <ArrowLeft
           className="h-5 w-5 text-slate-700 cursor-pointer"
-          onClick={() => navigate("/")} 
+          onClick={() => setTab("home")}  {/* 点击箭头返回 Home 页面 */}
         />
         <h2 className="font-semibold text-slate-800 text-lg">Withdraw</h2>
       </div>
@@ -20,7 +18,7 @@ export default function Withdraw() {
       {/* Tabs */}
       <div className="flex border-b border-slate-200 mb-3">
         <button
-          onClick={() => setTab("request")}
+          onClick={() => setTabState("request")}
           className={`flex-1 py-2 text-sm font-semibold border-b-2 ${
             tab === "request"
               ? "border-yellow-500 text-yellow-600"
@@ -30,7 +28,7 @@ export default function Withdraw() {
           Request Withdraw
         </button>
         <button
-          onClick={() => setTab("address")}
+          onClick={() => setTabState("address")}
           className={`flex-1 py-2 text-sm font-semibold border-b-2 ${
             tab === "address"
               ? "border-yellow-500 text-yellow-600"
