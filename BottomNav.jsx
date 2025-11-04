@@ -12,21 +12,19 @@ const BottomNav = ({ tab, setTab }) => {
   ];
 
   return (
-    <nav className="bg-white border-t border-slate-200 shadow-none">
-      <div className="w-full flex justify-between px-6 py-2">
-        {tabs.map((t) => (
-          <button
-            key={t.id}
-            onClick={() => setTab(t.id)}
-            className={`flex-1 flex flex-col items-center ${
-              tab === t.id ? "text-indigo-600" : "text-slate-500"
-            }`}
-          >
-            {t.icon}
-            <span className="text-xs mt-1 font-medium">{t.label}</span>
-          </button>
-        ))}
-      </div>
+    <nav className="w-full flex justify-between px-6 py-2 bg-white">
+      {tabs.map((t) => (
+        <button
+          key={t.id}
+          onClick={() => setTab(t.id)}
+          className={`flex-1 flex flex-col items-center ${
+            tab === t.id ? "text-indigo-600" : "text-slate-500"
+          }`}
+        >
+          {t.icon}
+          <span className="text-xs mt-1 font-medium">{t.label}</span>
+        </button>
+      ))}
     </nav>
   );
 };
