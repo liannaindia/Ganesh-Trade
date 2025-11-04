@@ -4,7 +4,7 @@ import { Search, Wallet, Send, Headphones, Gift } from "lucide-react";
 export default function Home({ setTab }) {
   const [coins, setCoins] = useState([]);
   const [activeTab, setActiveTab] = useState("favorites");
-  const [bannerIndex, setBannerIndex] = useState(0);  // 定义 bannerIndex 状态
+  const [bannerIndex, setBannerIndex] = useState(0);  
 
   // ===== 轮播图数组（可后台配置） =====
   const banners = [
@@ -19,7 +19,7 @@ export default function Home({ setTab }) {
       () => setBannerIndex((prev) => (prev + 1) % banners.length),
       4000  // 每4秒切换一次
     );
-    return () => clearInterval(timer);  // 清除定时器
+    return () => clearInterval(timer);  
   }, [banners.length]);
 
   // ===== 获取币安实时数据 =====
