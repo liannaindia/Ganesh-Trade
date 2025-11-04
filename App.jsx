@@ -7,7 +7,7 @@ import MePage from "./components/Me.jsx";
 import RechargePage from "./components/Recharge.jsx";
 import WithdrawPage from "./components/Withdraw.jsx";
 import InvitePage from "./components/Invite.jsx";
-import BottomNav from "./components/BottomNav";  // 引入底部导航栏
+import BottomNav from "./BottomNav";  // 引入底部导航栏
 
 export default function App() {
   const [tab, setTab] = useState("home");
