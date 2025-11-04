@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { Wallet, Send, Gift, Headphones } from "lucide-react";  // 确保导入 Wallet 和其他需要的图标
 import { Search } from "lucide-react";
 
 export default function Home() {
@@ -104,7 +105,6 @@ export default function Home() {
         <div className="flex justify-between items-center">
           <div>
             <div className="text-xs text-slate-500">Total Assets (USDT)</div>
-            {/* Removed User's Asset Display */}
             <div className="text-xs text-slate-500 mt-1">Pnl Today 0.00 / 0%</div>
           </div>
           <button
