@@ -142,34 +142,25 @@ export default function Home({ setTab }) {
 
         <div className="grid grid-cols-4 mt-4 text-center text-xs text-slate-700">
           <div
-            onClick={() => setTab("recharge")}
+            onClick={() => setTab("recharge")}  {/* 点击时切换为 Recharge 页面 */}
             className="cursor-pointer flex flex-col items-center gap-1"
           >
             <Wallet className="w-5 h-5 text-yellow-500" />
             <span>Recharge</span>
           </div>
           <div
-            onClick={() => setTab("withdraw")}
+            onClick={() => setTab("withdraw")}  {/* 点击时切换为 Withdraw 页面 */}
             className="cursor-pointer flex flex-col items-center gap-1"
           >
             <Send className="w-5 h-5 text-orange-500 rotate-180" />
             <span>Withdraw</span>
           </div>
           <div
-            onClick={() => setTab("invite")}
+            onClick={() => setTab("invite")}  {/* 点击时切换为 Invite 页面 */}
             className="cursor-pointer flex flex-col items-center gap-1"
           >
             <Gift className="w-5 h-5 text-indigo-500" />
             <span>Invite</span>
-          </div>
-          <div
-            onClick={() =>
-              window.open("https://t.me/ganeshsupport", "_blank")
-            }
-            className="cursor-pointer flex flex-col items-center gap-1"
-          >
-            <Headphones className="w-5 h-5 text-green-500" />
-            <span>Support</span>
           </div>
         </div>
       </div>
