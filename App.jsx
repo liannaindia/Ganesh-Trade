@@ -56,12 +56,12 @@ export default function App() {
 
       {/* 底部导航栏 */}
       <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 shadow-sm">
-        <div className="max-w-md mx-auto flex">
+        <div className="w-full flex justify-between px-4 py-2">
           {tabs.map((t) => (
             <button
               key={t.id}
               onClick={() => setTab(t.id)}
-              className={`flex-1 flex flex-col items-center py-2 ${
+              className={`flex-1 flex flex-col items-center ${
                 tab === t.id ? "text-indigo-600" : "text-slate-500"
               }`}
             >
