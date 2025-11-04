@@ -1,16 +1,33 @@
 import React, { useState } from "react";
-import { ArrowLeft, Headphones } from "lucide-react";
+import { supabase } from "./supabaseClient"; // 引入 supabase 客户端
 
 export default function Register({ setTab }) {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [password, setPassword] = useState("");
   const [retypePassword, setRetypePassword] = useState("");
+  const [error, setError] = useState("");
 
-  const handleRegister = () => {
-    if (password === retypePassword) {
-      console.log("Registering with phone:", phoneNumber);
-    } else {
-      console.log("Passwords do not match");
+  const handleRegister = async () => {
+    if (password !== retypePassword) {
+      setError("Passwords do not match");
+      return;
+    }
+
+    try {
+      // 使用 Supabase 创建用户
+      const { data, error } = await supabase
+        .from("users")
+        .insert([
+          { phone_number: phoneNumber, password: password }
+        ]);
+
+      if (error) {
+        setError(error.message);
+      } else {
+        setTab("home"); // 注册成功后跳转到主页
+      }
+    } catch (error) {
+      setError("An error occurred during registration");
     }
   };
 
@@ -27,16 +44,13 @@ export default function Register({ setTab }) {
       <div className="px-4 mt-8">
         <div className="mb-4">
           <label className="text-sm text-slate-500">Phone Number</label>
-          <div className="flex items-center border border-slate-200 rounded-lg">
-            <span className="text-sm text-slate-500 px-3">+91</span>
-            <input
-              type="text"
-              className="w-full py-2 px-3 text-sm text-slate-700"
-              placeholder="Enter the phone number"
-              value={phoneNumber}
-              onChange={(e) => setPhoneNumber(e.target.value)}
-            />
-          </div>
+          <input
+            type="text"
+            className="w-full py-2 px-3 text-sm text-slate-700"
+            placeholder="Enter the phone number"
+            value={phoneNumber}
+            onChange={(e) => setPhoneNumber(e.target.value)}
+          />
         </div>
 
         <div className="mb-4">
@@ -61,15 +75,7 @@ export default function Register({ setTab }) {
           />
         </div>
 
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center text-sm text-slate-500">
-            <input type="checkbox" className="mr-2" />
-            <span>
-              I have read and agree to <a href="#">User Agreement</a> and{" "}
-              <a href="#">Privacy Policy</a>
-            </span>
-          </div>
-        </div>
+        {error && <div className="text-red-500 text-sm">{error}</div>}
 
         <button
           onClick={handleRegister}
@@ -89,16 +95,6 @@ export default function Register({ setTab }) {
             Login now
           </button>
         </span>
-      </div>
-
-      <div className="mt-3 text-center">
-        <button
-          onClick={() => window.open("https://t.me/ganeshsupport", "_blank")}
-          className="flex justify-center items-center gap-2 text-slate-500 hover:text-yellow-500"
-        >
-          <Headphones className="w-5 h-5" />
-          <span>Contact Support</span>
-        </button>
       </div>
     </div>
   );
