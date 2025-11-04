@@ -74,7 +74,8 @@ export default function Home({ setTab }) {
   const displayed = getFilteredCoins();
 
   const handleLogin = () => {
-    navigate("/login"); // 跳转到登录页面
+    localStorage.setItem("user", "true");  // 模拟登录
+    setIsLoggedIn(true);
   };
 
   return (
