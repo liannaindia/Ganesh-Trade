@@ -37,11 +37,13 @@ export default function App() {
   return (
     <div className="min-h-screen bg-slate-100 text-slate-900">
       {/* 页面内容 */}
-      <div className="max-w-md mx-auto pb-20">{renderPage()}</div>
+      <div className="max-w-md mx-auto bg-[#f5f7fb] pb-24 min-h-screen text-slate-900">
+        {renderPage()}
 
-      {/* 在每个页面中嵌入底部导航栏，并限制宽度 */}
-      <div className="max-w-md mx-auto w-full">
-        <BottomNav tab={tab} setTab={setTab} />
+        {/* 固定底部导航栏并嵌入内容区域 */}
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 shadow-none">
+          <BottomNav tab={tab} setTab={setTab} />
+        </div>
       </div>
     </div>
   );
