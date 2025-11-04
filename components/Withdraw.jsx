@@ -6,16 +6,14 @@ export default function Withdraw({ setTab }) {
 
   return (
     <div className="px-4 pb-24 max-w-md mx-auto">
-      {/* Header */}
       <div className="flex items-center gap-3 py-3">
         <ArrowLeft
           className="h-5 w-5 text-slate-700 cursor-pointer"
-          onClick={() => setTab("home")}  {/* 点击箭头返回 Home 页面 */}
+          onClick={() => setTab("home")}
         />
         <h2 className="font-semibold text-slate-800 text-lg">Withdraw</h2>
       </div>
 
-      {/* Tabs */}
       <div className="flex border-b border-slate-200 mb-3">
         <button
           onClick={() => setTabState("request")}
@@ -41,7 +39,6 @@ export default function Withdraw({ setTab }) {
 
       {tab === "request" ? (
         <>
-          {/* Balance */}
           <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm mb-3">
             <div className="text-sm text-slate-500">Available Balance</div>
             <div className="text-2xl font-bold text-slate-900">
@@ -49,7 +46,6 @@ export default function Withdraw({ setTab }) {
             </div>
           </div>
 
-          {/* Withdraw Form */}
           <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm space-y-3">
             <div>
               <div className="text-sm text-slate-500 mb-1">
@@ -75,7 +71,6 @@ export default function Withdraw({ setTab }) {
             </div>
           </div>
 
-          {/* Reminder */}
           <div className="mt-3 bg-yellow-50 border border-yellow-200 rounded-xl p-3 text-xs text-slate-700">
             <strong>Important Reminder:</strong>
             <br />
@@ -83,7 +78,6 @@ export default function Withdraw({ setTab }) {
             The final amount depends on network conditions.
           </div>
 
-          {/* Button */}
           <button className="mt-4 w-full bg-yellow-400 hover:bg-yellow-500 text-slate-900 font-semibold py-3 rounded-xl">
             Continue
           </button>
