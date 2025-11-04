@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react"; 
+import React, { useState, useEffect } from "react";  
 import { useNavigate } from "react-router-dom";
 import { Search, Wallet, Send, Headphones, Gift } from "lucide-react";
 
@@ -78,17 +78,46 @@ export default function Home({ setTab }) {
     setIsLoggedIn(true);
   };
 
+  // 点击搜索框跳转到 Markets 页面
+  const handleSearchClick = () => {
+    setTab("markets");  // 设置当前tab为Markets
+    navigate("/markets");  // 跳转到Markets页面
+  };
+
   return (
     <div className="max-w-md mx-auto bg-[#f5f7fb] pb-24 min-h-screen text-slate-900">
-      {/* 搜索栏 */}
+      {/* 搜索框 */}
       <div className="px-4 mt-4">
-        <div className="flex items-center bg-white rounded-full shadow-sm py-2 px-4">
+        <div 
+          className="flex items-center bg-white rounded-full shadow-sm py-2 px-4 cursor-pointer"
+          onClick={handleSearchClick}  // 点击搜索框跳转到Markets页面
+        >
           <Search className="w-5 h-5 text-slate-500" />
           <input
             type="text"
             className="ml-2 w-full bg-transparent border-none outline-none"
             placeholder="Search for digital assets..."
+            readOnly
           />
+        </div>
+      </div>
+
+      {/* 轮播图 */}
+      <div className="px-4 mt-3 relative">
+        <div className="rounded-xl overflow-hidden shadow-sm">
+          <img
+            src={banners[bannerIndex]}
+            alt="banner"
+            className="w-full h-24 object-cover transition-all duration-700"
+          />
+        </div>
+        <div className="flex justify-center mt-1 gap-1">
+          {banners.map((_, i) => (
+            <span
+              key={i}
+              className={`w-2 h-2 rounded-full ${i === bannerIndex ? "bg-yellow-500" : "bg-slate-300"}`}
+            ></span>
+          ))}
         </div>
       </div>
 
@@ -127,25 +156,6 @@ export default function Home({ setTab }) {
             </div>
           </>
         )}
-      </div>
-
-      {/* 轮播图 */}
-      <div className="px-4 mt-3 relative">
-        <div className="rounded-xl overflow-hidden shadow-sm">
-          <img
-            src={banners[bannerIndex]}
-            alt="banner"
-            className="w-full h-24 object-cover transition-all duration-700"
-          />
-        </div>
-        <div className="flex justify-center mt-1 gap-1">
-          {banners.map((_, i) => (
-            <span
-              key={i}
-              className={`w-2 h-2 rounded-full ${i === bannerIndex ? "bg-yellow-500" : "bg-slate-300"}`}
-            ></span>
-          ))}
-        </div>
       </div>
 
       {/* Market Data Section */}
