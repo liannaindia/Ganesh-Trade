@@ -1,9 +1,9 @@
 import React from "react";
 import { ArrowLeft } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";  // 引入 useNavigate
 
 export default function Recharge() {
-  const navigate = useNavigate();
+  const navigate = useNavigate();  // 使用 navigate 跳转
 
   const channels = [
     { name: "OKPay (三方钱包充值)", logo: "https://i.imgur.com/b5NYPsZ.png" },
@@ -18,7 +18,7 @@ export default function Recharge() {
       <div className="flex items-center gap-3 py-3">
         <ArrowLeft
           className="h-5 w-5 text-slate-700 cursor-pointer"
-          onClick={() => navigate("/")} 
+          onClick={() => navigate("/")}  // 使用 navigate 跳转回 Home 页面
         />
         <h2 className="font-semibold text-slate-800 text-lg">Recharge</h2>
       </div>
