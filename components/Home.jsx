@@ -6,7 +6,7 @@ export default function Home({ setTab }) {
   const [coins, setCoins] = useState([]);
   const [activeTab, setActiveTab] = useState("favorites");
   const [bannerIndex, setBannerIndex] = useState(0);
-  const [isLoggedIn, setIsLoggedIn] = useState(false); // 管理登录状态
+  const [isLoggedIn, setIsLoggedIn] = useState(false); // 登录状态
 
   const banners = [
     "https://public.bnbstatic.com/image/banner/binance-futures.jpg",
@@ -73,14 +73,13 @@ export default function Home({ setTab }) {
 
   const displayed = getFilteredCoins();
 
-  // 登录按钮点击
   const handleLogin = () => {
     navigate("/login"); // 跳转到登录页面
   };
 
   return (
     <div className="max-w-md mx-auto bg-[#f5f7fb] pb-24 min-h-screen text-slate-900">
-      {/* 如果用户未登录，显示登录/注册按钮 */}
+      {/* 显示登录按钮 */}
       {!isLoggedIn && (
         <div className="text-center mt-10">
           <h1 className="text-xl font-semibold mb-2">Welcome</h1>
@@ -96,10 +95,10 @@ export default function Home({ setTab }) {
         </div>
       )}
 
-      {/* 如果用户已登录，显示资产信息和市场数据 */}
+      {/* 登录后显示的内容 */}
       {isLoggedIn && (
         <>
-          {/* Banner Section */}
+          {/* Banner */}
           <div className="px-4 mt-3 relative">
             <div className="rounded-xl overflow-hidden shadow-sm">
               <img
