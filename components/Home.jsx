@@ -125,9 +125,8 @@ export default function Home({ setTab }) {
       <div className="text-center mt-10">
         {!isLoggedIn ? (
           <>
-            <h1 className="text-xl font-semibold mb-2">Welcome</h1>
             <div className="mb-4">
-              <p className="text-base text-slate-500">Welcome To Explore The World of Digital Assets.</p>
+              <p className="text-base text-slate-500">Welcome To Explore The World of Digital Ganesh.</p>
             </div>
             <button
               className="bg-yellow-400 hover:bg-yellow-500 text-sm font-medium text-slate-900 rounded-full px-4 py-1.5 transition"
