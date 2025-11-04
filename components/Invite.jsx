@@ -11,7 +11,7 @@ export default function Invite() {
       <div className="flex items-center gap-3 py-3">
         <ArrowLeft
           className="h-5 w-5 text-slate-700 cursor-pointer"
-          onClick={() => navigate(-1)}
+          onClick={() => setTab("home")}
         />
         <h2 className="font-semibold text-slate-800 text-lg">Invite</h2>
       </div>
