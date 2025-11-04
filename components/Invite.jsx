@@ -1,17 +1,14 @@
 import React from "react";
 import { ArrowLeft, Copy } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 
-export default function Invite() {
-  const navigate = useNavigate();
-
+export default function Invite({ setTab }) {
   return (
     <div className="px-4 pb-24 max-w-md mx-auto">
       {/* Header */}
       <div className="flex items-center gap-3 py-3">
         <ArrowLeft
           className="h-5 w-5 text-slate-700 cursor-pointer"
-          onClick={() => navigate("/")} 
+          onClick={() => setTab("home")}  {/* 点击箭头返回 Home 页面 */}
         />
         <h2 className="font-semibold text-slate-800 text-lg">Invite</h2>
       </div>
