@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Search, Wallet, Send, Headphones, Gift, ArrowLeft } from "lucide-react";
-import { supabase } from "./supabaseClient"; // 引入 Supabase 客户端
+import { supabase } from "../supabaseClient";
+
 
 export default function Home({ setTab }) {
   const [coins, setCoins] = useState([]);
