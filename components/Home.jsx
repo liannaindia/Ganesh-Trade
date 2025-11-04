@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";  // 引入 useNavigate
 import {
   Search,
   Wallet,
@@ -11,6 +12,8 @@ export default function Home({ setTab }) {
   const [coins, setCoins] = useState([]);
   const [activeTab, setActiveTab] = useState("favorites");
   const [bannerIndex, setBannerIndex] = useState(0);
+
+  const navigate = useNavigate();  // 使用 navigate 钩子
 
   // ===== 轮播图数组（可后台配置） =====
   const banners = [
@@ -134,7 +137,7 @@ export default function Home({ setTab }) {
           </div>
           <button
             className="bg-yellow-400 hover:bg-yellow-500 text-sm font-medium text-slate-900 rounded-full px-4 py-1.5 transition"
-            onClick={() => setTab("trade")}
+            onClick={() => navigate("/trade")} // 使用 navigate 跳转到 Trade 页面
           >
             Go Trade
           </button>
