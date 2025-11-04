@@ -12,7 +12,7 @@ const BottomNav = ({ tab, setTab }) => {
   ];
 
   return (
-    <nav className="bg-white border-t border-slate-200 shadow-none">
+    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 shadow-none">
       <div className="w-full flex justify-between px-6 py-2">
         {tabs.map((t) => (
           <button
