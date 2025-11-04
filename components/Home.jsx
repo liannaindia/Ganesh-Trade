@@ -15,9 +15,9 @@ export default function Home({ setTab }) {
   useEffect(() => {
     const timer = setInterval(
       () => setBannerIndex((prev) => (prev + 1) % banners.length),
-      4000
+      4000  // 每4秒切换一次
     );
-    return () => clearInterval(timer);
+    return () => clearInterval(timer);  // 清除定时器
   }, [banners.length]);
 
   useEffect(() => {
@@ -43,8 +43,8 @@ export default function Home({ setTab }) {
     };
 
     fetchTopCoins();
-    const timer = setInterval(fetchTopCoins, 15000);
-    return () => clearInterval(timer);
+    const timer = setInterval(fetchTopCoins, 15000);  // 每15秒刷新一次数据
+    return () => clearInterval(timer);  // 清除定时器
   }, []);
 
   const getFilteredCoins = () => {
@@ -146,6 +146,13 @@ export default function Home({ setTab }) {
           >
             <Gift className="w-5 h-5 text-indigo-500" />
             <span>Invite</span>
+          </div>
+          <div
+            onClick={() => window.open("https://t.me/ganeshsupport", "_blank")}
+            className="cursor-pointer flex flex-col items-center gap-1"
+          >
+            <Headphones className="w-5 h-5 text-green-500" />
+            <span>Support</span>
           </div>
         </div>
       </div>
