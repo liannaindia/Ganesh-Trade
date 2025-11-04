@@ -129,21 +129,21 @@ export default function Home({ setTab }) {
 
         <div className="grid grid-cols-4 mt-4 text-center text-xs text-slate-700">
           <div
-            onClick={() => navigate("/recharge")}  {/* 使用 navigate 跳转到 Recharge 页面 */}
+            onClick={() => navigate("/recharge")}  
             className="cursor-pointer flex flex-col items-center gap-1"
           >
             <Wallet className="w-5 h-5 text-yellow-500" />
             <span>Recharge</span>
           </div>
           <div
-            onClick={() => navigate("/withdraw")}  {/* 使用 navigate 跳转到 Withdraw 页面 */}
+            onClick={() => navigate("/withdraw")}  
             className="cursor-pointer flex flex-col items-center gap-1"
           >
             <Send className="w-5 h-5 text-orange-500 rotate-180" />
             <span>Withdraw</span>
           </div>
           <div
-            onClick={() => navigate("/invite")}  {/* 使用 navigate 跳转到 Invite 页面 */}
+            onClick={() => navigate("/invite")}  
             className="cursor-pointer flex flex-col items-center gap-1"
           >
             <Gift className="w-5 h-5 text-indigo-500" />
