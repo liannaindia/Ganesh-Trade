@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";  // 引入 useNavigate
 import {
   Search,
   Wallet,
@@ -12,8 +11,6 @@ export default function Home({ setTab }) {
   const [coins, setCoins] = useState([]);
   const [activeTab, setActiveTab] = useState("favorites");
   const [bannerIndex, setBannerIndex] = useState(0);
-
-  const navigate = useNavigate();  // 使用 navigate 钩子
 
   // ===== 轮播图数组（可后台配置） =====
   const banners = [
@@ -137,7 +134,7 @@ export default function Home({ setTab }) {
           </div>
           <button
             className="bg-yellow-400 hover:bg-yellow-500 text-sm font-medium text-slate-900 rounded-full px-4 py-1.5 transition"
-             onClick={() => setTab("trade")}
+            onClick={() => setTab("trade")}
           >
             Go Trade
           </button>
@@ -145,21 +142,21 @@ export default function Home({ setTab }) {
 
         <div className="grid grid-cols-4 mt-4 text-center text-xs text-slate-700">
           <div
-              onClick={() => navigate("/recharge")}  
+            onClick={() => setTab("recharge")}
             className="cursor-pointer flex flex-col items-center gap-1"
           >
             <Wallet className="w-5 h-5 text-yellow-500" />
             <span>Recharge</span>
           </div>
           <div
-             onClick={() => navigate("/withdraw")}  
+            onClick={() => setTab("withdraw")}
             className="cursor-pointer flex flex-col items-center gap-1"
           >
             <Send className="w-5 h-5 text-orange-500 rotate-180" />
             <span>Withdraw</span>
           </div>
           <div
-             onClick={() => navigate("/invite")}  
+            onClick={() => setTab("invite")}
             className="cursor-pointer flex flex-col items-center gap-1"
           >
             <Gift className="w-5 h-5 text-indigo-500" />
