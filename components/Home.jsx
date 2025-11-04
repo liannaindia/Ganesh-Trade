@@ -80,7 +80,19 @@ export default function Home({ setTab }) {
 
   return (
     <div className="max-w-md mx-auto bg-[#f5f7fb] pb-24 min-h-screen text-slate-900">
-      {/* 显示登录按钮 */}
+      {/* 搜索栏 */}
+      <div className="px-4 mt-4">
+        <div className="flex items-center bg-white rounded-full shadow-sm py-2 px-4">
+          <Search className="w-5 h-5 text-slate-500" />
+          <input
+            type="text"
+            className="ml-2 w-full bg-transparent border-none outline-none"
+            placeholder="Search for digital assets..."
+          />
+        </div>
+      </div>
+
+      {/* 显示登录按钮或资产信息模块 */}
       <div className="text-center mt-10">
         {!isLoggedIn ? (
           <>
@@ -117,7 +129,7 @@ export default function Home({ setTab }) {
         )}
       </div>
 
-      {/* 显示其他内容，始终显示 */}
+      {/* 轮播图 */}
       <div className="px-4 mt-3 relative">
         <div className="rounded-xl overflow-hidden shadow-sm">
           <img
