@@ -7,7 +7,7 @@ import MePage from "./components/Me.jsx";
 import RechargePage from "./components/Recharge.jsx";
 import WithdrawPage from "./components/Withdraw.jsx";
 import InvitePage from "./components/Invite.jsx";
-import BottomNav from "./BottomNav";  // 引入底部导航栏
+import BottomNav from "./components/BottomNav";  // 引入底部导航栏
 
 export default function App() {
   const [tab, setTab] = useState("home");
@@ -37,10 +37,10 @@ export default function App() {
   return (
     <div className="min-h-screen bg-slate-100 text-slate-900">
       {/* 页面内容 */}
-      <div className="max-w-md mx-auto pb-20">{renderPage()}</div>
-
-      {/* 在每个页面中嵌入底部导航栏，并限制宽度 */}
-      <div className="max-w-md mx-auto w-full">
+      <div className="max-w-md mx-auto bg-[#f5f7fb] pb-24 min-h-screen text-slate-900">
+        {renderPage()}
+        
+        {/* 底部导航栏嵌入到页面内容中 */}
         <BottomNav tab={tab} setTab={setTab} />
       </div>
     </div>
