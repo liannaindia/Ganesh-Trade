@@ -11,7 +11,6 @@ export default function Home({ setTab }) {
   const [user, setUser] = useState(null);  // 存储用户信息
   const navigate = useNavigate();
 
-  // 轮播图
   const banners = [
     "https://public.bnbstatic.com/image/banner/binance-futures.jpg",
     "https://public.bnbstatic.com/image/banner/spk-fixed-term.jpg",
@@ -20,11 +19,15 @@ export default function Home({ setTab }) {
 
   // 检查用户是否登录
   useEffect(() => {
-    const session = supabase.auth.session();
-    if (session) {
-      setIsLoggedIn(true);
-      setUser(session.user);
-    }
+    const fetchSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        setIsLoggedIn(true);
+        setUser(session.user);
+      }
+    };
+
+    fetchSession();
   }, []);
 
   useEffect(() => {
@@ -87,6 +90,7 @@ export default function Home({ setTab }) {
 
   return (
     <div className="max-w-md mx-auto bg-[#f5f7fb] pb-24 min-h-screen text-slate-900">
+      {/* 搜索框 */}
       <div className="px-4 mt-4">
         <div
           className="flex items-center bg-white rounded-full shadow-sm py-2 px-4 cursor-pointer"
@@ -102,6 +106,7 @@ export default function Home({ setTab }) {
         </div>
       </div>
 
+      {/* 轮播图 */}
       <div className="px-4 mt-3 relative">
         <div className="rounded-xl overflow-hidden shadow-sm">
           <img
@@ -120,6 +125,7 @@ export default function Home({ setTab }) {
         </div>
       </div>
 
+      {/* 显示登录按钮或资产信息模块 */}
       <div className="text-center mt-1">
         {!isLoggedIn ? (
           <>
@@ -154,8 +160,77 @@ export default function Home({ setTab }) {
         )}
       </div>
 
+      {/* Market Data Section */}
       <div className="bg-white rounded-2xl shadow-sm mx-4 mt-3 p-4 border border-slate-100">
-        {/* Market Data Section */}
+        <div className="grid grid-cols-4 mt-4 text-center text-xs text-slate-700">
+          <div
+            onClick={() => setTab("recharge")}
+            className="cursor-pointer flex flex-col items-center gap-1"
+          >
+            <Wallet className="w-5 h-5 text-yellow-500" />
+            <span>Recharge</span>
+          </div>
+          <div
+            onClick={() => setTab("withdraw")}
+            className="cursor-pointer flex flex-col items-center gap-1"
+          >
+            <Send className="w-5 h-5 text-orange-500 rotate-180" />
+            <span>Withdraw</span>
+          </div>
+          <div
+            onClick={() => setTab("invite")}
+            className="cursor-pointer flex flex-col items-center gap-1"
+          >
+            <Gift className="w-5 h-5 text-indigo-500" />
+            <span>Invite</span>
+          </div>
+          <div
+            onClick={() => window.open("https://t.me/ganeshsupport", "_blank")}
+            className="cursor-pointer flex flex-col items-center gap-1"
+          >
+            <Headphones className="w-5 h-5 text-green-500" />
+            <span>Support</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Market Data Filter Section */}
+      <div className="bg-white rounded-2xl mx-4 mt-4 border border-slate-100 shadow-sm">
+        <div className="flex text-sm border-b border-slate-100">
+          {[{ id: "favorites", label: "Favorites" }, { id: "hot", label: "Hot" }, { id: "gainers", label: "Gainers" }, { id: "losers", label: "Losers" }].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex-1 py-2 text-center font-medium ${activeTab === tab.id ? "text-yellow-600 border-b-2 border-yellow-400" : "text-slate-500"}`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="p-3">
+          <div className="flex justify-between text-xs text-slate-400 mb-2">
+            <span>Name</span>
+            <span>Last Price</span>
+            <span>24chg%</span>
+          </div>
+
+          <div className="divide-y divide-slate-100">
+            {displayed.length === 0 ? (
+              <div className="text-center py-4 text-slate-400 text-sm">Loading market data...</div>
+            ) : (
+              displayed.map((c, i) => (
+                <div key={i} className="flex justify-between items-center py-2 text-sm">
+                  <span className="font-medium text-slate-800">{c.symbol}</span>
+                  <span className="text-slate-700">{c.price}</span>
+                  <span className={`font-semibold ${c.change >= 0 ? "text-emerald-600" : "text-rose-600"}`}>
+                    {c.change}%
+                  </span>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
