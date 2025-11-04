@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Search,
   Wallet,
@@ -10,16 +10,13 @@ import {
 export default function Home({ setTab }) {
   const [coins, setCoins] = useState([]);
   const [activeTab, setActiveTab] = useState("favorites");
-  const [bannerIndex, setBannerIndex] = useState(0);
 
-  // ===== 轮播图数组（可后台配置） =====
   const banners = [
     "https://public.bnbstatic.com/image/banner/binance-futures.jpg",
     "https://public.bnbstatic.com/image/banner/spk-fixed-term.jpg",
     "https://public.bnbstatic.com/image/banner/binance-earn.jpg",
   ];
 
-  // ===== 自动轮播逻辑 =====
   useEffect(() => {
     const timer = setInterval(
       () => setBannerIndex((prev) => (prev + 1) % banners.length),
@@ -28,13 +25,11 @@ export default function Home({ setTab }) {
     return () => clearInterval(timer);
   }, []);
 
-  // ===== 获取币安实时数据 =====
   useEffect(() => {
     const fetchTopCoins = async () => {
       try {
         const res = await fetch("https://api.binance.com/api/v3/ticker/24hr");
         const data = await res.json();
-
         const all = data
           .filter((i) => i.symbol.endsWith("USDT"))
           .sort((a, b) => parseFloat(b.quoteVolume) - parseFloat(a.quoteVolume))
@@ -44,7 +39,6 @@ export default function Home({ setTab }) {
             price: parseFloat(i.lastPrice).toFixed(2),
             change: parseFloat(i.priceChangePercent).toFixed(2),
           }));
-
         setCoins(all);
       } catch (e) {
         console.error("Binance API Error:", e);
@@ -56,7 +50,6 @@ export default function Home({ setTab }) {
     return () => clearInterval(timer);
   }, []);
 
-  // ===== 标签过滤逻辑 =====
   const getFilteredCoins = () => {
     switch (activeTab) {
       case "favorites":
@@ -85,11 +78,9 @@ export default function Home({ setTab }) {
 
   return (
     <div className="max-w-md mx-auto bg-[#f5f7fb] pb-24 min-h-screen text-slate-900">
-      {/* ===== 顶部欢迎与搜索 ===== */}
+      {/* 顶部欢迎与搜索 */}
       <div className="px-4 pt-3">
         <h1 className="text-base font-semibold text-center mb-2">Welcome</h1>
-
-        {/* ✅ 修改后的搜索栏 */}
         <div
           onClick={() => setTab("markets")}
           className="flex items-center gap-2 bg-white rounded-full border border-slate-200 shadow-sm px-3 py-2 cursor-pointer"
@@ -101,7 +92,7 @@ export default function Home({ setTab }) {
         </div>
       </div>
 
-      {/* ===== 顶部 Banner ===== */}
+      {/* 顶部 Banner */}
       <div className="px-4 mt-3 relative">
         <div className="rounded-xl overflow-hidden shadow-sm">
           <img
@@ -122,7 +113,7 @@ export default function Home({ setTab }) {
         </div>
       </div>
 
-      {/* ===== 资产卡片 ===== */}
+      {/* 资产卡片 */}
       <div className="bg-white rounded-2xl shadow-sm mx-4 mt-3 p-4 border border-slate-100">
         <div className="flex justify-between items-center">
           <div>
@@ -142,21 +133,21 @@ export default function Home({ setTab }) {
 
         <div className="grid grid-cols-4 mt-4 text-center text-xs text-slate-700">
           <div
-            onClick={() => setTab("recharge")}  
+            onClick={() => setTab("recharge")}
             className="cursor-pointer flex flex-col items-center gap-1"
           >
             <Wallet className="w-5 h-5 text-yellow-500" />
             <span>Recharge</span>
           </div>
           <div
-            onClick={() => setTab("withdraw")} 
+            onClick={() => setTab("withdraw")}
             className="cursor-pointer flex flex-col items-center gap-1"
           >
             <Send className="w-5 h-5 text-orange-500 rotate-180" />
             <span>Withdraw</span>
           </div>
           <div
-            onClick={() => setTab("invite")} 
+            onClick={() => setTab("invite")}
             className="cursor-pointer flex flex-col items-center gap-1"
           >
             <Gift className="w-5 h-5 text-indigo-500" />
@@ -165,7 +156,7 @@ export default function Home({ setTab }) {
         </div>
       </div>
 
-      {/* ===== 市场行情 ===== */}
+      {/* 市场行情 */}
       <div className="bg-white rounded-2xl mx-4 mt-4 border border-slate-100 shadow-sm">
         <div className="flex text-sm border-b border-slate-100">
           {[
