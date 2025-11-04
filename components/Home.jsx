@@ -16,9 +16,9 @@ export default function Home({ setTab }) {
 
   const navigate = useNavigate();
 
-  // 假设通过localStorage检查登录状态
+  // 检查用户是否登录（这里假设通过localStorage模拟登录状态）
   useEffect(() => {
-    const user = localStorage.getItem("user"); // 这里使用localStorage模拟检查
+    const user = localStorage.getItem("user"); // 检查localStorage中的用户信息
     if (user) {
       setIsLoggedIn(true);
     } else {
