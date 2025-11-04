@@ -137,7 +137,7 @@ export default function Home({ setTab }) {
           </div>
           <button
             className="bg-yellow-400 hover:bg-yellow-500 text-sm font-medium text-slate-900 rounded-full px-4 py-1.5 transition"
-            onClick={() => navigate("/trade")} // 使用 navigate 跳转到 Trade 页面
+             onClick={() => setTab("trade")}
           >
             Go Trade
           </button>
