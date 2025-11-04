@@ -39,8 +39,10 @@ export default function App() {
       {/* 页面内容 */}
       <div className="max-w-md mx-auto pb-20">{renderPage()}</div>
 
-      {/* 在每个页面中嵌入底部导航栏 */}
-      <BottomNav tab={tab} setTab={setTab} />
+      {/* 在每个页面中嵌入底部导航栏，并限制宽度 */}
+      <div className="max-w-md mx-auto w-full">
+        <BottomNav tab={tab} setTab={setTab} />
+      </div>
     </div>
   );
 }
