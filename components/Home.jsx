@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { Search, Wallet, Send, Headphones, Gift } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Search } from "lucide-react";
 
-export default function Home({ setTab }) {
+export default function Home() {
   const [coins, setCoins] = useState([]);
   const [activeTab, setActiveTab] = useState("favorites");
   const [bannerIndex, setBannerIndex] = useState(0);
@@ -12,12 +13,11 @@ export default function Home({ setTab }) {
     "https://public.bnbstatic.com/image/banner/binance-earn.jpg",
   ];
 
+  const navigate = useNavigate();
+
   useEffect(() => {
-    const timer = setInterval(
-      () => setBannerIndex((prev) => (prev + 1) % banners.length),
-      4000  // 每4秒切换一次
-    );
-    return () => clearInterval(timer);  // 清除定时器
+    const timer = setInterval(() => setBannerIndex((prev) => (prev + 1) % banners.length), 4000);
+    return () => clearInterval(timer);
   }, [banners.length]);
 
   useEffect(() => {
@@ -25,7 +25,6 @@ export default function Home({ setTab }) {
       try {
         const res = await fetch("https://api.binance.com/api/v3/ticker/24hr");
         const data = await res.json();
-
         const all = data
           .filter((i) => i.symbol.endsWith("USDT"))
           .sort((a, b) => parseFloat(b.quoteVolume) - parseFloat(a.quoteVolume))
@@ -35,7 +34,6 @@ export default function Home({ setTab }) {
             price: parseFloat(i.lastPrice).toFixed(2),
             change: parseFloat(i.priceChangePercent).toFixed(2),
           }));
-
         setCoins(all);
       } catch (e) {
         console.error("Binance API Error:", e);
@@ -43,8 +41,8 @@ export default function Home({ setTab }) {
     };
 
     fetchTopCoins();
-    const timer = setInterval(fetchTopCoins, 15000);  // 每15秒刷新一次数据
-    return () => clearInterval(timer);  // 清除定时器
+    const timer = setInterval(fetchTopCoins, 15000);
+    return () => clearInterval(timer);
   }, []);
 
   const getFilteredCoins = () => {
@@ -52,20 +50,11 @@ export default function Home({ setTab }) {
       case "favorites":
         return coins.slice(0, 10);
       case "hot":
-        return coins
-          .slice()
-          .sort((a, b) => b.price - a.price)
-          .slice(0, 10);
+        return coins.slice().sort((a, b) => b.price - a.price).slice(0, 10);
       case "gainers":
-        return coins
-          .slice()
-          .sort((a, b) => b.change - a.change)
-          .slice(0, 10);
+        return coins.slice().sort((a, b) => b.change - a.change).slice(0, 10);
       case "losers":
-        return coins
-          .slice()
-          .sort((a, b) => a.change - b.change)
-          .slice(0, 10);
+        return coins.slice().sort((a, b) => a.change - b.change).slice(0, 10);
       default:
         return coins.slice(0, 10);
     }
@@ -75,19 +64,21 @@ export default function Home({ setTab }) {
 
   return (
     <div className="max-w-md mx-auto bg-[#f5f7fb] pb-24 min-h-screen text-slate-900">
-      <div className="px-4 pt-3">
-        <h1 className="text-base font-semibold text-center mb-2">Welcome</h1>
-        <div
-          onClick={() => setTab("markets")}
-          className="flex items-center gap-2 bg-white rounded-full border border-slate-200 shadow-sm px-3 py-2 cursor-pointer"
-        >
-          <Search className="w-4 h-4 text-slate-400" />
-          <span className="text-sm text-slate-400 select-none">
-            Enter the trading product name
-          </span>
+      {/* Login/Register Section */}
+      <div className="text-center mt-10">
+        <h1 className="text-xl font-semibold mb-2">Welcome</h1>
+        <div className="mb-4">
+          <p className="text-base text-slate-500">Welcome To Explore The World of Digital Assets.</p>
         </div>
+        <button
+          className="bg-yellow-400 hover:bg-yellow-500 text-sm font-medium text-slate-900 rounded-full px-4 py-1.5 transition"
+          onClick={() => navigate("/login")}
+        >
+          Login / Register
+        </button>
       </div>
 
+      {/* Banner Section */}
       <div className="px-4 mt-3 relative">
         <div className="rounded-xl overflow-hidden shadow-sm">
           <img
@@ -108,18 +99,17 @@ export default function Home({ setTab }) {
         </div>
       </div>
 
+      {/* Market Data Section */}
       <div className="bg-white rounded-2xl shadow-sm mx-4 mt-3 p-4 border border-slate-100">
         <div className="flex justify-between items-center">
           <div>
             <div className="text-xs text-slate-500">Total Assets (USDT)</div>
-            <div className="text-2xl font-bold mt-1">9900.06</div>
-            <div className="text-xs text-slate-500 mt-1">
-              Pnl Today 0.00 / 0%
-            </div>
+            {/* Removed User's Asset Display */}
+            <div className="text-xs text-slate-500 mt-1">Pnl Today 0.00 / 0%</div>
           </div>
           <button
             className="bg-yellow-400 hover:bg-yellow-500 text-sm font-medium text-slate-900 rounded-full px-4 py-1.5 transition"
-            onClick={() => setTab("trade")}
+            onClick={() => navigate("/trade")}
           >
             Go Trade
           </button>
@@ -127,28 +117,30 @@ export default function Home({ setTab }) {
 
         <div className="grid grid-cols-4 mt-4 text-center text-xs text-slate-700">
           <div
-            onClick={() => setTab("recharge")}
+            onClick={() => navigate("/recharge")}
             className="cursor-pointer flex flex-col items-center gap-1"
           >
             <Wallet className="w-5 h-5 text-yellow-500" />
             <span>Recharge</span>
           </div>
           <div
-            onClick={() => setTab("withdraw")}
+            onClick={() => navigate("/withdraw")}
             className="cursor-pointer flex flex-col items-center gap-1"
           >
             <Send className="w-5 h-5 text-orange-500 rotate-180" />
             <span>Withdraw</span>
           </div>
           <div
-            onClick={() => setTab("invite")}
+            onClick={() => navigate("/invite")}
             className="cursor-pointer flex flex-col items-center gap-1"
           >
             <Gift className="w-5 h-5 text-indigo-500" />
             <span>Invite</span>
           </div>
           <div
-            onClick={() => window.open("https://t.me/ganeshsupport", "_blank")}
+            onClick={() =>
+              window.open("https://t.me/ganeshsupport", "_blank")
+            }
             className="cursor-pointer flex flex-col items-center gap-1"
           >
             <Headphones className="w-5 h-5 text-green-500" />
@@ -157,6 +149,7 @@ export default function Home({ setTab }) {
         </div>
       </div>
 
+      {/* Market Data Filter Section */}
       <div className="bg-white rounded-2xl mx-4 mt-4 border border-slate-100 shadow-sm">
         <div className="flex text-sm border-b border-slate-100">
           {[
@@ -193,13 +186,8 @@ export default function Home({ setTab }) {
               </div>
             ) : (
               displayed.map((c, i) => (
-                <div
-                  key={i}
-                  className="flex justify-between items-center py-2 text-sm"
-                >
-                  <span className="font-medium text-slate-800">
-                    {c.symbol}
-                  </span>
+                <div key={i} className="flex justify-between items-center py-2 text-sm">
+                  <span className="font-medium text-slate-800">{c.symbol}</span>
                   <span className="text-slate-700">{c.price}</span>
                   <span
                     className={`font-semibold ${
