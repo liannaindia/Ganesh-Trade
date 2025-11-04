@@ -24,11 +24,11 @@ export default function App() {
       case "me":
         return <MePage setTab={setTab} />;
       case "recharge":
-        return <RechargePage setTab={setTab} />;
+        return <RechargePage />; 
       case "withdraw":
-        return <WithdrawPage setTab={setTab} />;
+        return <WithdrawPage  />;
       case "invite":
-        return <InvitePage setTab={setTab} />;
+        return <InvitePage />;
       default:
         return <HomePage setTab={setTab} />;
     }
