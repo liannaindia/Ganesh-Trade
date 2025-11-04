@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react"; 
 import { useNavigate } from "react-router-dom";
 import { Search, Wallet, Send, Headphones, Gift } from "lucide-react";
 
@@ -80,7 +80,7 @@ export default function Home({ setTab }) {
   return (
     <div className="max-w-md mx-auto bg-[#f5f7fb] pb-24 min-h-screen text-slate-900">
       {/* 显示登录按钮 */}
-      {!isLoggedIn && (
+      {!isLoggedIn ? (
         <div className="text-center mt-10">
           <h1 className="text-xl font-semibold mb-2">Welcome</h1>
           <div className="mb-4">
@@ -93,10 +93,7 @@ export default function Home({ setTab }) {
             Login / Register
           </button>
         </div>
-      )}
-
-      {/* 登录后显示的内容 */}
-      {isLoggedIn && (
+      ) : (
         <>
           {/* Banner */}
           <div className="px-4 mt-3 relative">
@@ -168,20 +165,11 @@ export default function Home({ setTab }) {
           {/* Market Data Filter Section */}
           <div className="bg-white rounded-2xl mx-4 mt-4 border border-slate-100 shadow-sm">
             <div className="flex text-sm border-b border-slate-100">
-              {[
-                { id: "favorites", label: "Favorites" },
-                { id: "hot", label: "Hot" },
-                { id: "gainers", label: "Gainers" },
-                { id: "losers", label: "Losers" },
-              ].map((tab) => (
+              {[{ id: "favorites", label: "Favorites" }, { id: "hot", label: "Hot" }, { id: "gainers", label: "Gainers" }, { id: "losers", label: "Losers" }].map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex-1 py-2 text-center font-medium ${
-                    activeTab === tab.id
-                      ? "text-yellow-600 border-b-2 border-yellow-400"
-                      : "text-slate-500"
-                  }`}
+                  className={`flex-1 py-2 text-center font-medium ${activeTab === tab.id ? "text-yellow-600 border-b-2 border-yellow-400" : "text-slate-500"}`}
                 >
                   {tab.label}
                 </button>
@@ -203,11 +191,7 @@ export default function Home({ setTab }) {
                     <div key={i} className="flex justify-between items-center py-2 text-sm">
                       <span className="font-medium text-slate-800">{c.symbol}</span>
                       <span className="text-slate-700">{c.price}</span>
-                      <span
-                        className={`font-semibold ${
-                          c.change >= 0 ? "text-emerald-600" : "text-rose-600"
-                        }`}
-                      >
+                      <span className={`font-semibold ${c.change >= 0 ? "text-emerald-600" : "text-rose-600"}`}>
                         {c.change}%
                       </span>
                     </div>
