@@ -55,8 +55,8 @@ export default function App() {
       <div className="max-w-md mx-auto pb-20">{renderPage()}</div>
 
       {/* 底部导航栏 */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 shadow-sm">
-        <div className="w-full flex justify-between px-4 py-2">
+      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 shadow-none">
+        <div className="w-full flex justify-between px-6 py-2">
           {tabs.map((t) => (
             <button
               key={t.id}
