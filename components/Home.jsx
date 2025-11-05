@@ -3,6 +3,87 @@ import { supabase } from "../supabaseClient"; // 引入supabase客户端
 import { useNavigate } from "react-router-dom";
 import { Search, Wallet, Send, Headphones, Gift } from "lucide-react"; // 引入需要的图标
 
+// 单独封装 Banner 组件
+const Banner = ({ banners, bannerIndex }) => (
+  <div className="px-4 mt-3 relative">
+    <div className="rounded-xl overflow-hidden shadow-sm">
+      <img
+        src={banners[bannerIndex]}
+        alt="banner"
+        className="w-full h-24 object-cover transition-all duration-700"
+      />
+    </div>
+    <div className="flex justify-center mt-1 gap-1">
+      {banners.map((_, i) => (
+        <span
+          key={i}
+          className={`w-2 h-2 rounded-full ${i === bannerIndex ? "bg-yellow-500" : "bg-slate-300"}`}
+        ></span>
+      ))}
+    </div>
+  </div>
+);
+
+const MarketDataSection = ({ setTab }) => (
+  <div className="bg-white rounded-2xl shadow-sm mx-4 mt-3 p-4 border border-slate-100">
+    <div className="grid grid-cols-4 mt-4 text-center text-xs text-slate-700">
+      <div onClick={() => setTab("recharge")} className="cursor-pointer flex flex-col items-center gap-1">
+        <Wallet className="w-5 h-5 text-yellow-500" />
+        <span>Recharge</span>
+      </div>
+      <div onClick={() => setTab("withdraw")} className="cursor-pointer flex flex-col items-center gap-1">
+        <Send className="w-5 h-5 text-orange-500 rotate-180" />
+        <span>Withdraw</span>
+      </div>
+      <div onClick={() => setTab("invite")} className="cursor-pointer flex flex-col items-center gap-1">
+        <Gift className="w-5 h-5 text-indigo-500" />
+        <span>Invite</span>
+      </div>
+      <div onClick={() => window.open("https://t.me/ganeshsupport", "_blank")} className="cursor-pointer flex flex-col items-center gap-1">
+        <Headphones className="w-5 h-5 text-green-500" />
+        <span>Support</span>
+      </div>
+    </div>
+  </div>
+);
+
+// 余额部分单独封装
+const BalanceSection = ({ isLoggedIn, balance, handleLoginRedirect }) => (
+  <div className="text-center mt-1">
+    {!isLoggedIn ? (
+      <>
+        <div className="mb-4">
+          <p className="text-base text-slate-500">Welcome To Explore The World of Digital Ganesh.</p>
+        </div>
+        <button
+          className="bg-yellow-400 hover:bg-yellow-500 text-sm font-medium text-slate-900 rounded-full px-4 py-1.5 transition"
+          onClick={handleLoginRedirect}
+        >
+          Login / Register
+        </button>
+      </>
+    ) : (
+      <>
+        <div className="bg-white rounded-2xl shadow-sm mx-4 mt-3 p-4 border border-slate-100">
+          <div className="flex justify-between items-center">
+            <div>
+              <div className="text-xs text-slate-500">Total Assets (USDT)</div>
+              <div className="text-2xl font-bold mt-1">{balance.toFixed(2)}</div> {/* 显示余额 */}
+              <div className="text-xs text-slate-500 mt-1">Pnl Today 0.00 / 0%</div>
+            </div>
+            <button
+              className="bg-yellow-400 hover:bg-yellow-500 text-sm font-medium text-slate-900 rounded-full px-4 py-1.5 transition"
+              onClick={() => setTab("trade")}
+            >
+              Go Trade
+            </button>
+          </div>
+        </div>
+      </>
+    )}
+  </div>
+);
+
 export default function Home({ setTab }) {
   const [coins, setCoins] = useState([]);
   const [activeTab, setActiveTab] = useState("favorites");
@@ -20,83 +101,41 @@ export default function Home({ setTab }) {
 
   // 检查用户是否登录并获取用户的资产信息
   useEffect(() => {
-    let subscription = null; // 初始化订阅
+    const fetchSession = async () => {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error) {
+        console.error("Error fetching session:", error);
+        return;
+      }
 
-    // 监听认证状态变化（替换 getSession）
-    const handleAuthStateChange = async (event, session) => {
-      console.log("Auth event:", event, "Session:", session); // 调试日志
-      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') { // 捕获登录或刷新
-        if (session?.user?.id) {
-          console.log("Session User ID:", session.user.id);
-          setIsLoggedIn(true);
-          setUser(session.user);
+      if (session) {
+        setIsLoggedIn(true);
+        setUser(session.user);
 
-          // 获取用户的资产（余额）
-          const { data: userData, error: balanceError } = await supabase
-            .from("users")
-            .select("balance")
-            .eq("id", session.user.id)
-            .maybeSingle();
-          if (balanceError) {
-            console.error("Error fetching user balance:", balanceError);
-          } else if (userData) {
-            setBalance(userData.balance || 0);
-          } else {
-            console.warn("No balance data found for this user");
-            // 可选：如果无记录，插入默认余额
-            // await supabase.from("users").upsert({ id: session.user.id, balance: 0 });
-          }
-
-          // 实时订阅：监听余额变化
-          subscription = supabase
-            .channel("user-balance-updates")
-            .on(
-              "postgres_changes",
-              {
-                event: "UPDATE",
-                schema: "public",
-                table: "users",
-                filter: `id=eq.${session.user.id}`,
-              },
-              (payload) => {
-                console.log("Balance updated:", payload.new.balance);
-                setBalance(payload.new.balance);
-              }
-            )
-            .subscribe();
-        }
-      } else if (event === 'SIGNED_OUT') {
-        setIsLoggedIn(false);
-        setUser(null);
-        setBalance(0);
-        if (subscription) {
-          supabase.removeChannel(subscription);
-          subscription = null;
+        // 获取用户的资产（余额）
+        const { data, error: balanceError } = await supabase
+          .from("users")
+          .select("balance")
+          .eq("id", session.user.id)  // 使用正确的用户 ID
+          .maybeSingle(); // 只返回一个用户数据
+        if (balanceError) {
+          console.error("Error fetching user balance:", balanceError);
+        } else {
+          setBalance(data?.balance || 0);
         }
       }
     };
 
-    // 订阅 auth 变化
-    const authSubscription = supabase.auth.onAuthStateChange(handleAuthStateChange);
+    fetchSession();
+  }, []);
 
-    // 初次检查（fallback）
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) handleAuthStateChange('INITIAL_SESSION', session);
-    });
-
-    // 清理
-    return () => {
-      authSubscription.data.subscription.unsubscribe();
-      if (subscription) supabase.removeChannel(subscription);
-    };
-  }, []); // 空依赖数组，确保只执行一次
-
-  // 获取市场数据
+  // 设置轮播图自动切换
   useEffect(() => {
     const timer = setInterval(() => setBannerIndex((prev) => (prev + 1) % banners.length), 4000);
     return () => clearInterval(timer);
   }, [banners.length]);
 
+  // 获取市场数据
   useEffect(() => {
     const fetchTopCoins = async () => {
       try {
@@ -150,7 +189,6 @@ export default function Home({ setTab }) {
 
   return (
     <div className="max-w-md mx-auto bg-[#f5f7fb] pb-24 min-h-screen text-slate-900">
-      {/* 搜索框 */}
       <div className="px-4 mt-4">
         <div
           className="flex items-center bg-white rounded-full shadow-sm py-2 px-4 cursor-pointer"
@@ -167,92 +205,17 @@ export default function Home({ setTab }) {
       </div>
 
       {/* 轮播图 */}
-      <div className="px-4 mt-3 relative">
-        <div className="rounded-xl overflow-hidden shadow-sm">
-          <img
-            src={banners[bannerIndex]}
-            alt="banner"
-            className="w-full h-24 object-cover transition-all duration-700"
-          />
-        </div>
-        <div className="flex justify-center mt-1 gap-1">
-          {banners.map((_, i) => (
-            <span
-              key={i}
-              className={`w-2 h-2 rounded-full ${i === bannerIndex ? "bg-yellow-500" : "bg-slate-300"}`}
-            ></span>
-          ))}
-        </div>
-      </div>
+      <Banner banners={banners} bannerIndex={bannerIndex} />
 
       {/* 显示登录按钮或资产信息模块 */}
-      <div className="text-center mt-1">
-        {!isLoggedIn ? (
-          <>
-            <div className="mb-4">
-              <p className="text-base text-slate-500">Welcome To Explore The World of Digital Ganesh.</p>
-            </div>
-            <button
-              className="bg-yellow-400 hover:bg-yellow-500 text-sm font-medium text-slate-900 rounded-full px-4 py-1.5 transition"
-              onClick={handleLoginRedirect}
-            >
-              Login / Register
-            </button>
-          </>
-        ) : (
-          <>
-            <div className="bg-white rounded-2xl shadow-sm mx-4 mt-3 p-4 border border-slate-100">
-              <div className="flex justify-between items-center">
-                <div>
-                  <div className="text-xs text-slate-500">Total Assets (USDT)</div>
-                  <div className="text-2xl font-bold mt-1">{balance.toFixed(2)}</div> {/* 显示余额 */}
-                  <div className="text-xs text-slate-500 mt-1">Pnl Today 0.00 / 0%</div>
-                </div>
-                <button
-                  className="bg-yellow-400 hover:bg-yellow-500 text-sm font-medium text-slate-900 rounded-full px-4 py-1.5 transition"
-                  onClick={() => setTab("trade")}
-                >
-                  Go Trade
-                </button>
-              </div>
-            </div>
-          </>
-        )}
-      </div>
+      <BalanceSection
+        isLoggedIn={isLoggedIn}
+        balance={balance}
+        handleLoginRedirect={handleLoginRedirect}
+      />
 
       {/* Market Data Section */}
-      <div className="bg-white rounded-2xl shadow-sm mx-4 mt-3 p-4 border border-slate-100">
-        <div className="grid grid-cols-4 mt-4 text-center text-xs text-slate-700">
-          <div
-            onClick={() => setTab("recharge")}
-            className="cursor-pointer flex flex-col items-center gap-1"
-          >
-            <Wallet className="w-5 h-5 text-yellow-500" />
-            <span>Recharge</span>
-          </div>
-          <div
-            onClick={() => setTab("withdraw")}
-            className="cursor-pointer flex flex-col items-center gap-1"
-          >
-            <Send className="w-5 h-5 text-orange-500 rotate-180" />
-            <span>Withdraw</span>
-          </div>
-          <div
-            onClick={() => setTab("invite")}
-            className="cursor-pointer flex flex-col items-center gap-1"
-          >
-            <Gift className="w-5 h-5 text-indigo-500" />
-            <span>Invite</span>
-          </div>
-          <div
-            onClick={() => window.open("https://t.me/ganeshsupport", "_blank")}
-            className="cursor-pointer flex flex-col items-center gap-1"
-          >
-            <Headphones className="w-5 h-5 text-green-500" />
-            <span>Support</span>
-          </div>
-        </div>
-      </div>
+      <MarketDataSection setTab={setTab} />
 
       {/* Market Data Filter Section */}
       <div className="bg-white rounded-2xl mx-4 mt-4 border border-slate-100 shadow-sm">
