@@ -2,14 +2,13 @@ import React, { useState } from "react";
 import { supabase } from "../supabaseClient"; // 引入supabase客户端
 import { ArrowLeft } from "lucide-react"; // 引入返回箭头组件
 
-export default function Login({ setTab }) {
+export default function Login({ setTab, setIsLoggedIn }) {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
   const handleLogin = async () => {
     try {
-      // 查询 `users` 表，获取用户的记录
       const { data, error: queryError } = await supabase
         .from('users')
         .select('password_hash')
@@ -23,8 +22,12 @@ export default function Login({ setTab }) {
 
       // 在这里直接比对密码
       if (password === data.password_hash) {
-        // 登录成功
-        setTab("home"); // 登录成功后跳转到主页
+        // 登录成功，将手机号码存储到 localStorage
+        localStorage.setItem('phone_number', phoneNumber);
+
+        // 登录成功后，设置登录状态
+        setIsLoggedIn(true);
+        setTab("home"); // 跳转到主页
       } else {
         setError("Incorrect password");
       }
