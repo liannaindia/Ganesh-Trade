@@ -101,6 +101,8 @@ export default function Home({ setTab, isLoggedIn: propIsLoggedIn }) { // 新增
 
   // 检查用户是否登录并获取用户的资产信息（优先 prop，fallback localStorage）
   useEffect(() => {
+    let realtimeSubscription = null; // 新增：实时订阅引用
+
     const fetchSession = async () => {
       const phoneNumber = localStorage.getItem('phone_number'); // 从 localStorage 获取手机号码
 
@@ -119,10 +121,37 @@ export default function Home({ setTab, isLoggedIn: propIsLoggedIn }) { // 新增
         } else {
           setLocalBalance(data?.balance || 0);
         }
+
+        // 新增：实时订阅余额变化（基于 phone_number）
+        realtimeSubscription = supabase
+          .channel('user-balance-updates') // channel 名（任意，但唯一）
+          .on(
+            'postgres_changes',
+            {
+              event: 'UPDATE', // 只监听更新事件
+              schema: 'public',
+              table: 'users',
+              filter: `phone_number=eq.${phoneNumber}`, // 过滤当前用户
+            },
+            (payload) => {
+              console.log('Balance updated via Realtime:', payload.new.balance); // 调试日志
+              setLocalBalance(payload.new.balance || 0); // 自动更新余额
+            }
+          )
+          .subscribe((status) => {
+            console.log('Realtime subscription status:', status); // 调试：确认订阅成功
+          });
       }
     };
 
     fetchSession();
+
+    // 清理订阅
+    return () => {
+      if (realtimeSubscription) {
+        supabase.removeChannel(realtimeSubscription);
+      }
+    };
   }, []); // 空数组依赖，确保只运行一次
 
   // Banner自动切换
