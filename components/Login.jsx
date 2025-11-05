@@ -35,40 +35,52 @@ export default function Login({ setTab }) {
           className="h-5 w-5 text-slate-700 cursor-pointer"
           onClick={() => setTab("home")}
         />
-        <h2 className="font-semibold text-slate-800 text-lg">Welcome to Login</h2>
+        <h2 className="font-semibold text-slate-800 text-lg">Login</h2>
       </div>
 
-      <div className="px-4 mt-8">
-        <div className="mb-4">
+      <div className="px-4 mt-8 space-y-4">
+        <div>
           <label className="text-sm text-slate-500">Phone Number</label>
           <input
             type="text"
-            className="w-full py-2 px-3 text-sm text-slate-700"
-            placeholder="Enter the phone number"
+            className="w-full py-2 px-3 text-sm text-slate-700 rounded-lg border focus:ring-2 focus:ring-yellow-400"
+            placeholder="Enter your phone number"
             value={phoneNumber}
             onChange={(e) => setPhoneNumber(e.target.value)}
           />
         </div>
 
-        <div className="mb-4">
+        <div>
           <label className="text-sm text-slate-500">Password</label>
           <input
             type="password"
-            className="w-full border border-slate-200 rounded-lg py-2 px-3 text-sm text-slate-700"
-            placeholder="Enter the password"
+            className="w-full py-2 px-3 text-sm text-slate-700 rounded-lg border focus:ring-2 focus:ring-yellow-400"
+            placeholder="Enter your password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
         </div>
 
-        {error && <div className="text-red-500 text-sm">{error}</div>}
+        {error && <div className="text-red-500 text-sm mt-2">{error}</div>}
 
         <button
           onClick={handleLogin}
-          className="w-full bg-yellow-400 hover:bg-yellow-500 text-slate-900 font-semibold py-3 rounded-xl"
+          className="w-full bg-yellow-400 hover:bg-yellow-500 text-slate-900 font-semibold py-3 rounded-xl mt-4"
         >
           Login
         </button>
+
+        <div className="mt-6 text-center text-sm text-slate-500">
+          <span>
+            Don't have an account?{" "}
+            <button
+              onClick={() => setTab("register")}
+              className="text-yellow-500 font-semibold"
+            >
+              Create an account
+            </button>
+          </span>
+        </div>
       </div>
     </div>
   );
