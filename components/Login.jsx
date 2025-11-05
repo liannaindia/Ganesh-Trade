@@ -2,47 +2,38 @@ import React, { useState } from "react";
 import { supabase } from "../supabaseClient"; // 引入supabase客户端
 import { ArrowLeft } from "lucide-react"; // 引入返回箭头组件
 
-export default function Register({ setTab, setIsLoggedIn }) {
+export default function Login({ setTab, setIsLoggedIn }) {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
 
-  const handleRegister = async () => {
-    if (password !== confirmPassword) {
-      setError("Passwords do not match");
-      return;
-    }
-
+  const handleLogin = async () => {
     try {
-      // 将用户信息插入到 `users` 表，密码以明文存储
-      const { data, error: insertError } = await supabase
+      const { data, error: queryError } = await supabase
         .from('users')
-        .insert([
-          {
-            phone_number: phoneNumber,
-            password_hash: password,  // 存储明文密码
-            balance: 0.00,  // 默认余额
-          }
-        ]);
+        .select('password_hash')
+        .eq('phone_number', phoneNumber)
+        .single(); // 获取单一用户
 
-      if (insertError) {
-        // 打印并显示 Supabase 错误信息
-        console.error("Supabase error during registration:", insertError);
-        setError(insertError.message); // 显示错误消息
+      if (queryError || !data) {
+        setError("User not found");
         return;
       }
 
-      // 注册成功后将手机号码存储在 localStorage
-      localStorage.setItem('phone_number', phoneNumber);
+      // 在这里直接比对密码
+      if (password === data.password_hash) {
+        // 登录成功，将手机号码存储到 localStorage
+        localStorage.setItem('phone_number', phoneNumber);
 
-      // 设置登录状态
-      setIsLoggedIn(true); // 自动登录
-      setTab("home"); // 跳转到主页
+        // 登录成功后，设置登录状态
+        setIsLoggedIn(true);
+        setTab("home"); // 跳转到主页
+      } else {
+        setError("Incorrect password");
+      }
     } catch (error) {
-      // 捕获其他错误并显示
-      console.error("Error during registration:", error); // 打印错误
-      setError("An error occurred during registration: " + error.message);
+      setError("An error occurred during login");
+      console.error("Error during login:", error);
     }
   };
 
@@ -53,7 +44,7 @@ export default function Register({ setTab, setIsLoggedIn }) {
           className="h-5 w-5 text-slate-700 cursor-pointer"
           onClick={() => setTab("home")}
         />
-        <h2 className="font-semibold text-slate-800 text-lg">Register</h2>
+        <h2 className="font-semibold text-slate-800 text-lg">Login</h2>
       </div>
 
       <div className="px-4 mt-8 space-y-4">
@@ -79,34 +70,23 @@ export default function Register({ setTab, setIsLoggedIn }) {
           />
         </div>
 
-        <div>
-          <label className="text-sm text-slate-500">Confirm Password</label>
-          <input
-            type="password"
-            className="w-full py-2 px-3 text-sm text-slate-700 rounded-lg border focus:ring-2 focus:ring-yellow-400"
-            placeholder="Confirm your password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-          />
-        </div>
-
         {error && <div className="text-red-500 text-sm mt-2">{error}</div>}
 
         <button
-          onClick={handleRegister}
+          onClick={handleLogin}
           className="w-full bg-yellow-400 hover:bg-yellow-500 text-slate-900 font-semibold py-3 rounded-xl mt-4"
         >
-          Register
+          Login
         </button>
 
         <div className="mt-6 text-center text-sm text-slate-500">
           <span>
-            Already have an account?{" "}
+            Don't have an account?{" "}
             <button
-              onClick={() => setTab("login")}  // 设置 tab 为 login
+              onClick={() => setTab("register")}  // 设置 tab 为 register
               className="text-yellow-500 font-semibold"
             >
-              Login
+              Create an account
             </button>
           </span>
         </div>
