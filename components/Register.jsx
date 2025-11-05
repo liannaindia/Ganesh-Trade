@@ -8,7 +8,7 @@ export default function Register({ setTab, setIsLoggedIn }) {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
 
-  const handleRegister = async () => {
+ const handleRegister = async () => {
   if (password !== confirmPassword) {
     setError("Passwords do not match");
     return;
@@ -20,8 +20,8 @@ export default function Register({ setTab, setIsLoggedIn }) {
       .insert([
         {
           phone_number: phoneNumber,
-          password_hash: password,  // 存储明文密码
-          balance: 0.00,  // 默认余额
+          password_hash: password,  // TODO: 哈希密码
+          balance: 0.00,
         }
       ]);
 
@@ -31,17 +31,15 @@ export default function Register({ setTab, setIsLoggedIn }) {
       return;
     }
 
-    // 注册成功后将手机号码存储在 localStorage
     localStorage.setItem('phone_number', phoneNumber);
-
-    // 设置登录状态
-    setIsLoggedIn(true); // 自动登录
-    setTab("home"); // 跳转到主页
+    setIsLoggedIn(true);
+    setTab("home");
   } catch (error) {
     setError("An error occurred during registration: " + error.message);
     console.error("Error during registration:", error);
   }
-};
+ 
+};  
 
 
   return (
