@@ -44,6 +44,24 @@ export default function Home({ setTab }) {
     fetchSession();
   }, []);
 
+  // 实时订阅：监听用户的 balance 变化
+  useEffect(() => {
+    if (user) {
+      const subscription = supabase
+        .from(`users:id=eq.${user.id}`) // 监听指定用户的变化
+        .on('UPDATE', (payload) => {
+          // 当余额变化时更新余额
+          setBalance(payload.new.balance);
+        })
+        .subscribe();
+
+      // 清除订阅
+      return () => {
+        supabase.removeSubscription(subscription);
+      };
+    }
+  }, [user]); // 依赖 user，确保在用户信息发生变化时重新设置订阅
+
   useEffect(() => {
     const timer = setInterval(() => setBannerIndex((prev) => (prev + 1) % banners.length), 4000);
     return () => clearInterval(timer);
