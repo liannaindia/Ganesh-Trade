@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { Search, Wallet, Send, Headphones, Gift } from "lucide-react";
 import { supabase } from "../supabaseClient"; // 引入supabase客户端
+import { useNavigate } from "react-router-dom";
+import { Search, Wallet, Send, Headphones, Gift } from "lucide-react"; // 引入需要的图标
 
 export default function Home({ setTab }) {
   const [coins, setCoins] = useState([]);
@@ -22,7 +22,7 @@ export default function Home({ setTab }) {
   useEffect(() => {
     const fetchSession = async () => {
       const { data: { session }, error } = await supabase.auth.getSession();
-      console.log(session); // 打印 session，确保它包含有效的用户 ID
+      console.log("Session User ID:", session?.user?.id); // 打印 session.user.id，确认有效
 
       if (error) {
         console.error("Error fetching session:", error);
@@ -38,20 +38,20 @@ export default function Home({ setTab }) {
           .from("users")
           .select("balance")
           .eq("id", session.user.id)  // 使用有效的用户 ID
-          .single(); // 只返回单个用户数据
+          .single(); // 只返回一个用户数据
 
         if (error) {
           console.error("Error fetching user balance:", error);
         } else {
-          setBalance(data.balance); // 设置用户的资产余额
+          setBalance(data.balance || 0); // 设置用户的资产余额，若没有则为 0
         }
 
-        // 监听用户数据变化
+        // 实时订阅：监听余额变化
         const subscription = supabase
           .from(`users:id=eq.${session.user.id}`)
           .on("UPDATE", (payload) => {
             console.log("User data updated:", payload);
-            setBalance(payload.new.balance);
+            setBalance(payload.new.balance); // 更新余额
           })
           .subscribe();
 
@@ -114,7 +114,7 @@ export default function Home({ setTab }) {
 
   // 点击登录跳转到登录页面
   const handleLoginRedirect = () => {
-    setTab("login"); // 设置当前tab为login
+    setTab("login");  // 设置当前tab为login
   };
 
   const handleSearchClick = () => {
@@ -178,7 +178,7 @@ export default function Home({ setTab }) {
               <div className="flex justify-between items-center">
                 <div>
                   <div className="text-xs text-slate-500">Total Assets (USDT)</div>
-                  <div className="text-2xl font-bold mt-1">{balance.toFixed(2)}</div> {/* 显示余额 */}
+                  <div className="text-2xl font-bold mt-1">{balance ? balance.toFixed(2) : "0.00"}</div> {/* 显示余额 */}
                   <div className="text-xs text-slate-500 mt-1">Pnl Today 0.00 / 0%</div>
                 </div>
                 <button
