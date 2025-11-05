@@ -1,26 +1,38 @@
 import React, { useState } from "react";
 import { supabase } from "../supabaseClient"; // 引入supabase客户端
+import bcrypt from 'bcryptjs'; // 引入bcrypt进行密码验证
 import { ArrowLeft } from "lucide-react"; // 引入返回箭头组件
 
 export default function Login({ setTab }) {
-  const [email, setEmail] = useState(""); // 这里改为 email
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
   const handleLogin = async () => {
     try {
-      // 使用supabase.auth.signInWithPassword来登录用户
-      const { user, error: loginError } = await supabase.auth.signInWithPassword({
-        email: email,  // 直接使用电子邮件
-        password: password,
-      });
+      // 查询 `users` 表，获取用户的记录
+      const { data, error: queryError } = await supabase
+        .from('users')
+        .select('password_hash')
+        .eq('phone_number', phoneNumber)
+        .single(); // 获取单一用户
 
-      if (loginError) {
-        setError(loginError.message);
-      } else {
-        // 登录成功后跳转到主页
-        setTab("home");
+      if (queryError || !data) {
+        setError("User not found");
+        return;
       }
+
+      // 使用 bcrypt 比较输入的密码与数据库中的密码哈希值
+      const passwordMatch = await bcrypt.compare(password, data.password_hash);
+
+      if (!passwordMatch) {
+        setError("Incorrect password");
+        return;
+      }
+
+      // 登录成功
+      console.log("Login successful!");
+      setTab("home"); // 登录成功后跳转到主页
     } catch (error) {
       setError("An error occurred during login");
       console.error("Error during login:", error);
@@ -39,13 +51,13 @@ export default function Login({ setTab }) {
 
       <div className="px-4 mt-8 space-y-4">
         <div>
-          <label className="text-sm text-slate-500">Email</label>
+          <label className="text-sm text-slate-500">Phone Number</label>
           <input
-            type="email"
+            type="text"
             className="w-full py-2 px-3 text-sm text-slate-700 rounded-lg border focus:ring-2 focus:ring-yellow-400"
-            placeholder="Enter your email address"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            placeholder="Enter your phone number"
+            value={phoneNumber}
+            onChange={(e) => setPhoneNumber(e.target.value)}
           />
         </div>
 
