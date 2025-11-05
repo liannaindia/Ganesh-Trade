@@ -6,33 +6,48 @@ export default function Login({ setTab, setIsLoggedIn }) {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false); // 新增加载状态
 
   const handleLogin = async () => {
-  try {
-    const { data, error: queryError } = await supabase
-      .from('users')
-      .select('password_hash')
-      .eq('phone_number', phoneNumber)
-      .single();
+    if (isLoading) return;
+    setIsLoading(true);
+    setError("");
 
-    if (queryError || !data) {
-      setError("User not found");
+    if (phoneNumber.length < 10) {
+      setError("Phone number must be at least 10 digits");
+      setIsLoading(false);
       return;
     }
 
-    if (password === data.password_hash) {
-      localStorage.setItem('phone_number', phoneNumber);
-      setIsLoggedIn(true);
-      setTab("home");
-    } else {
-      setError("Incorrect password");
-    }
-  } catch (error) {
-    setError("An error occurred during login: " + error.message);
-    console.error("Error during login:", error);
-  }
-};  
+    try {
+      const { data, error: queryError } = await supabase
+        .from('users')
+        .select('password_hash, balance') // 新增 balance，便于后续
+        .eq('phone_number', phoneNumber)
+        .single();
 
+      if (queryError || !data) {
+        console.error("Supabase query error:", queryError);
+        setError("User not found");
+        setIsLoading(false);
+        return;
+      }
+
+      if (password === data.password_hash) {
+        console.log("Login successful:", data); // 调试
+        localStorage.setItem('phone_number', phoneNumber);
+        setIsLoggedIn(true);
+        setTab("home");
+      } else {
+        setError("Incorrect password");
+      }
+    } catch (error) {
+      console.error("Unexpected error during login:", error);
+      setError("An error occurred during login: " + error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="max-w-md mx-auto bg-[#f5f7fb] pb-24 min-h-screen text-slate-900">
@@ -53,6 +68,7 @@ export default function Login({ setTab, setIsLoggedIn }) {
             placeholder="Enter your phone number"
             value={phoneNumber}
             onChange={(e) => setPhoneNumber(e.target.value)}
+            disabled={isLoading}
           />
         </div>
 
@@ -64,24 +80,29 @@ export default function Login({ setTab, setIsLoggedIn }) {
             placeholder="Enter your password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            disabled={isLoading}
           />
         </div>
 
-        {error && <div className="text-red-500 text-sm mt-2">{error}</div>}
+        {error && <div className="text-red-500 text-sm mt-2 p-2 bg-red-50 rounded">{error}</div>}
 
         <button
           onClick={handleLogin}
-          className="w-full bg-yellow-400 hover:bg-yellow-500 text-slate-900 font-semibold py-3 rounded-xl mt-4"
+          disabled={isLoading}
+          className={`w-full text-slate-900 font-semibold py-3 rounded-xl mt-4 transition ${
+            isLoading ? 'bg-yellow-300 cursor-not-allowed' : 'bg-yellow-400 hover:bg-yellow-500'
+          }`}
         >
-          Login
+          {isLoading ? 'Logging in...' : 'Login'}
         </button>
 
         <div className="mt-6 text-center text-sm text-slate-500">
           <span>
             Don't have an account?{" "}
             <button
-              onClick={() => setTab("register")}  // 设置 tab 为 register
+              onClick={() => setTab("register")}
               className="text-yellow-500 font-semibold"
+              disabled={isLoading}
             >
               Create an account
             </button>
