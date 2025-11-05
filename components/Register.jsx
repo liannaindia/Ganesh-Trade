@@ -9,40 +9,40 @@ export default function Register({ setTab, setIsLoggedIn }) {
   const [error, setError] = useState("");
 
   const handleRegister = async () => {
-    if (password !== confirmPassword) {
-      setError("Passwords do not match");
+  if (password !== confirmPassword) {
+    setError("Passwords do not match");
+    return;
+  }
+
+  try {
+    const { data, error: insertError } = await supabase
+      .from('users')
+      .insert([
+        {
+          phone_number: phoneNumber,
+          password_hash: password,  // 存储明文密码
+          balance: 0.00,  // 默认余额
+        }
+      ]);
+
+    if (insertError) {
+      setError(insertError.message);
+      console.error("Supabase error during registration:", insertError);
       return;
     }
 
-    try {
-      // 将用户信息插入到 `users` 表，密码以明文存储
-      const { data, error: insertError } = await supabase
-        .from('users')
-        .insert([
-          {
-            phone_number: phoneNumber,
-            password_hash: password,  // 存储明文密码
-            balance: 0.00,  // 默认余额
-          }
-        ]);
+    // 注册成功后将手机号码存储在 localStorage
+    localStorage.setItem('phone_number', phoneNumber);
 
-      if (insertError) {
-        setError(insertError.message); // 显示错误消息
-        console.error("Supabase error during registration:", insertError);
-        return;
-      }
+    // 设置登录状态
+    setIsLoggedIn(true); // 自动登录
+    setTab("home"); // 跳转到主页
+  } catch (error) {
+    setError("An error occurred during registration: " + error.message);
+    console.error("Error during registration:", error);
+  }
+};
 
-      // 注册成功后将手机号码存储在 localStorage
-      localStorage.setItem('phone_number', phoneNumber);
-
-      // 设置登录状态
-      setIsLoggedIn(true); // 自动登录
-      setTab("home"); // 跳转到主页
-    } catch (error) {
-      setError("An error occurred during registration");
-      console.error("Error during registration:", error);
-    }
-  };
 
   return (
     <div className="max-w-md mx-auto bg-[#f5f7fb] pb-24 min-h-screen text-slate-900">
