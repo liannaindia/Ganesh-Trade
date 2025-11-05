@@ -19,34 +19,41 @@ export default function Home({ setTab }) {
   ];
 
   // 检查用户是否登录并获取用户的资产信息
-  useEffect(() => {
+ useEffect(() => {
   const fetchSession = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
+    const { data: { session }, error } = await supabase.auth.getSession();
+    if (error) {
+      console.error("Error fetching session:", error);
+      return;
+    }
     if (session) {
       setIsLoggedIn(true);
       setUser(session.user);
 
-      // 只有当 user.id 存在时才进行数据库查询
-      if (session.user.id) {
+      // 获取用户的资产（余额）
+      try {
         const { data, error } = await supabase
           .from("users")
           .select("balance")
-          .eq("id", session.user.id)  // 确保这里使用的是有效的 user.id
-          .single(); // 获取单个用户的数据
+          .eq("id", session.user.id)  // 根据用户 ID 查询余额
+          .single();  // 只返回单个用户数据
 
         if (error) {
           console.error("Error fetching user balance:", error);
         } else {
           setBalance(data.balance);  // 设置用户的资产余额
         }
-      } else {
-        console.error("User ID is not available");
+      } catch (error) {
+        console.error("Error during balance fetching:", error);
       }
+    } else {
+      console.log("User not logged in");
     }
   };
 
   fetchSession();
 }, []);
+
 
 
   useEffect(() => {
