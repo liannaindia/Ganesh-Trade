@@ -202,6 +202,7 @@ export default function Home({ setTab }) {
         isLoggedIn={isLoggedIn}
         balance={balance}
         handleLoginRedirect={handleLoginRedirect}
+        setTab={setTab}
       />
 
       {/* Market Data Section */}
