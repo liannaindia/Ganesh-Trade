@@ -1,5 +1,5 @@
-import React, { useState } from "react";
 import { ArrowLeft } from "lucide-react"; // 确保导入 ArrowLeft 组件
+import React, { useState } from "react";
 import { supabase } from "../supabaseClient"; // 引入 supabase 客户端
 
 export default function Register({ setTab }) {
@@ -15,9 +15,12 @@ export default function Register({ setTab }) {
     }
 
     try {
-      // 使用手机号作为电子邮件进行注册
+      // 将手机号转化为符合电子邮件格式的地址
+      const email = `${phoneNumber}@sms.com`;  // 添加一个虚拟的域名使其符合邮箱格式
+
+      // 使用 supabase.auth.signUp 来注册用户
       const { user, error: signupError } = await supabase.auth.signUp({
-        email: phoneNumber,  // 使用手机号作为电子邮件
+        email: email,  // 使用转化后的手机号作为电子邮件
         password: password
       });
 
@@ -26,7 +29,7 @@ export default function Register({ setTab }) {
       } else {
         // 注册成功后自动登录
         const { session, error: loginError } = await supabase.auth.signInWithPassword({
-          email: phoneNumber, // 使用手机号作为电子邮件
+          email: email,  // 使用转化后的手机号作为电子邮件
           password: password,
         });
 
