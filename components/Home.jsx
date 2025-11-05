@@ -27,44 +27,22 @@ export default function Home({ setTab }) {
         setUser(session.user);
         
         // 获取用户的资产（余额）
-        try {
-          const { data, error } = await supabase
-            .from("users")
-            .select("balance")
-            .eq("id", session.user.id)  // 根据用户 ID 查询余额
-            .single();  // 只返回单个用户数据
+        const { data, error } = await supabase
+          .from("users")
+          .select("balance")
+          .eq("id", session.user.id)  // 根据用户 ID 查询余额
+          .single(); // 只返回一个用户数据
 
-          if (error) {
-            console.error("Error fetching user balance:", error);
-          } else {
-            setBalance(data.balance);  // 设置用户的资产余额
-          }
-        } catch (error) {
-          console.error("Error during balance fetching:", error);
+        if (error) {
+          console.error("Error fetching user balance:", error);
+        } else {
+          setBalance(data.balance);  // 设置用户的资产余额
         }
       }
     };
 
     fetchSession();
   }, []);
-
-  // 实时订阅：监听用户的 balance 变化
-  useEffect(() => {
-    if (user) {
-      const subscription = supabase
-        .from(`users:id=eq.${user.id}`) // 监听指定用户的变化
-        .on('UPDATE', (payload) => {
-          // 当余额变化时更新余额
-          setBalance(payload.new.balance);
-        })
-        .subscribe();
-
-      // 清除订阅
-      return () => {
-        supabase.removeSubscription(subscription);
-      };
-    }
-  }, [user]); // 依赖 user，确保在用户信息发生变化时重新设置订阅
 
   useEffect(() => {
     const timer = setInterval(() => setBannerIndex((prev) => (prev + 1) % banners.length), 4000);
