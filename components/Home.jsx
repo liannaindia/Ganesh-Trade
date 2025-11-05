@@ -19,10 +19,10 @@ export default function Home({ setTab }) {
   ];
 
   // 检查用户是否登录并获取用户的资产信息
- useEffect(() => {
+useEffect(() => {
   const fetchSession = async () => {
     const { data: { session }, error } = await supabase.auth.getSession();
-    console.log("Session User ID:", session?.user?.id); // 检查 session 是否成功
+    console.log("Session User ID:", session?.user?.id); // 确保session正确
     if (error) {
       console.error("Error fetching session:", error);
       return;
@@ -36,13 +36,17 @@ export default function Home({ setTab }) {
       const { data, error } = await supabase
         .from("users")
         .select("balance")
-        .eq("id", session.user.id)  // 使用有效的用户 ID
+        .eq("id", session.user.id)  // 使用正确的用户 ID
         .single(); // 只返回一个用户数据
 
       if (error) {
         console.error("Error fetching user balance:", error);
       } else {
-        setBalance(data.balance || 0); // 设置用户的资产余额，若没有则为 0
+        if (data) {
+          setBalance(data.balance || 0); // 设置用户余额
+        } else {
+          console.error("User balance not found.");
+        }
       }
 
       // 实时订阅：监听余额变化
