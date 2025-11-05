@@ -35,7 +35,7 @@ export default function Register({ setTab, setIsLoggedIn }) {
       localStorage.setItem('phone_number', phoneNumber);
 
       // 设置登录状态
-      setIsLoggedIn(true);
+      setIsLoggedIn(true); // 自动登录
       setTab("home"); // 跳转到主页
     } catch (error) {
       setError("An error occurred during registration");
