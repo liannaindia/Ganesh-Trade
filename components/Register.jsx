@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { supabase } from "../supabaseClient"; // 引入supabase客户端
 import { ArrowLeft } from "lucide-react"; // 引入返回箭头组件
 
-export default function Register({ setTab }) {
+export default function Register({ setTab, setIsLoggedIn }) {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -15,13 +15,13 @@ export default function Register({ setTab }) {
     }
 
     try {
-      // 直接将用户信息插入到 `users` 表，密码为明文
+      // 将用户信息插入到 `users` 表，密码以明文存储
       const { data, error: insertError } = await supabase
         .from('users')
         .insert([
           {
             phone_number: phoneNumber,
-            password_hash: password,  // 这里存储明文密码
+            password_hash: password,  // 存储明文密码
             balance: 0.00,  // 默认余额
           }
         ]);
@@ -31,8 +31,12 @@ export default function Register({ setTab }) {
         return;
       }
 
-      console.log('User successfully added to users table:', data);
-      setTab("home"); // 注册成功后跳转到主页
+      // 注册成功后将手机号码存储在 localStorage
+      localStorage.setItem('phone_number', phoneNumber);
+
+      // 设置登录状态
+      setIsLoggedIn(true);
+      setTab("home"); // 跳转到主页
     } catch (error) {
       setError("An error occurred during registration");
       console.error("Error during registration:", error);
