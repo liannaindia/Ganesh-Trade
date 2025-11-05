@@ -19,51 +19,51 @@ export default function Home({ setTab }) {
   ];
 
   // 检查用户是否登录并获取用户的资产信息
-  useEffect(() => {
-    const fetchSession = async () => {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      console.log("Session User ID:", session?.user?.id); // 打印 session.user.id，确认有效
+ useEffect(() => {
+  const fetchSession = async () => {
+    const { data: { session }, error } = await supabase.auth.getSession();
+    console.log("Session User ID:", session?.user?.id); // 检查 session 是否成功
+    if (error) {
+      console.error("Error fetching session:", error);
+      return;
+    }
+
+    if (session) {
+      setIsLoggedIn(true);
+      setUser(session.user);
+
+      // 获取用户的资产（余额）
+      const { data, error } = await supabase
+        .from("users")
+        .select("balance")
+        .eq("id", session.user.id)  // 使用有效的用户 ID
+        .single(); // 只返回一个用户数据
 
       if (error) {
-        console.error("Error fetching session:", error);
-        return;
+        console.error("Error fetching user balance:", error);
+      } else {
+        setBalance(data.balance || 0); // 设置用户的资产余额，若没有则为 0
       }
 
-      if (session) {
-        setIsLoggedIn(true);
-        setUser(session.user);
+      // 实时订阅：监听余额变化
+      const subscription = supabase
+        .from(`users:id=eq.${session.user.id}`)
+        .on("UPDATE", (payload) => {
+          console.log("User data updated:", payload);
+          setBalance(payload.new.balance); // 更新余额
+        })
+        .subscribe();
 
-        // 获取用户的资产（余额）
-        const { data, error } = await supabase
-          .from("users")
-          .select("balance")
-          .eq("id", session.user.id)  // 使用有效的用户 ID
-          .single(); // 只返回一个用户数据
+      // 清理订阅
+      return () => {
+        supabase.removeSubscription(subscription);
+      };
+    }
+  };
 
-        if (error) {
-          console.error("Error fetching user balance:", error);
-        } else {
-          setBalance(data.balance || 0); // 设置用户的资产余额，若没有则为 0
-        }
+  fetchSession();
+}, []);
 
-        // 实时订阅：监听余额变化
-        const subscription = supabase
-          .from(`users:id=eq.${session.user.id}`)
-          .on("UPDATE", (payload) => {
-            console.log("User data updated:", payload);
-            setBalance(payload.new.balance); // 更新余额
-          })
-          .subscribe();
-
-        // 清理订阅
-        return () => {
-          supabase.removeSubscription(subscription);
-        };
-      }
-    };
-
-    fetchSession();
-  }, []);
 
   useEffect(() => {
     const timer = setInterval(() => setBannerIndex((prev) => (prev + 1) % banners.length), 4000);
