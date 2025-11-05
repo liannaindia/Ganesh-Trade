@@ -31,7 +31,7 @@ export default function Register({ setTab }) {
         const { error: insertError } = await supabase
           .from("users")
           .insert([
-            { phone_number: phoneNumber, email: email }  // 在 "users" 表中插入手机号和电子邮件
+            { phone_number: phoneNumber, email: email, password: password }  // 在 "users" 表中插入手机号、邮箱和密码
           ]);
 
         if (insertError) {
