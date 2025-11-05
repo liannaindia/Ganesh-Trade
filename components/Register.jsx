@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { ArrowLeft } from "lucide-react"; // 确保导入 ArrowLeft 组件
 import { supabase } from "../supabaseClient"; // 引入 supabase 客户端
+import { ArrowLeft } from "lucide-react"; // 引入返回箭头组件
 
 export default function Register({ setTab }) {
   const [phoneNumber, setPhoneNumber] = useState("");
@@ -16,7 +16,7 @@ export default function Register({ setTab }) {
 
     try {
       // 将手机号转化为符合电子邮件格式的地址
-      const email = `${phoneNumber}@sms.com`;  // 添加一个虚拟的域名使其符合邮箱格式
+      const email = `${phoneNumber.replace(/\s+/g, '')}@sms.com`;  // 确保手机号没有空格，并转化为有效邮箱格式
 
       // 使用 supabase.auth.signUp 来注册用户
       const { user, error: signupError } = await supabase.auth.signUp({
@@ -35,6 +35,7 @@ export default function Register({ setTab }) {
           ]);
 
         if (insertError) {
+          console.error("Error inserting data into users table:", insertError); // 打印详细错误
           setError("Failed to insert user data into 'users' table");
           return;
         }
@@ -53,6 +54,7 @@ export default function Register({ setTab }) {
       }
     } catch (error) {
       setError("An error occurred during registration");
+      console.error("Error during registration:", error);  // 打印错误
     }
   };
 
