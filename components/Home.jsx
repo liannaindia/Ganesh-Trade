@@ -20,66 +20,64 @@ export default function Home({ setTab }) {
 
   // 检查用户是否登录并获取用户的资产信息
   useEffect(() => {
-    let subscription = null;
+  const fetchSession = async () => {
+    const { data, error } = await supabase.auth.getSession();
+    if (error) {
+      console.error("Error fetching session:", error);
+      return;
+    }
 
-    const fetchSession = async () => {
-      const { data, error } = await supabase.auth.getSession();
-      if (error) {
-        console.error("Error fetching session:", error);
-        return;
-      }
+    const session = data?.session;
+    if (!session || !session.user?.id) {
+      console.log("Session not ready yet, waiting...");
+      return;
+    }
 
-      const session = data?.session;
-      if (!session || !session.user?.id) {
-        console.log("Session not ready yet, waiting...");
-        return;
-      }
+    console.log("Session User ID:", session.user.id);
+    setIsLoggedIn(true);
+    setUser(session.user);
 
-      console.log("Session User ID:", session.user.id);
-      setIsLoggedIn(true);
-      setUser(session.user);
+    // 获取用户的资产（余额）
+    const { data: userData, error: balanceError } = await supabase
+      .from("users")
+      .select("balance")
+      .eq("id", session.user.id)
+      .maybeSingle(); // 避免 0 行时报错
 
-      // 获取用户的资产（余额）
-      const { data: userData, error: balanceError } = await supabase
-        .from("users")
-        .select("balance")
-        .eq("id", session.user.id)
-        .maybeSingle(); // 避免 0 行时报错
+    if (balanceError) {
+      console.error("Error fetching user balance:", balanceError);
+    } else if (userData) {
+      setBalance(userData.balance || 0); // 设置用户余额
+    } else {
+      console.warn("No balance data found for this user");
+    }
 
-      if (balanceError) {
-        console.error("Error fetching user balance:", balanceError);
-      } else if (userData) {
-        setBalance(userData.balance || 0); // 设置用户余额
-      } else {
-        console.warn("No balance data found for this user");
-      }
-
-      // 实时订阅：监听余额变化
-      subscription = supabase
-        .channel("user-balance-updates")
-        .on(
-          "postgres_changes",
-          {
-            event: "UPDATE",
-            schema: "public",
-            table: "users",
-            filter: `id=eq.${session.user.id}`,
-          },
-          (payload) => {
-            console.log("Balance updated:", payload.new.balance);
-            setBalance(payload.new.balance);
-          }
-        )
-        .subscribe();
-    };
-
-    fetchSession();
+    // 实时订阅：监听余额变化
+    const subscription = supabase
+      .channel("user-balance-updates")
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "users",
+          filter: `id=eq.${session.user.id}`,
+        },
+        (payload) => {
+          console.log("Balance updated:", payload.new.balance);
+          setBalance(payload.new.balance);
+        }
+      )
+      .subscribe();
 
     // 清理订阅
     return () => {
       if (subscription) supabase.removeChannel(subscription);
     };
-  }, []);
+  };
+
+  fetchSession();
+}, []); // 空依赖数组，确保只执行一次
 
   // Banner自动切换
   useEffect(() => {
