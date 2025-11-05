@@ -74,7 +74,7 @@ export default function Login({ setTab }) {
           <span>
             Don't have an account?{" "}
             <button
-              onClick={() => setTab("register")}
+              onClick={() => setTab("register")}  // 设置 tab 为 register
               className="text-yellow-500 font-semibold"
             >
               Create an account
