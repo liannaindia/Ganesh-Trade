@@ -8,34 +8,35 @@ export default function Login({ setTab, setIsLoggedIn }) {
   const [error, setError] = useState("");
 
   const handleLogin = async () => {
-    try {
-      const { data, error: queryError } = await supabase
-        .from('users')
-        .select('password_hash')
-        .eq('phone_number', phoneNumber)
-        .single(); // 获取单一用户
+  try {
+    const { data, error: queryError } = await supabase
+      .from('users')
+      .select('password_hash')
+      .eq('phone_number', phoneNumber)
+      .single(); // 获取单一用户
 
-      if (queryError || !data) {
-        setError("User not found");
-        return;
-      }
-
-      // 在这里直接比对密码
-      if (password === data.password_hash) {
-        // 登录成功，将手机号码存储到 localStorage
-        localStorage.setItem('phone_number', phoneNumber);
-
-        // 登录成功后，设置登录状态
-        setIsLoggedIn(true);
-        setTab("home"); // 跳转到主页
-      } else {
-        setError("Incorrect password");
-      }
-    } catch (error) {
-      setError("An error occurred during login");
-      console.error("Error during login:", error);
+    if (queryError || !data) {
+      setError("User not found");
+      return;
     }
-  };
+
+    // 在这里直接比对密码
+    if (password === data.password_hash) {
+      // 登录成功，将手机号码存储到 localStorage
+      localStorage.setItem('phone_number', phoneNumber);
+
+      // 登录成功后，设置登录状态
+      setIsLoggedIn(true);
+      setTab("home"); // 跳转到主页
+    } else {
+      setError("Incorrect password");
+    }
+  } catch (error) {
+    setError("An error occurred during login: " + error.message);
+    console.error("Error during login:", error);
+  }
+};
+
 
   return (
     <div className="max-w-md mx-auto bg-[#f5f7fb] pb-24 min-h-screen text-slate-900">
