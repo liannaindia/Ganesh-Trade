@@ -102,24 +102,20 @@ export default function Home({ setTab }) {
   // 检查用户是否登录并获取用户的资产信息
   useEffect(() => {
     const fetchSession = async () => {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      if (error) {
-        console.error("Error fetching session:", error);
-        return;
-      }
+      const phoneNumber = localStorage.getItem('phone_number'); // 从 localStorage 获取手机号码
 
-      if (session) {
+      if (phoneNumber) {
         setIsLoggedIn(true);
-        setUser(session.user);
 
-        // 获取用户的资产（余额）
-        const { data, error: balanceError } = await supabase
-          .from("users")
-          .select("balance")
-          .eq("id", session.user.id)  // 使用正确的用户 ID
-          .maybeSingle(); // 只返回一个用户数据
-        if (balanceError) {
-          console.error("Error fetching user balance:", balanceError);
+        // 从 `users` 表中获取余额
+        const { data, error } = await supabase
+          .from('users')
+          .select('balance')
+          .eq('phone_number', phoneNumber)
+          .single();
+
+        if (error) {
+          console.error('Error fetching user balance:', error);
         } else {
           setBalance(data?.balance || 0);
         }
