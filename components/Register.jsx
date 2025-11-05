@@ -1,9 +1,10 @@
 import React, { useState } from "react";
 import { supabase } from "../supabaseClient"; // 引入supabase客户端
+import bcrypt from 'bcryptjs'; // 引入bcrypt进行密码哈希
 import { ArrowLeft } from "lucide-react"; // 引入返回箭头组件
 
 export default function Register({ setTab }) {
-  const [email, setEmail] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
@@ -15,18 +16,27 @@ export default function Register({ setTab }) {
     }
 
     try {
-      // 使用supabase.auth.signUp进行注册
-      const { user, error: signupError } = await supabase.auth.signUp({
-        email: email,
-        password: password,
-      });
+      // 使用 bcrypt 加密密码
+      const hashedPassword = await bcrypt.hash(password, 10); // 10 为盐的强度，越高越安全
 
-      if (signupError) {
-        setError(signupError.message);
-      } else {
-        // 注册成功后跳转到主页
-        setTab("home");
+      // 将注册信息插入到 `users` 表
+      const { data, error: insertError } = await supabase
+        .from('users')
+        .insert([
+          {
+            phone_number: phoneNumber,
+            password_hash: hashedPassword,  // 存储加密后的密码
+            balance: 0.00,  // 默认余额
+          }
+        ]);
+
+      if (insertError) {
+        setError(insertError.message);
+        return;
       }
+
+      console.log('User successfully added to users table:', data);
+      setTab("home"); // 注册成功后跳转到主页
     } catch (error) {
       setError("An error occurred during registration");
       console.error("Error during registration:", error);
@@ -45,13 +55,13 @@ export default function Register({ setTab }) {
 
       <div className="px-4 mt-8 space-y-4">
         <div>
-          <label className="text-sm text-slate-500">Email</label>
+          <label className="text-sm text-slate-500">Phone Number</label>
           <input
-            type="email"
+            type="text"
             className="w-full py-2 px-3 text-sm text-slate-700 rounded-lg border focus:ring-2 focus:ring-yellow-400"
-            placeholder="Enter your email address"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            placeholder="Enter your phone number"
+            value={phoneNumber}
+            onChange={(e) => setPhoneNumber(e.target.value)}
           />
         </div>
 
