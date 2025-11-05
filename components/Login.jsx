@@ -9,16 +9,15 @@ export default function Login({ setTab }) {
 
   const handleLogin = async () => {
     try {
-      // 使用 Supabase 验证用户
-      const { data, error } = await supabase
-        .from("users")
-        .select("*")
-        .eq("phone_number", phoneNumber)
-        .eq("password", password);
+      // 使用 Supabase 进行邮箱密码登录
+      const { data, error: loginError } = await supabase.auth.signInWithPassword({
+        email: `${phoneNumber}@sms.com`,  // 将手机号转化为邮箱格式
+        password: password,
+      });
 
-      if (error) {
-        setError(error.message);
-      } else if (data.length > 0) {
+      if (loginError) {
+        setError(loginError.message);  // 登录失败，设置错误消息
+      } else if (data) {
         setTab("home");  // 登录成功后跳转到主页
       } else {
         setError("Invalid credentials");
