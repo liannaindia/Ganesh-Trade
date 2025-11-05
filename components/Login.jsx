@@ -6,12 +6,26 @@ export default function Login({ setTab, setIsLoggedIn }) {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false); // 新增加载状态
+  const [isLoading, setIsLoading] = useState(false); // 加载状态
 
   const handleLogin = async () => {
     if (isLoading) return;
     setIsLoading(true);
     setError("");
+
+    // Prop 检查（调试用）
+    if (typeof setIsLoggedIn !== 'function') {
+      console.error('setIsLoggedIn is not a function!', setIsLoggedIn);
+      setError('Internal error: Invalid login state handler');
+      setIsLoading(false);
+      return;
+    }
+    if (typeof setTab !== 'function') {
+      console.error('setTab is not a function!', setTab);
+      setError('Internal error: Invalid tab handler');
+      setIsLoading(false);
+      return;
+    }
 
     if (phoneNumber.length < 10) {
       setError("Phone number must be at least 10 digits");
@@ -22,7 +36,7 @@ export default function Login({ setTab, setIsLoggedIn }) {
     try {
       const { data, error: queryError } = await supabase
         .from('users')
-        .select('password_hash, balance') // 新增 balance，便于后续
+        .select('password_hash')
         .eq('phone_number', phoneNumber)
         .single();
 
@@ -33,7 +47,7 @@ export default function Login({ setTab, setIsLoggedIn }) {
         return;
       }
 
-      if (password === data.password_hash) {
+      if (password === data.password_hash) { // TODO: 生产环境用 bcrypt.compare
         console.log("Login successful:", data); // 调试
         localStorage.setItem('phone_number', phoneNumber);
         setIsLoggedIn(true);
