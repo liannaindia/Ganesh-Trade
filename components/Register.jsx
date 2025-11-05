@@ -27,7 +27,8 @@ export default function Register({ setTab, setIsLoggedIn }) {
         ]);
 
       if (insertError) {
-        setError(insertError.message);
+        setError(insertError.message); // 显示错误消息
+        console.error("Supabase error during registration:", insertError);
         return;
       }
 
