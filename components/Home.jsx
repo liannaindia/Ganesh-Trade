@@ -3,7 +3,6 @@ import { supabase } from "../supabaseClient"; // 引入supabase客户端
 import { useNavigate } from "react-router-dom";
 import { Search, Wallet, Send, Headphones, Gift } from "lucide-react"; // 引入需要的图标
 
-// 单独封装 Banner 组件
 const Banner = ({ banners, bannerIndex }) => (
   <div className="px-4 mt-3 relative">
     <div className="rounded-xl overflow-hidden shadow-sm">
@@ -122,7 +121,7 @@ export default function Home({ setTab }) {
     };
 
     fetchSession();
-  }, []);
+  }, []); // 空数组依赖，确保只运行一次
 
   // 设置轮播图自动切换
   useEffect(() => {
