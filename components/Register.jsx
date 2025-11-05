@@ -1,60 +1,35 @@
 import React, { useState } from "react";
-import { supabase } from "../supabaseClient"; // 引入 supabase 客户端
+import { supabase } from "../supabaseClient"; // 引入supabase客户端
 import { ArrowLeft } from "lucide-react"; // 引入返回箭头组件
 
 export default function Register({ setTab }) {
-  const [phoneNumber, setPhoneNumber] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [retypePassword, setRetypePassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
 
   const handleRegister = async () => {
-    if (password !== retypePassword) {
+    if (password !== confirmPassword) {
       setError("Passwords do not match");
       return;
     }
 
     try {
-      // 将手机号转化为符合电子邮件格式的地址
-      const email = `${phoneNumber.replace(/\s+/g, '')}@sms.com`;  // 确保手机号没有空格，并转化为有效邮箱格式
-
-      // 使用 supabase.auth.signUp 来注册用户
+      // 使用supabase.auth.signUp进行注册
       const { user, error: signupError } = await supabase.auth.signUp({
-        email: email,  // 使用转化后的手机号作为电子邮件
-        password: password
+        email: email,
+        password: password,
       });
 
       if (signupError) {
         setError(signupError.message);
       } else {
-        // 将用户信息插入到自定义的 "users" 表中
-        const { error: insertError } = await supabase
-          .from("users")
-          .insert([
-            { phone_number: phoneNumber, email: email, password: password }  // 在 "users" 表中插入手机号、邮箱和密码
-          ]);
-
-        if (insertError) {
-          console.error("Error inserting data into users table:", insertError); // 打印详细错误
-          setError("Failed to insert user data into 'users' table");
-          return;
-        }
-
-        // 注册成功后自动登录
-        const { session, error: loginError } = await supabase.auth.signInWithPassword({
-          email: email,  // 使用转化后的手机号作为电子邮件
-          password: password,
-        });
-
-        if (loginError) {
-          setError("Login failed: " + loginError.message);
-        } else {
-          setTab("home"); // 登录成功后跳转到主页
-        }
+        // 注册成功后跳转到主页
+        setTab("home");
       }
     } catch (error) {
       setError("An error occurred during registration");
-      console.error("Error during registration:", error);  // 打印错误
+      console.error("Error during registration:", error);
     }
   };
 
@@ -70,35 +45,35 @@ export default function Register({ setTab }) {
 
       <div className="px-4 mt-8 space-y-4">
         <div>
-          <label className="text-sm text-slate-500">Phone Number</label>
+          <label className="text-sm text-slate-500">Email</label>
           <input
-            type="text"
+            type="email"
             className="w-full py-2 px-3 text-sm text-slate-700 rounded-lg border focus:ring-2 focus:ring-yellow-400"
-            placeholder="Enter your phone number"
-            value={phoneNumber}
-            onChange={(e) => setPhoneNumber(e.target.value)}
+            placeholder="Enter your email address"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
           />
         </div>
 
         <div>
-          <label className="text-sm text-slate-500">Set Login Password</label>
+          <label className="text-sm text-slate-500">Password</label>
           <input
             type="password"
             className="w-full py-2 px-3 text-sm text-slate-700 rounded-lg border focus:ring-2 focus:ring-yellow-400"
-            placeholder="Set your password"
+            placeholder="Enter your password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
         </div>
 
         <div>
-          <label className="text-sm text-slate-500">Retype Password</label>
+          <label className="text-sm text-slate-500">Confirm Password</label>
           <input
             type="password"
             className="w-full py-2 px-3 text-sm text-slate-700 rounded-lg border focus:ring-2 focus:ring-yellow-400"
-            placeholder="Retype your password"
-            value={retypePassword}
-            onChange={(e) => setRetypePassword(e.target.value)}
+            placeholder="Confirm your password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
           />
         </div>
 
@@ -115,10 +90,10 @@ export default function Register({ setTab }) {
           <span>
             Already have an account?{" "}
             <button
-              onClick={() => setTab("login")}
+              onClick={() => setTab("login")}  // 设置 tab 为 login
               className="text-yellow-500 font-semibold"
             >
-              Login now
+              Login
             </button>
           </span>
         </div>
