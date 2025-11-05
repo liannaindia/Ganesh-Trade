@@ -80,7 +80,7 @@ export default function Home({ setTab }) {
   // 点击登录跳转到登录页面
   const handleLoginRedirect = () => {
     setTab("login");  // 设置当前tab为login
-    onClick={() => setTab("login")}
+    
   };
 
   const handleSearchClick = () => {
