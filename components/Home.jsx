@@ -20,75 +20,60 @@ export default function Home({ setTab }) {
 
   // 检查用户是否登录并获取用户的资产信息
   useEffect(() => {
-  const fetchSession = async () => {
-    const { data, error } = await supabase.auth.getSession();
-    if (error) {
-      console.error("Error fetching session:", error);
-      return;
-    }
+    const fetchSession = async () => {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      console.log("Session User ID:", session?.user?.id); // 确保session正确
+      if (error) {
+        console.error("Error fetching session:", error);
+        return;
+      }
 
-    const session = data?.session;
-    if (!session || !session.user?.id) {
-      console.log("Session not ready yet, waiting...");
-      return;
-    }
+      if (session) {
+        setIsLoggedIn(true);
+        setUser(session.user);
 
-    console.log("Session User ID:", session.user.id);
-    setIsLoggedIn(true);
-    setUser(session.user);
+        // 获取用户的资产（余额）
+        const { data, error } = await supabase
+          .from("users")
+          .select("balance")
+          .eq("id", session.user.id)  // 使用正确的用户 ID
+          .single(); // 只返回一个用户数据
 
-    // 获取用户的资产（余额）
-    const { data: userData, error: balanceError } = await supabase
-      .from("users")
-      .select("balance")
-      .eq("id", session.user.id)
-      .maybeSingle(); // 避免 0 行时报错
-
-    if (balanceError) {
-      console.error("Error fetching user balance:", balanceError);
-    } else if (userData) {
-      setBalance(userData.balance || 0); // 设置用户余额
-    } else {
-      console.warn("No balance data found for this user");
-    }
-
-    // 实时订阅：监听余额变化
-    const subscription = supabase
-      .channel("user-balance-updates")
-      .on(
-        "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "users",
-          filter: `id=eq.${session.user.id}`,
-        },
-        (payload) => {
-          console.log("Balance updated:", payload.new.balance);
-          setBalance(payload.new.balance);
+        if (error) {
+          console.error("Error fetching user balance:", error);
+        } else {
+          if (data) {
+            setBalance(data.balance || 0); // 设置用户余额
+          } else {
+            console.error("User balance not found.");
+          }
         }
-      )
-      .subscribe();
 
-    // 清理订阅
-    return () => {
-      if (subscription) supabase.removeChannel(subscription);
+        // 实时订阅：监听余额变化
+        const subscription = supabase
+          .from(`users:id=eq.${session.user.id}`)
+          .on("UPDATE", (payload) => {
+            console.log("User data updated:", payload);
+            setBalance(payload.new.balance); // 更新余额
+          })
+          .subscribe();
+
+        // 清理订阅
+        return () => {
+          supabase.removeSubscription(subscription);
+        };
+      }
     };
-  };
 
-  fetchSession();
-}, []); // 空依赖数组，确保只执行一次
+    fetchSession();
+  }, []); // 空依赖数组，确保只执行一次
 
-  // Banner自动切换
+  // 获取市场数据
   useEffect(() => {
-    const timer = setInterval(
-      () => setBannerIndex((prev) => (prev + 1) % banners.length),
-      4000
-    );
+    const timer = setInterval(() => setBannerIndex((prev) => (prev + 1) % banners.length), 4000);
     return () => clearInterval(timer);
   }, [banners.length]);
 
-  // 获取币种行情
   useEffect(() => {
     const fetchTopCoins = async () => {
       try {
@@ -171,22 +156,18 @@ export default function Home({ setTab }) {
           {banners.map((_, i) => (
             <span
               key={i}
-              className={`w-2 h-2 rounded-full ${
-                i === bannerIndex ? "bg-yellow-500" : "bg-slate-300"
-              }`}
+              className={`w-2 h-2 rounded-full ${i === bannerIndex ? "bg-yellow-500" : "bg-slate-300"}`}
             ></span>
           ))}
         </div>
       </div>
 
-      {/* 用户信息模块 */}
+      {/* 显示登录按钮或资产信息模块 */}
       <div className="text-center mt-1">
         {!isLoggedIn ? (
           <>
             <div className="mb-4">
-              <p className="text-base text-slate-500">
-                Welcome To Explore The World of Digital Ganesh.
-              </p>
+              <p className="text-base text-slate-500">Welcome To Explore The World of Digital Ganesh.</p>
             </div>
             <button
               className="bg-yellow-400 hover:bg-yellow-500 text-sm font-medium text-slate-900 rounded-full px-4 py-1.5 transition"
@@ -200,15 +181,9 @@ export default function Home({ setTab }) {
             <div className="bg-white rounded-2xl shadow-sm mx-4 mt-3 p-4 border border-slate-100">
               <div className="flex justify-between items-center">
                 <div>
-                  <div className="text-xs text-slate-500">
-                    Total Assets (USDT)
-                  </div>
-                  <div className="text-2xl font-bold mt-1">
-                    {balance ? balance.toFixed(2) : "0.00"}
-                  </div>
-                  <div className="text-xs text-slate-500 mt-1">
-                    Pnl Today 0.00 / 0%
-                  </div>
+                  <div className="text-xs text-slate-500">Total Assets (USDT)</div>
+                  <div className="text-2xl font-bold mt-1">{balance.toFixed(2)}</div> {/* 显示余额 */}
+                  <div className="text-xs text-slate-500 mt-1">Pnl Today 0.00 / 0%</div>
                 </div>
                 <button
                   className="bg-yellow-400 hover:bg-yellow-500 text-sm font-medium text-slate-900 rounded-full px-4 py-1.5 transition"
