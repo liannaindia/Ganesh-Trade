@@ -10,12 +10,14 @@ import InvitePage from "./components/Invite.jsx";
 import LoginPage from "./components/Login.jsx"; 
 import RegisterPage from "./components/Register.jsx"; 
 import BottomNav from "./BottomNav";  // 引入底部导航栏
+import { supabase } from "./components/supabaseClient"; // 新增：引入 supabase（调整路径如果不同）
 
 export default function App() {
   const [tab, setTab] = useState("home");
-  const [isLoggedIn, setIsLoggedIn] = useState(false); // 新增：全局登录状态
+  const [isLoggedIn, setIsLoggedIn] = useState(false); // 全局登录状态
+  const [balance, setBalance] = useState(0); // 新增：全局余额状态
 
-  // 新增：初始化登录状态，从 localStorage 恢复
+  // 初始化登录状态，从 localStorage 恢复
   useEffect(() => {
     const savedPhone = localStorage.getItem('phone_number');
     if (savedPhone) {
@@ -23,29 +25,81 @@ export default function App() {
     }
   }, []);
 
+  // 新增：全局实时余额订阅和初始查询
+  useEffect(() => {
+    let realtimeSubscription = null;
+    const phoneNumber = localStorage.getItem('phone_number');
+
+    const setupBalance = async () => {
+      if (!phoneNumber) return;
+
+      // 初始查询余额
+      const { data, error } = await supabase
+        .from('users')
+        .select('balance')
+        .eq('phone_number', phoneNumber)
+        .single();
+
+      if (error) {
+        console.error('Error fetching initial balance:', error);
+      } else {
+        setBalance(data?.balance || 0);
+      }
+
+      // 实时订阅余额变化
+      realtimeSubscription = supabase
+        .channel('global-balance-updates') // 全局 channel 名
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'users',
+            filter: `phone_number=eq.${phoneNumber}`,
+          },
+          (payload) => {
+            console.log('Global balance updated via Realtime:', payload.new.balance);
+            setBalance(payload.new.balance || 0);
+          }
+        )
+        .subscribe((status) => {
+          console.log('Global Realtime subscription status:', status);
+        });
+    };
+
+    setupBalance();
+
+    // 清理订阅
+    return () => {
+      if (realtimeSubscription) {
+        supabase.removeChannel(realtimeSubscription);
+      }
+    };
+  }, []); // 空依赖：只订阅一次
+
   // 页面渲染逻辑
   const renderPage = () => {
     switch (tab) {
       case "markets":
         return <MarketsPage setTab={setTab} />;
       case "login":
-        return <LoginPage setTab={setTab} setIsLoggedIn={setIsLoggedIn} />; // 新增：传递 setIsLoggedIn
+        return <LoginPage setTab={setTab} setIsLoggedIn={setIsLoggedIn} />;
       case "register":
-        return <RegisterPage setTab={setTab} setIsLoggedIn={setIsLoggedIn} />; // 新增：传递 setIsLoggedIn
+        return <RegisterPage setTab={setTab} setIsLoggedIn={setIsLoggedIn} />;
       case "trade":
-        return <TradePage setTab={setTab} />;
+        return <TradePage setTab={setTab} isLoggedIn={isLoggedIn} balance={balance}/>;
       case "positions":
-        return <PositionsPage setTab={setTab} />;
+        return <PositionsPage setTab={setTab} isLoggedIn={isLoggedIn} balance={balance}  />;
       case "me":
-        return <MePage setTab={setTab} />;
+        return <MePage setTab={setTab} isLoggedIn={isLoggedIn} balance={balance} />;
       case "recharge":
-        return <RechargePage setTab={setTab} />;
+        return <RechargePage setTab={setTab} balance={balance} />; // 示例：如果 Recharge 需要余额
       case "withdraw":
-        return <WithdrawPage setTab={setTab} />;
+        return <WithdrawPage setTab={setTab} balance={balance} />; // 示例：如果 Withdraw 需要余额
       case "invite":
-        return <InvitePage setTab={setTab} />;
+        return <InvitePage setTab={setTab} isLoggedIn={isLoggedIn} />;
       default:
-        return <HomePage setTab={setTab} isLoggedIn={isLoggedIn} />; // 新增：传递 isLoggedIn
+        return <HomePage setTab={setTab} isLoggedIn={isLoggedIn} balance={balance} />; // 新增：传递 balance
     }
   };
 
