@@ -1,5 +1,5 @@
-import { ArrowLeft } from "lucide-react"; // 确保导入 ArrowLeft 组件
 import React, { useState } from "react";
+import { ArrowLeft } from "lucide-react"; // 确保导入 ArrowLeft 组件
 import { supabase } from "../supabaseClient"; // 引入 supabase 客户端
 
 export default function Register({ setTab }) {
@@ -27,6 +27,18 @@ export default function Register({ setTab }) {
       if (signupError) {
         setError(signupError.message);
       } else {
+        // 将用户信息插入到自定义的 "users" 表中
+        const { error: insertError } = await supabase
+          .from("users")
+          .insert([
+            { phone_number: phoneNumber, email: email }  // 在 "users" 表中插入手机号和电子邮件
+          ]);
+
+        if (insertError) {
+          setError("Failed to insert user data into 'users' table");
+          return;
+        }
+
         // 注册成功后自动登录
         const { session, error: loginError } = await supabase.auth.signInWithPassword({
           email: email,  // 使用转化后的手机号作为电子邮件
