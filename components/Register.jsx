@@ -7,40 +7,55 @@ export default function Register({ setTab, setIsLoggedIn }) {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false); // 新增：加载状态，避免重复点击
 
- const handleRegister = async () => {
-  if (password !== confirmPassword) {
-    setError("Passwords do not match");
-    return;
-  }
+  const handleRegister = async () => {
+    if (isLoading) return; // 防止重复提交
+    setIsLoading(true);
+    setError(""); // 清空旧错误
 
-  try {
-    const { data, error: insertError } = await supabase
-      .from('users')
-      .insert([
-        {
-          phone_number: phoneNumber,
-          password_hash: password,  // TODO: 哈希密码
-          balance: 0.00,
-        }
-      ]);
-
-    if (insertError) {
-      setError(insertError.message);
-      console.error("Supabase error during registration:", insertError);
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
+      setIsLoading(false);
       return;
     }
 
-    localStorage.setItem('phone_number', phoneNumber);
-    setIsLoggedIn(true);
-    setTab("home");
-  } catch (error) {
-    setError("An error occurred during registration: " + error.message);
-    console.error("Error during registration:", error);
-  }
- 
-};  
+    if (phoneNumber.length < 10) { // 简单验证手机号
+      setError("Phone number must be at least 10 digits");
+      setIsLoading(false);
+      return;
+    }
 
+    try {
+      const { data, error: insertError } = await supabase
+        .from('users')
+        .insert([
+          {
+            phone_number: phoneNumber,
+            password_hash: password,  // TODO: 生产环境用哈希
+            balance: 0.00,
+          }
+        ])
+        .select(); // 新增 .select() 返回插入数据，便于调试
+
+      if (insertError) {
+        console.error("Supabase insert error:", insertError); // 调试日志
+        setError(insertError.message || "Registration failed");
+        setIsLoading(false);
+        return;
+      }
+
+      console.log("Registration successful:", data); // 调试日志
+      localStorage.setItem('phone_number', phoneNumber);
+      setIsLoggedIn(true);
+      setTab("home");
+    } catch (error) {
+      console.error("Unexpected error during registration:", error); // 详细日志
+      setError("An error occurred during registration: " + error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="max-w-md mx-auto bg-[#f5f7fb] pb-24 min-h-screen text-slate-900">
@@ -61,6 +76,7 @@ export default function Register({ setTab, setIsLoggedIn }) {
             placeholder="Enter your phone number"
             value={phoneNumber}
             onChange={(e) => setPhoneNumber(e.target.value)}
+            disabled={isLoading}
           />
         </div>
 
@@ -72,6 +88,7 @@ export default function Register({ setTab, setIsLoggedIn }) {
             placeholder="Enter your password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            disabled={isLoading}
           />
         </div>
 
@@ -83,24 +100,29 @@ export default function Register({ setTab, setIsLoggedIn }) {
             placeholder="Confirm your password"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
+            disabled={isLoading}
           />
         </div>
 
-        {error && <div className="text-red-500 text-sm mt-2">{error}</div>}
+        {error && <div className="text-red-500 text-sm mt-2 p-2 bg-red-50 rounded">{error}</div>}
 
         <button
           onClick={handleRegister}
-          className="w-full bg-yellow-400 hover:bg-yellow-500 text-slate-900 font-semibold py-3 rounded-xl mt-4"
+          disabled={isLoading}
+          className={`w-full text-slate-900 font-semibold py-3 rounded-xl mt-4 transition ${
+            isLoading ? 'bg-yellow-300 cursor-not-allowed' : 'bg-yellow-400 hover:bg-yellow-500'
+          }`}
         >
-          Register
+          {isLoading ? 'Registering...' : 'Register'}
         </button>
 
         <div className="mt-6 text-center text-sm text-slate-500">
           <span>
             Already have an account?{" "}
             <button
-              onClick={() => setTab("login")}  // 设置 tab 为 login
+              onClick={() => setTab("login")}
               className="text-yellow-500 font-semibold"
+              disabled={isLoading}
             >
               Login
             </button>
