@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { ArrowLeft } from "lucide-react"; // 确保导入 ArrowLeft 组件
 import { supabase } from "../supabaseClient"; // 引入 supabase 客户端
 
 export default function Register({ setTab }) {
