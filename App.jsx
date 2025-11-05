@@ -21,7 +21,7 @@ export default function App() {
         return <MarketsPage setTab={setTab} />;
         case "login":
         return <LoginPage setTab={setTab} />;
-        case "Register":
+        case "register":
         return <RegisterPage setTab={setTab} />;
       case "trade":
         return <TradePage setTab={setTab} />;
