@@ -89,7 +89,6 @@ export default function Home({ setTab }) {
   const [activeTab, setActiveTab] = useState("favorites");
   const [bannerIndex, setBannerIndex] = useState(0);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [user, setUser] = useState(null); // 存储用户信息
   const [balance, setBalance] = useState(0); // 存储用户的总资产
   const navigate = useNavigate();
 
