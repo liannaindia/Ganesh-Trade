@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { supabase } from "../supabaseClient"; // 引入supabase客户端
-import { useNavigate } from "react-router-dom";
 import { Search, Wallet, Send, Headphones, Gift } from "lucide-react"; // 引入需要的图标
 
 // 单独封装 Banner 组件
@@ -91,7 +90,6 @@ export default function Home({ setTab }) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState(null); // 存储用户信息
   const [balance, setBalance] = useState(0); // 存储用户的总资产
-  const navigate = useNavigate();
 
   const banners = [
     "https://public.bnbstatic.com/image/banner/binance-futures.jpg",
@@ -101,33 +99,72 @@ export default function Home({ setTab }) {
 
   // 检查用户是否登录并获取用户的资产信息
   useEffect(() => {
-    const fetchSession = async () => {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      if (error) {
-        console.error("Error fetching session:", error);
-        return;
-      }
+    let subscription = null; // 初始化订阅
 
-      if (session) {
-        setIsLoggedIn(true);
-        setUser(session.user);
+    // 监听认证状态变化（替换 getSession）
+    const handleAuthStateChange = async (event, session) => {
+      console.log("Auth event:", event, "Session:", session); // 调试日志
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') { // 捕获登录或刷新
+        if (session?.user?.id) {
+          console.log("Session User ID:", session.user.id);
+          setIsLoggedIn(true);
+          setUser(session.user);
 
-        // 获取用户的资产（余额）
-        const { data, error: balanceError } = await supabase
-          .from("users")
-          .select("balance")
-          .eq("id", session.user.id)  // 使用正确的用户 ID
-          .maybeSingle(); // 只返回一个用户数据
-        if (balanceError) {
-          console.error("Error fetching user balance:", balanceError);
-        } else {
-          setBalance(data?.balance || 0);
+          // 获取用户的资产（余额）
+          const { data, error: balanceError } = await supabase
+            .from("users")
+            .select("balance")
+            .eq("id", session.user.id)  // 使用正确的用户 ID
+            .maybeSingle(); // 只返回一个用户数据
+          if (balanceError) {
+            console.error("Error fetching user balance:", balanceError);
+          } else {
+            setBalance(data?.balance || 0);
+          }
+
+          // 实时订阅：监听余额变化
+          subscription = supabase
+            .channel("user-balance-updates")
+            .on(
+              "postgres_changes",
+              {
+                event: "UPDATE",
+                schema: "public",
+                table: "users",
+                filter: `id=eq.${session.user.id}`,
+              },
+              (payload) => {
+                console.log("Balance updated:", payload.new.balance);
+                setBalance(payload.new.balance);
+              }
+            )
+            .subscribe();
+        }
+      } else if (event === 'SIGNED_OUT') {
+        setIsLoggedIn(false);
+        setUser(null);
+        setBalance(0);
+        if (subscription) {
+          supabase.removeChannel(subscription);
+          subscription = null;
         }
       }
     };
 
-    fetchSession();
-  }, []);
+    // 订阅 auth 变化
+    const authSubscription = supabase.auth.onAuthStateChange(handleAuthStateChange);
+
+    // 初次检查（fallback）
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) handleAuthStateChange('INITIAL_SESSION', session);
+    });
+
+    // 清理
+    return () => {
+      authSubscription.data.subscription.unsubscribe();
+      if (subscription) supabase.removeChannel(subscription);
+    };
+  }, []); // 空依赖数组，确保只执行一次
 
   // 设置轮播图自动切换
   useEffect(() => {
@@ -183,16 +220,12 @@ export default function Home({ setTab }) {
     setTab("login");  // 设置当前tab为login
   };
 
-  const handleSearchClick = () => {
-    setTab("markets");
-  };
-
   return (
     <div className="max-w-md mx-auto bg-[#f5f7fb] pb-24 min-h-screen text-slate-900">
       <div className="px-4 mt-4">
         <div
           className="flex items-center bg-white rounded-full shadow-sm py-2 px-4 cursor-pointer"
-          onClick={handleSearchClick}
+          onClick={() => setTab("markets")}
         >
           <Search className="w-5 h-5 text-slate-500" />
           <input
