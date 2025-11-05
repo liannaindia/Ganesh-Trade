@@ -9,6 +9,7 @@ export default function Home({ setTab }) {
   const [bannerIndex, setBannerIndex] = useState(0);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState(null);  // 存储用户信息
+  const [balance, setBalance] = useState(0);  // 存储用户的总资产
   const navigate = useNavigate();
 
   const banners = [
@@ -17,13 +18,26 @@ export default function Home({ setTab }) {
     "https://public.bnbstatic.com/image/banner/binance-earn.jpg",
   ];
 
-  // 检查用户是否登录
+  // 检查用户是否登录并获取用户的资产信息
   useEffect(() => {
     const fetchSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
         setIsLoggedIn(true);
         setUser(session.user);
+        
+        // 获取用户的资产（余额）
+        const { data, error } = await supabase
+          .from("users")
+          .select("balance")
+          .eq("id", session.user.id)  // 根据用户 ID 查询余额
+          .single(); // 只返回一个用户数据
+
+        if (error) {
+          console.error("Error fetching user balance:", error);
+        } else {
+          setBalance(data.balance);  // 设置用户的资产余额
+        }
       }
     };
 
@@ -80,7 +94,6 @@ export default function Home({ setTab }) {
   // 点击登录跳转到登录页面
   const handleLoginRedirect = () => {
     setTab("login");  // 设置当前tab为login
-    
   };
 
   const handleSearchClick = () => {
@@ -144,7 +157,7 @@ export default function Home({ setTab }) {
               <div className="flex justify-between items-center">
                 <div>
                   <div className="text-xs text-slate-500">Total Assets (USDT)</div>
-                  <div className="text-2xl font-bold mt-1">9900.06</div>
+                  <div className="text-2xl font-bold mt-1">{balance.toFixed(2)}</div> {/* 显示余额 */}
                   <div className="text-xs text-slate-500 mt-1">Pnl Today 0.00 / 0%</div>
                 </div>
                 <button
