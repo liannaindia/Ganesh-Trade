@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { ArrowLeft } from "lucide-react";
 import { supabase } from "../supabaseClient"; // 引入supabase客户端
+import { ArrowLeft } from "lucide-react"; // 引入返回箭头组件
 
 export default function Login({ setTab }) {
   const [phoneNumber, setPhoneNumber] = useState("");
@@ -9,21 +9,24 @@ export default function Login({ setTab }) {
 
   const handleLogin = async () => {
     try {
-      // 使用 Supabase 进行邮箱密码登录
-      const { data, error: loginError } = await supabase.auth.signInWithPassword({
-        email: `${phoneNumber}@sms.com`,  // 将手机号转化为邮箱格式
+      // 将手机号转化为符合电子邮件格式的地址
+      const email = `${phoneNumber.replace(/\s+/g, '')}@sms.com`;  // 确保手机号没有空格，并转化为有效邮箱格式
+
+      // 使用 supabase.auth.signInWithPassword 来登录用户
+      const { user, error: loginError } = await supabase.auth.signInWithPassword({
+        email: email,  // 使用转化后的手机号作为电子邮件
         password: password,
       });
 
       if (loginError) {
-        setError(loginError.message);  // 登录失败，设置错误消息
-      } else if (data) {
-        setTab("home");  // 登录成功后跳转到主页
+        setError(loginError.message);
       } else {
-        setError("Invalid credentials");
+        // 登录成功后跳转到主页
+        setTab("home");
       }
     } catch (error) {
       setError("An error occurred during login");
+      console.error("Error during login:", error);
     }
   };
 
