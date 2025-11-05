@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { supabase } from "../supabaseClient"; // 引入supabase客户端
-import bcrypt from 'bcryptjs'; // 引入bcrypt进行密码验证
 import { ArrowLeft } from "lucide-react"; // 引入返回箭头组件
 
 export default function Login({ setTab }) {
@@ -22,17 +21,13 @@ export default function Login({ setTab }) {
         return;
       }
 
-      // 使用 bcrypt 比较输入的密码与数据库中的密码哈希值
-      const passwordMatch = await bcrypt.compare(password, data.password_hash);
-
-      if (!passwordMatch) {
+      // 在这里直接比对密码
+      if (password === data.password_hash) {
+        // 登录成功
+        setTab("home"); // 登录成功后跳转到主页
+      } else {
         setError("Incorrect password");
-        return;
       }
-
-      // 登录成功
-      console.log("Login successful!");
-      setTab("home"); // 登录成功后跳转到主页
     } catch (error) {
       setError("An error occurred during login");
       console.error("Error during login:", error);
