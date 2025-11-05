@@ -15,19 +15,18 @@ export default function Register({ setTab }) {
     }
 
     try {
-      // 使用 Supabase 创建用户
-      const { data, error } = await supabase
-        .from("users")
-        .insert([
-          { phone_number: phoneNumber, password: password }
-        ]);
+      // 使用手机号作为电子邮件进行注册
+      const { user, error: signupError } = await supabase.auth.signUp({
+        email: phoneNumber,  // 使用手机号作为电子邮件
+        password: password
+      });
 
-      if (error) {
-        setError(error.message);
+      if (signupError) {
+        setError(signupError.message);
       } else {
         // 注册成功后自动登录
-        const { user, error: loginError } = await supabase.auth.signInWithPassword({
-          email: phoneNumber, // 假设 phone_number 是邮箱字段
+        const { session, error: loginError } = await supabase.auth.signInWithPassword({
+          email: phoneNumber, // 使用手机号作为电子邮件
           password: password,
         });
 
