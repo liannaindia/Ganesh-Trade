@@ -19,61 +19,88 @@ export default function Home({ setTab }) {
   ];
 
   // 检查用户是否登录并获取用户的资产信息
-  useEffect(() => {
-    const fetchSession = async () => {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      console.log("Session User ID:", session?.user?.id); // 确保session正确
-      if (error) {
-        console.error("Error fetching session:", error);
-        return;
-      }
+  // 检查用户是否登录并获取用户的资产信息
+useEffect(() => {
+  let subscription = null;
 
-      if (session) {
+  // 监听认证状态变化（替换 getSession）
+  const handleAuthStateChange = async (event, session) => {
+    console.log("Auth event:", event, "Session:", session); // 调试日志
+    if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') { // 捕获登录或刷新
+      if (session?.user?.id) {
+        console.log("Session User ID:", session.user.id);
         setIsLoggedIn(true);
         setUser(session.user);
 
         // 获取用户的资产（余额）
-        const { data, error } = await supabase
+        const { data: userData, error: balanceError } = await supabase
           .from("users")
           .select("balance")
-          .eq("id", session.user.id)  // 使用正确的用户 ID
-          .single(); // 只返回一个用户数据
-
-        if (error) {
-          console.error("Error fetching user balance:", error);
+          .eq("id", session.user.id)
+          .maybeSingle();
+        if (balanceError) {
+          console.error("Error fetching user balance:", balanceError);
+        } else if (userData) {
+          setBalance(userData.balance || 0);
         } else {
-          if (data) {
-            setBalance(data.balance || 0); // 设置用户余额
-          } else {
-            console.error("User balance not found.");
-          }
+          console.warn("No balance data found for this user");
+          // 可选：如果无记录，插入默认余额
+          // await supabase.from("users").upsert({ id: session.user.id, balance: 0 });
         }
 
         // 实时订阅：监听余额变化
-        const subscription = supabase
-          .from(`users:id=eq.${session.user.id}`)
-          .on("UPDATE", (payload) => {
-            console.log("User data updated:", payload);
-            setBalance(payload.new.balance); // 更新余额
-          })
+        subscription = supabase
+          .channel("user-balance-updates")
+          .on(
+            "postgres_changes",
+            {
+              event: "UPDATE",
+              schema: "public",
+              table: "users",
+              filter: `id=eq.${session.user.id}`,
+            },
+            (payload) => {
+              console.log("Balance updated:", payload.new.balance);
+              setBalance(payload.new.balance);
+            }
+          )
           .subscribe();
-
-        // 清理订阅
-        return () => {
-          supabase.removeSubscription(subscription);
-        };
       }
-    };
+    } else if (event === 'SIGNED_OUT') {
+      setIsLoggedIn(false);
+      setUser(null);
+      setBalance(0);
+      if (subscription) {
+        supabase.removeChannel(subscription);
+        subscription = null;
+      }
+    }
+  };
 
-    fetchSession();
-  }, []); // 空依赖数组，确保只执行一次
+  // 订阅 auth 变化
+  const authSubscription = supabase.auth.onAuthStateChange(handleAuthStateChange);
 
-  // 获取市场数据
+  // 初次检查（fallback）
+  supabase.auth.getSession().then(({ data: { session } }) => {
+    if (session) handleAuthStateChange('INITIAL_SESSION', session);
+  });
+
+  // 清理
+  return () => {
+    authSubscription.data.subscription.unsubscribe();
+    if (subscription) supabase.removeChannel(subscription);
+  };
+}, []);
+  // Banner自动切换
   useEffect(() => {
-    const timer = setInterval(() => setBannerIndex((prev) => (prev + 1) % banners.length), 4000);
+    const timer = setInterval(
+      () => setBannerIndex((prev) => (prev + 1) % banners.length),
+      4000
+    );
     return () => clearInterval(timer);
   }, [banners.length]);
 
+  // 获取币种行情
   useEffect(() => {
     const fetchTopCoins = async () => {
       try {
@@ -156,18 +183,22 @@ export default function Home({ setTab }) {
           {banners.map((_, i) => (
             <span
               key={i}
-              className={`w-2 h-2 rounded-full ${i === bannerIndex ? "bg-yellow-500" : "bg-slate-300"}`}
+              className={`w-2 h-2 rounded-full ${
+                i === bannerIndex ? "bg-yellow-500" : "bg-slate-300"
+              }`}
             ></span>
           ))}
         </div>
       </div>
 
-      {/* 显示登录按钮或资产信息模块 */}
+      {/* 用户信息模块 */}
       <div className="text-center mt-1">
         {!isLoggedIn ? (
           <>
             <div className="mb-4">
-              <p className="text-base text-slate-500">Welcome To Explore The World of Digital Ganesh.</p>
+              <p className="text-base text-slate-500">
+                Welcome To Explore The World of Digital Ganesh.
+              </p>
             </div>
             <button
               className="bg-yellow-400 hover:bg-yellow-500 text-sm font-medium text-slate-900 rounded-full px-4 py-1.5 transition"
@@ -181,9 +212,15 @@ export default function Home({ setTab }) {
             <div className="bg-white rounded-2xl shadow-sm mx-4 mt-3 p-4 border border-slate-100">
               <div className="flex justify-between items-center">
                 <div>
-                  <div className="text-xs text-slate-500">Total Assets (USDT)</div>
-                  <div className="text-2xl font-bold mt-1">{balance.toFixed(2)}</div> {/* 显示余额 */}
-                  <div className="text-xs text-slate-500 mt-1">Pnl Today 0.00 / 0%</div>
+                  <div className="text-xs text-slate-500">
+                    Total Assets (USDT)
+                  </div>
+                  <div className="text-2xl font-bold mt-1">
+                    {balance ? balance.toFixed(2) : "0.00"}
+                  </div>
+                  <div className="text-xs text-slate-500 mt-1">
+                    Pnl Today 0.00 / 0%
+                  </div>
                 </div>
                 <button
                   className="bg-yellow-400 hover:bg-yellow-500 text-sm font-medium text-slate-900 rounded-full px-4 py-1.5 transition"
