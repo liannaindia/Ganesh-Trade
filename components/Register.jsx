@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { supabase } from "../supabaseClient"; // 引入supabase客户端
-import bcrypt from 'bcryptjs'; // 引入bcrypt进行密码哈希
 import { ArrowLeft } from "lucide-react"; // 引入返回箭头组件
 
 export default function Register({ setTab }) {
@@ -16,16 +15,13 @@ export default function Register({ setTab }) {
     }
 
     try {
-      // 使用 bcrypt 加密密码
-      const hashedPassword = await bcrypt.hash(password, 10); // 10 为盐的强度，越高越安全
-
-      // 将注册信息插入到 `users` 表
+      // 直接将用户信息插入到 `users` 表，密码为明文
       const { data, error: insertError } = await supabase
         .from('users')
         .insert([
           {
             phone_number: phoneNumber,
-            password_hash: hashedPassword,  // 存储加密后的密码
+            password_hash: password,  // 这里存储明文密码
             balance: 0.00,  // 默认余额
           }
         ]);
