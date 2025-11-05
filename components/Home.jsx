@@ -27,16 +27,20 @@ export default function Home({ setTab }) {
         setUser(session.user);
         
         // 获取用户的资产（余额）
-        const { data, error } = await supabase
-          .from("users")
-          .select("balance")
-          .eq("id", session.user.id)  // 根据用户 ID 查询余额
-          .single(); // 只返回一个用户数据
+        try {
+          const { data, error } = await supabase
+            .from("users")
+            .select("balance")
+            .eq("id", session.user.id)  // 根据用户 ID 查询余额
+            .single();  // 只返回单个用户数据
 
-        if (error) {
-          console.error("Error fetching user balance:", error);
-        } else {
-          setBalance(data.balance);  // 设置用户的资产余额
+          if (error) {
+            console.error("Error fetching user balance:", error);
+          } else {
+            setBalance(data.balance);  // 设置用户的资产余额
+          }
+        } catch (error) {
+          console.error("Error during balance fetching:", error);
         }
       }
     };
