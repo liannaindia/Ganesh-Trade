@@ -10,7 +10,7 @@ import InvitePage from "./components/Invite.jsx";
 import LoginPage from "./components/Login.jsx"; 
 import RegisterPage from "./components/Register.jsx"; 
 import BottomNav from "./BottomNav";  // 引入底部导航栏
-import { supabase } from "./components/supabaseClient"; // 新增：引入 supabase（调整路径如果不同）
+import { supabase } from "./supabaseClient"; // 新增：引入 supabase（调整路径如果不同）
 
 export default function App() {
   const [tab, setTab] = useState("home");
