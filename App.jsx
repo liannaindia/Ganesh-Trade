@@ -7,6 +7,8 @@ import MePage from "./components/Me.jsx";
 import RechargePage from "./components/Recharge.jsx";
 import WithdrawPage from "./components/Withdraw.jsx";
 import InvitePage from "./components/Invite.jsx";
+import LoginPage from "./components/Login.jsx"; 
+import RegisterPage from "./components/Register.jsx"; 
 import BottomNav from "./BottomNav";  // 引入底部导航栏
 
 export default function App() {
@@ -17,6 +19,10 @@ export default function App() {
     switch (tab) {
       case "markets":
         return <MarketsPage setTab={setTab} />;
+        case "login":
+        return <LoginPage setTab={setTab} />;
+        case "Register":
+        return <RegisterPage setTab={setTab} />;
       case "trade":
         return <TradePage setTab={setTab} />;
       case "positions":
