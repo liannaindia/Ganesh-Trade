@@ -13,21 +13,17 @@ export default function Login({ setTab, setIsLoggedIn }) {
       .from('users')
       .select('password_hash')
       .eq('phone_number', phoneNumber)
-      .single(); // 获取单一用户
+      .single();
 
     if (queryError || !data) {
       setError("User not found");
       return;
     }
 
-    // 在这里直接比对密码
     if (password === data.password_hash) {
-      // 登录成功，将手机号码存储到 localStorage
       localStorage.setItem('phone_number', phoneNumber);
-
-      // 登录成功后，设置登录状态
       setIsLoggedIn(true);
-      setTab("home"); // 跳转到主页
+      setTab("home");
     } else {
       setError("Incorrect password");
     }
@@ -35,7 +31,7 @@ export default function Login({ setTab, setIsLoggedIn }) {
     setError("An error occurred during login: " + error.message);
     console.error("Error during login:", error);
   }
-};
+};  
 
 
   return (
