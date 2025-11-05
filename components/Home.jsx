@@ -8,8 +8,8 @@ export default function Home({ setTab }) {
   const [activeTab, setActiveTab] = useState("favorites");
   const [bannerIndex, setBannerIndex] = useState(0);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [user, setUser] = useState(null);  // 存储用户信息
-  const [balance, setBalance] = useState(0);  // 存储用户的总资产
+  const [user, setUser] = useState(null); // 存储用户信息
+  const [balance, setBalance] = useState(0); // 存储用户的总资产
   const navigate = useNavigate();
 
   const banners = [
@@ -19,42 +19,51 @@ export default function Home({ setTab }) {
   ];
 
   // 检查用户是否登录并获取用户的资产信息
- useEffect(() => {
-  const fetchSession = async () => {
-    const { data: { session }, error } = await supabase.auth.getSession();
-    if (error) {
-      console.error("Error fetching session:", error);
-      return;
-    }
-    if (session) {
-      setIsLoggedIn(true);
-      setUser(session.user);
+  useEffect(() => {
+    const fetchSession = async () => {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      console.log(session); // 打印 session，确保它包含有效的用户 ID
 
-      // 获取用户的资产（余额）
-      try {
+      if (error) {
+        console.error("Error fetching session:", error);
+        return;
+      }
+
+      if (session) {
+        setIsLoggedIn(true);
+        setUser(session.user);
+
+        // 获取用户的资产（余额）
         const { data, error } = await supabase
           .from("users")
           .select("balance")
-          .eq("id", session.user.id)  // 根据用户 ID 查询余额
-          .single();  // 只返回单个用户数据
+          .eq("id", session.user.id)  // 使用有效的用户 ID
+          .single(); // 只返回单个用户数据
 
         if (error) {
           console.error("Error fetching user balance:", error);
         } else {
-          setBalance(data.balance);  // 设置用户的资产余额
+          setBalance(data.balance); // 设置用户的资产余额
         }
-      } catch (error) {
-        console.error("Error during balance fetching:", error);
+
+        // 监听用户数据变化
+        const subscription = supabase
+          .from(`users:id=eq.${session.user.id}`)
+          .on("UPDATE", (payload) => {
+            console.log("User data updated:", payload);
+            setBalance(payload.new.balance);
+          })
+          .subscribe();
+
+        // 清理订阅
+        return () => {
+          supabase.removeSubscription(subscription);
+        };
       }
-    } else {
-      console.log("User not logged in");
-    }
-  };
+    };
 
-  fetchSession();
-}, []);
-
-
+    fetchSession();
+  }, []);
 
   useEffect(() => {
     const timer = setInterval(() => setBannerIndex((prev) => (prev + 1) % banners.length), 4000);
@@ -105,7 +114,7 @@ export default function Home({ setTab }) {
 
   // 点击登录跳转到登录页面
   const handleLoginRedirect = () => {
-    setTab("login");  // 设置当前tab为login
+    setTab("login"); // 设置当前tab为login
   };
 
   const handleSearchClick = () => {
