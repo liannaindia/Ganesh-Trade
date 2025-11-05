@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import HomePage from "./components/Home.jsx";
 import MarketsPage from "./components/Markets.jsx";
 import TradePage from "./components/Trade.jsx";
@@ -13,16 +13,25 @@ import BottomNav from "./BottomNav";  // 引入底部导航栏
 
 export default function App() {
   const [tab, setTab] = useState("home");
+  const [isLoggedIn, setIsLoggedIn] = useState(false); // 新增：全局登录状态
+
+  // 新增：初始化登录状态，从 localStorage 恢复
+  useEffect(() => {
+    const savedPhone = localStorage.getItem('phone_number');
+    if (savedPhone) {
+      setIsLoggedIn(true);
+    }
+  }, []);
 
   // 页面渲染逻辑
   const renderPage = () => {
     switch (tab) {
       case "markets":
         return <MarketsPage setTab={setTab} />;
-        case "login":
-        return <LoginPage setTab={setTab} />;
-        case "register":
-        return <RegisterPage setTab={setTab} />;
+      case "login":
+        return <LoginPage setTab={setTab} setIsLoggedIn={setIsLoggedIn} />; // 新增：传递 setIsLoggedIn
+      case "register":
+        return <RegisterPage setTab={setTab} setIsLoggedIn={setIsLoggedIn} />; // 新增：传递 setIsLoggedIn
       case "trade":
         return <TradePage setTab={setTab} />;
       case "positions":
@@ -36,7 +45,7 @@ export default function App() {
       case "invite":
         return <InvitePage setTab={setTab} />;
       default:
-        return <HomePage setTab={setTab} />;
+        return <HomePage setTab={setTab} isLoggedIn={isLoggedIn} />; // 新增：传递 isLoggedIn
     }
   };
 
