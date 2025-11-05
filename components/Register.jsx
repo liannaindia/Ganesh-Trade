@@ -7,12 +7,26 @@ export default function Register({ setTab, setIsLoggedIn }) {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false); // 新增：加载状态，避免重复点击
+  const [isLoading, setIsLoading] = useState(false); // 加载状态
 
   const handleRegister = async () => {
-    if (isLoading) return; // 防止重复提交
+    if (isLoading) return;
     setIsLoading(true);
     setError(""); // 清空旧错误
+
+    // Prop 检查（调试用）
+    if (typeof setIsLoggedIn !== 'function') {
+      console.error('setIsLoggedIn is not a function!', setIsLoggedIn);
+      setError('Internal error: Invalid login state handler');
+      setIsLoading(false);
+      return;
+    }
+    if (typeof setTab !== 'function') {
+      console.error('setTab is not a function!', setTab);
+      setError('Internal error: Invalid tab handler');
+      setIsLoading(false);
+      return;
+    }
 
     if (password !== confirmPassword) {
       setError("Passwords do not match");
@@ -32,14 +46,14 @@ export default function Register({ setTab, setIsLoggedIn }) {
         .insert([
           {
             phone_number: phoneNumber,
-            password_hash: password,  // TODO: 生产环境用哈希
+            password_hash: password,  // TODO: 生产环境用哈希 (e.g., bcrypt)
             balance: 0.00,
           }
         ])
-        .select(); // 新增 .select() 返回插入数据，便于调试
+        .select(); // 返回插入数据，便于调试
 
       if (insertError) {
-        console.error("Supabase insert error:", insertError); // 调试日志
+        console.error("Supabase insert error:", insertError);
         setError(insertError.message || "Registration failed");
         setIsLoading(false);
         return;
@@ -50,7 +64,7 @@ export default function Register({ setTab, setIsLoggedIn }) {
       setIsLoggedIn(true);
       setTab("home");
     } catch (error) {
-      console.error("Unexpected error during registration:", error); // 详细日志
+      console.error("Unexpected error during registration:", error);
       setError("An error occurred during registration: " + error.message);
     } finally {
       setIsLoading(false);
