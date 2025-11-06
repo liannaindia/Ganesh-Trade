@@ -3,19 +3,13 @@
 export default {
   content: [
     "./index.html",
-    "./src/**/*.{js,jsx,ts,tsx}", // 扫描所有 React 文件
+    "./src/**/*.{js,jsx,ts,tsx}",
+    // 可选：只扫描前台
+    // "!./src/Backend/**/*.jsx"
   ],
-  darkMode: 'class', // 启用 class-based 暗黑模式
+  darkMode: 'class',
   theme: {
     extend: {
-      colors: {
-        // 可选：自定义颜色扩展
-        primary: {
-          DEFAULT: '#ff9933',
-          light: '#ffaa4d',
-          dark: '#e68a2e',
-        },
-      },
       fontFamily: {
         poppins: ['Poppins', 'system-ui', 'sans-serif'],
       },
@@ -23,13 +17,13 @@ export default {
   },
   plugins: [],
   corePlugins: {
-    preflight: true, // 确保 Tailwind 重置样式生效
+    preflight: true,
   },
-  // 修复：允许任意透明度类（如 from-blue-50/50）
+  // 安全任意值（只允许你用到的）
   safelist: [
-    {
-      pattern: /.*/, // 允许所有类（包括任意透明度）
-      variants: ['hover', 'dark', 'focus', 'active'],
-    },
-  ],
+    'from-blue-50/50',
+    'to-indigo-50/50',
+    'bg-opacity-75',
+    'hover:bg-opacity-75',
+  ].map(cls => ({ pattern: new RegExp(`^${cls}$`) }))
 }
