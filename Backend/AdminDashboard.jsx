@@ -1,17 +1,8 @@
-// src/Backend/AdminDashboard.jsx
+<DOCUMENT filename="AdminDashboard.jsx">
 import { useEffect, useMemo } from "react";
 import { Link, useLocation, Outlet, useNavigate } from "react-router-dom";
 import {
-  Users,
-  DollarSign,
-  CreditCard,
-  Settings,
-  UserCheck,
-  Copy,
-  TrendingUp,
-  LogOut,
-  Bell,
-  ChevronDown,
+  Users, DollarSign, CreditCard, Settings, UserCheck, Copy, TrendingUp, LogOut, Bell, ChevronDown,
 } from "lucide-react";
 
 const menuItems = [
@@ -52,24 +43,24 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="flex h-screen bg-gray-50 text-gray-800">
-      {/* 固定左侧菜单栏 */}
-      <aside className="w-64 bg-white border-r border-gray-200 flex flex-col shadow-sm">
+    <div className="flex h-screen bg-gray-50 text-gray-800 overflow-hidden">
+      {/* 固定左侧菜单栏 - PC 端更宽 */}
+      <aside className="w-80 bg-white border-r border-gray-200 flex flex-col shadow-xl">
         {/* Brand */}
-        <div className="flex items-center justify-between p-4 border-b">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-500 text-white font-bold grid place-items-center shadow">
+        <div className="flex items-center justify-between p-6 border-b">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-blue-600 text-white font-bold text-xl grid place-items-center shadow-lg">
               G
             </div>
-            <h1 className="font-semibold text-lg bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-blue-600">
+            <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-blue-600">
               Ganesh Trade
             </h1>
           </div>
         </div>
 
         {/* Menu */}
-        <nav className="flex-1 px-2 py-3 overflow-y-auto">
-          <ul className="space-y-1">
+        <nav className="flex-1 px-4 py-4 overflow-y-auto">
+          <ul className="space-y-2">
             {menuItems.map((item) => {
               const active = location.pathname.startsWith(item.path);
               const Icon = item.icon;
@@ -77,14 +68,14 @@ export default function AdminDashboard() {
                 <li key={item.path}>
                   <Link
                     to={item.path}
-                    className={`group flex items-center gap-3 px-3 py-2 rounded-xl transition-all ${
+                    className={`group flex items-center gap-4 px-5 py-3.5 rounded-2xl transition-all text-base font-medium ${
                       active
-                        ? "bg-indigo-50 text-indigo-700 border border-indigo-100"
-                        : "hover:bg-gray-100"
+                        ? "bg-gradient-to-r from-indigo-50 to-blue-50 text-indigo-700 border border-indigo-200 shadow-sm"
+                        : "hover:bg-gray-100 text-gray-700"
                     }`}
                   >
-                    <Icon className={`w-5 h-5 ${active ? "text-indigo-600" : "text-gray-500"}`} />
-                    <span className="text-sm font-medium">{item.label}</span>
+                    <Icon className={`w-6 h-6 ${active ? "text-indigo-600" : "text-gray-500"}`} />
+                    <span>{item.label}</span>
                   </Link>
                 </li>
               );
@@ -93,13 +84,13 @@ export default function AdminDashboard() {
         </nav>
 
         {/* Logout */}
-        <div className="p-3 border-t">
+        <div className="p-4 border-t">
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-red-600 hover:bg-red-50"
+            className="w-full flex items-center gap-4 px-5 py-3.5 rounded-2xl text-red-600 hover:bg-red-50 transition-all text-base font-medium"
           >
-            <LogOut className="w-5 h-5" />
-            <span className="text-sm font-medium">退出登录</span>
+            <LogOut className="w-6 h-6" />
+            <span>退出登录</span>
           </button>
         </div>
       </aside>
@@ -107,18 +98,18 @@ export default function AdminDashboard() {
       {/* 主体内容 */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* 顶部导航 */}
-        <header className="bg-white border-b sticky top-0 z-30">
-          <div className="flex items-center justify-between px-6 py-3">
+        <header className="bg-white border-b sticky top-0 z-30 shadow-sm">
+          <div className="flex items-center justify-between px-8 py-4">
             {/* Breadcrumbs */}
-            <nav className="flex items-center text-sm font-medium">
-              <Link to="/admin" className="text-indigo-600 hover:text-indigo-700 font-semibold">
+            <nav className="flex items-center text-base font-medium">
+              <Link to="/admin" className="text-indigo-600 hover:text-indigo-700 font-bold">
                 控制台
               </Link>
               {breadcrumbs.map((crumb, idx) => (
                 <span key={crumb.path} className="flex items-center">
-                  <span className="text-gray-400 mx-2">/</span>
+                  <span className="text-gray-400 mx-3">/</span>
                   {idx === breadcrumbs.length - 1 ? (
-                    <span className="text-gray-900 font-semibold">{crumb.label}</span>
+                    <span className="text-gray-900 font-bold">{crumb.label}</span>
                   ) : (
                     <Link to={crumb.path} className="text-indigo-600 hover:text-indigo-700 font-medium">
                       {crumb.label}
@@ -129,28 +120,28 @@ export default function AdminDashboard() {
             </nav>
 
             {/* 右上角用户区 */}
-            <div className="flex items-center gap-3">
-              <button className="relative p-2 rounded-xl hover:bg-gray-100">
-                <Bell className="w-5 h-5 text-gray-600" />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
+            <div className="flex items-center gap-6">
+              <button className="relative p-3 rounded-xl hover:bg-gray-100 transition">
+                <Bell className="w-6 h-6 text-gray-600" />
+                <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse" />
               </button>
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-500 to-blue-500 text-white font-bold grid place-items-center shadow">
+              <div className="flex items-center gap-4 pr-4">
+                <div className="w-11 h-11 rounded-full bg-gradient-to-br from-indigo-500 to-blue-500 text-white font-bold text-lg grid place-items-center shadow">
                   A
                 </div>
                 <div>
-                  <p className="text-sm font-semibold">超级管理员</p>
-                  <p className="text-xs text-gray-500">admin@ganesh.com</p>
+                  <p className="text-base font-bold">超级管理员</p>
+                  <p className="text-sm text-gray-500">admin@ganesh.com</p>
                 </div>
-                <ChevronDown className="w-4 h-4 text-gray-500" />
+                <ChevronDown className="w-5 h-5 text-gray-500" />
               </div>
             </div>
           </div>
         </header>
 
-        {/* 页面内容区域 */}
-        <main className="flex-1 overflow-auto bg-gray-50 px-8 py-6">
-          <div className="max-w-[1400px] mx-auto">
+        {/* 页面内容区域 - 最大化宽度 */}
+        <main className="flex-1 overflow-auto bg-gray-50 px-10 py-8">
+          <div className="max-w-[1600px] mx-auto w-full">
             <Outlet />
           </div>
         </main>
@@ -158,3 +149,4 @@ export default function AdminDashboard() {
     </div>
   );
 }
+</DOCUMENT>
