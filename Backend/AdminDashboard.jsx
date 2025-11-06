@@ -1,5 +1,5 @@
-// src/Backend/AdminDashboard.jsx (修复布局 + 完全对齐 + 现代设计)
-import { useEffect, useState } from "react";
+// src/Backend/AdminDashboard.jsx
+import { useEffect, useState, useMemo } from "react";
 import { Link, useLocation, Outlet, useNavigate } from "react-router-dom";
 import {
   Users,
@@ -18,127 +18,138 @@ import {
 } from "lucide-react";
 
 const menuItems = [
-  { label: "用户信息", path: "/admin/users", icon: <Users className="w-5 h-5" /> },
-  { label: "充值管理", path: "/admin/recharge", icon: <DollarSign className="w-5 h-5" /> },
-  { label: "提款管理", path: "/admin/withdraw", icon: <CreditCard className="w-5 h-5" /> },
-  { label: "充值通道", path: "/admin/channels", icon: <Settings className="w-5 h-5" /> },
-  { label: "导师管理", path: "/admin/mentors", icon: <UserCheck className="w-5 h-5" /> },
-  { label: "跟单审核", path: "/admin/copytrade", icon: <Copy className="w-5 h-5" /> },
-  { label: "上股管理", path: "/admin/stocks", icon: <TrendingUp className="w-5 h-5" /> },
+  { label: "用户信息", path: "/admin/users", icon: Users },
+  { label: "充值管理", path: "/admin/recharge", icon: DollarSign },
+  { label: "提款管理", path: "/admin/withdraw", icon: CreditCard },
+  { label: "充值通道", path: "/admin/channels", icon: Settings },
+  { label: "导师管理", path: "/admin/mentors", icon: UserCheck },
+  { label: "跟单审核", path: "/admin/copytrade", icon: Copy },
+  { label: "上股管理", path: "/admin/stocks", icon: TrendingUp },
 ];
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(() => {
+    const cache = localStorage.getItem("adminSidebarOpen");
+    return cache ? cache === "true" : true;
+  });
   const [searchOpen, setSearchOpen] = useState(false);
 
   useEffect(() => {
     const isAdmin = localStorage.getItem("adminLoggedIn") === "true";
-    if (!isAdmin) {
-      navigate("/admin-login", { replace: true });
-    }
+    if (!isAdmin) navigate("/admin-login", { replace: true });
   }, [navigate]);
+
+  useEffect(() => {
+    localStorage.setItem("adminSidebarOpen", String(sidebarOpen));
+  }, [sidebarOpen]);
+
+  const breadcrumbs = useMemo(() => {
+    const parts = location.pathname.split("/").filter(Boolean);
+    const idxAdmin = parts.indexOf("admin");
+    const trail = parts.slice(idxAdmin + 1);
+    return trail.map((seg, idx, arr) => {
+      const matched = menuItems.find((m) => m.path.includes(seg));
+      return {
+        label: matched?.label || seg,
+        path: "/admin/" + arr.slice(0, idx + 1).join("/"),
+      };
+    });
+  }, [location.pathname]);
 
   const handleLogout = () => {
     localStorage.removeItem("adminLoggedIn");
     navigate("/admin-login", { replace: true });
   };
 
-  const breadcrumbs = location.pathname
-    .split("/")
-    .filter((p) => p && p !== "admin")
-    .map((segment, idx, arr) => {
-      const matched = menuItems.find((m) => m.path.includes(segment));
-      return {
-        label: matched?.label || segment,
-        path: "/admin/" + arr.slice(0, idx + 1).join("/"),
-      };
-    });
-
   return (
-    <div className="flex h-screen bg-gray-100">
-      {/* 侧边栏 - 固定宽度 + 完全对齐 */}
+    <div className="flex h-screen bg-gray-50 text-gray-800">
+      {/* Sidebar */}
       <aside
         className={`${
           sidebarOpen ? "w-64" : "w-20"
-        } bg-gradient-to-b from-slate-900 to-slate-800 text-white transition-all duration-300 flex flex-col shadow-2xl z-50`}
+        } bg-white border-r border-gray-200 transition-all duration-300 flex flex-col shadow-sm`}
       >
-        {/* Logo 区域 */}
-        <div className="flex items-center justify-between p-5 border-b border-slate-700">
-          <div className={`flex items-center gap-3 ${sidebarOpen ? "block" : "justify-center"}`}>
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center shadow-lg">
-              <span className="text-white font-bold text-xl">G</span>
+        {/* Brand */}
+        <div className="flex items-center justify-between p-4 border-b">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-500 text-white font-bold grid place-items-center shadow">
+              G
             </div>
-            <h1 className={`font-bold text-xl bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-400 ${sidebarOpen ? "block" : "hidden"}`}>
+            <h1
+              className={`font-semibold text-lg bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-blue-600 ${
+                sidebarOpen ? "block" : "hidden"
+              }`}
+            >
               Ganesh Trade
             </h1>
           </div>
           <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-2 rounded-lg hover:bg-slate-700 transition-all"
+            onClick={() => setSidebarOpen((v) => !v)}
+            className="p-2 rounded-lg hover:bg-gray-100"
+            aria-label="toggle sidebar"
           >
             {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
         </div>
 
-        {/* 导航菜单 */}
-        <nav className="flex-1 mt-4 px-3 pb-4">
+        {/* Menu */}
+        <nav className="flex-1 px-2 py-3 overflow-y-auto">
           <ul className="space-y-1">
-            {menuItems.map((item) => (
-              <li key={item.path}>
-                <Link
-                  to={item.path}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group relative
-                    ${
-                      location.pathname.startsWith(item.path)
-                        ? "bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-lg"
-                        : "text-slate-300 hover:bg-slate-700 hover:text-white"
+            {menuItems.map((item) => {
+              const active = location.pathname.startsWith(item.path);
+              const Icon = item.icon;
+              return (
+                <li key={item.path}>
+                  <Link
+                    to={item.path}
+                    className={`group relative flex items-center gap-3 px-3 py-2 rounded-xl transition-all ${
+                      active
+                        ? "bg-indigo-50 text-indigo-700 border border-indigo-100"
+                        : "hover:bg-gray-100"
                     }`}
-                >
-                  <div className="relative z-10">
-                    {item.icon}
-                  </div>
-                  <span className={`font-medium transition-opacity ${sidebarOpen ? "block" : "hidden"}`}>
-                    {item.label}
-                  </span>
-                  {/* 折叠时悬停提示 */}
-                  {!sidebarOpen && (
-                    <div className="absolute left-full ml-2 px-3 py-2 bg-slate-700 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-xl">
+                  >
+                    <Icon className={`w-5 h-5 ${active ? "text-indigo-600" : "text-gray-500"}`} />
+                    <span className={`${sidebarOpen ? "block" : "hidden"} text-sm font-medium`}>
                       {item.label}
-                    </div>
-                  )}
-                  {/* 当前页指示条 */}
-                  {location.pathname.startsWith(item.path) && (
-                    <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-cyan-400 rounded-r-full"></div>
-                  )}
-                </Link>
-              </li>
-            ))}
+                    </span>
+                    {!sidebarOpen && (
+                      <span className="absolute left-full ml-2 px-2 py-1 rounded-md bg-gray-900 text-white text-xs opacity-0 group-hover:opacity-100 shadow">
+                        {item.label}
+                      </span>
+                    )}
+                    {active && (
+                      <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-indigo-500 rounded-r-full"></span>
+                    )}
+                  </Link>
+                </li>
+              );
+            })}
           </ul>
         </nav>
 
-        {/* 退出登录 */}
-        <div className="p-4 border-t border-slate-700">
+        {/* Logout */}
+        <div className="p-3 border-t">
           <button
             onClick={handleLogout}
-            className={`flex items-center gap-3 w-full px-4 py-3 rounded-xl text-red-400 hover:bg-slate-700 hover:text-red-300 transition-all ${
+            className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-red-600 hover:bg-red-50 ${
               !sidebarOpen && "justify-center"
             }`}
           >
             <LogOut className="w-5 h-5" />
-            <span className={`${sidebarOpen ? "block" : "hidden"} font-medium`}>退出登录</span>
+            <span className={`${sidebarOpen ? "inline" : "hidden"} text-sm font-medium`}>退出登录</span>
           </button>
         </div>
       </aside>
 
-      {/* 主内容区 */}
+      {/* Main */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* 顶部栏 */}
-        <header className="bg-white shadow-sm border-b border-gray-200">
-          <div className="flex items-center justify-between px-6 py-4">
-            {/* 面包屑 */}
-            <nav className="flex items-center space-x-2 text-sm">
+        {/* Topbar */}
+        <header className="bg-white border-b">
+          <div className="flex items-center justify-between px-5 py-3">
+            {/* Breadcrumbs */}
+            <nav className="flex items-center text-sm">
               <Link to="/admin" className="text-gray-500 hover:text-gray-700 font-medium">
                 控制台
               </Link>
@@ -148,7 +159,7 @@ export default function AdminDashboard() {
                   {idx === breadcrumbs.length - 1 ? (
                     <span className="text-gray-900 font-semibold">{crumb.label}</span>
                   ) : (
-                    <Link to={crumb.path} className="text-blue-600 hover:text-blue-800 font-medium">
+                    <Link to={crumb.path} className="text-indigo-600 hover:text-indigo-700 font-medium">
                       {crumb.label}
                     </Link>
                   )}
@@ -156,38 +167,36 @@ export default function AdminDashboard() {
               ))}
             </nav>
 
-            {/* 右侧操作区 */}
-            <div className="flex items-center gap-4">
-              {/* 全局搜索 */}
-              <div className={`relative transition-all duration-300 ${searchOpen ? "w-64" : "w-10"}`}>
+            {/* Actions */}
+            <div className="flex items-center gap-3">
+              <div className={`relative ${searchOpen ? "w-64" : "w-10"} transition-all`}>
                 <input
                   type="text"
                   placeholder="搜索用户、订单、导师..."
-                  className={`w-full pl-10 pr-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
+                  className={`w-full pl-10 pr-3 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
                     searchOpen ? "block" : "hidden"
                   }`}
                 />
                 <button
-                  onClick={() => setSearchOpen(!searchOpen)}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                  onClick={() => setSearchOpen((v) => !v)}
+                  className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                  aria-label="toggle search"
                 >
                   <Search className="w-5 h-5" />
                 </button>
               </div>
 
-              {/* 通知 */}
-              <button className="relative p-2 rounded-xl hover:bg-gray-100 transition-all">
+              <button className="relative p-2 rounded-xl hover:bg-gray-100" aria-label="notifications">
                 <Bell className="w-5 h-5 text-gray-600" />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
               </button>
 
-              {/* 用户信息 */}
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-full flex items-center justify-center shadow-md">
-                  <span className="text-white font-bold">A</span>
+                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-500 to-blue-500 text-white font-bold grid place-items-center shadow">
+                  A
                 </div>
                 <div className="hidden md:block">
-                  <p className="text-sm font-semibold text-gray-800">超级管理员</p>
+                  <p className="text-sm font-semibold">超级管理员</p>
                   <p className="text-xs text-gray-500">admin@ganesh.com</p>
                 </div>
                 <ChevronDown className="w-4 h-4 text-gray-500" />
@@ -196,9 +205,9 @@ export default function AdminDashboard() {
           </div>
         </header>
 
-        {/* 子页面内容区 - 完全对齐 */}
-        <main className="flex-1 overflow-auto bg-gray-50 p-6">
-          <div className="max-w-full mx-auto">
+        {/* Content */}
+        <main className="flex-1 overflow-auto p-5 bg-gray-50">
+          <div className="max-w-[1400px] mx-auto">
             <Outlet />
           </div>
         </main>
