@@ -12,7 +12,6 @@ import {
   Menu,
   X,
   LogOut,
-  Search,
   Bell,
   ChevronDown,
 } from "lucide-react";
@@ -34,7 +33,6 @@ export default function AdminDashboard() {
     const cache = localStorage.getItem("adminSidebarOpen");
     return cache ? cache === "true" : true;
   });
-  const [searchOpen, setSearchOpen] = useState(false);
 
   useEffect(() => {
     const isAdmin = localStorage.getItem("adminLoggedIn") === "true";
@@ -88,7 +86,6 @@ export default function AdminDashboard() {
           <button
             onClick={() => setSidebarOpen((v) => !v)}
             className="p-2 rounded-lg hover:bg-gray-100"
-            aria-label="toggle sidebar"
           >
             {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
@@ -149,8 +146,8 @@ export default function AdminDashboard() {
         <header className="bg-white border-b">
           <div className="flex items-center justify-between px-5 py-3">
             {/* Breadcrumbs */}
-            <nav className="flex items-center text-sm">
-              <Link to="/admin" className="text-gray-500 hover:text-gray-700 font-medium">
+            <nav className="flex items-center text-sm font-medium">
+              <Link to="/admin" className="text-indigo-600 hover:text-indigo-700 font-semibold">
                 控制台
               </Link>
               {breadcrumbs.map((crumb, idx) => (
@@ -167,30 +164,12 @@ export default function AdminDashboard() {
               ))}
             </nav>
 
-            {/* Actions */}
+            {/* Right side */}
             <div className="flex items-center gap-3">
-              <div className={`relative ${searchOpen ? "w-64" : "w-10"} transition-all`}>
-                <input
-                  type="text"
-                  placeholder="搜索用户、订单、导师..."
-                  className={`w-full pl-10 pr-3 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
-                    searchOpen ? "block" : "hidden"
-                  }`}
-                />
-                <button
-                  onClick={() => setSearchOpen((v) => !v)}
-                  className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                  aria-label="toggle search"
-                >
-                  <Search className="w-5 h-5" />
-                </button>
-              </div>
-
-              <button className="relative p-2 rounded-xl hover:bg-gray-100" aria-label="notifications">
+              <button className="relative p-2 rounded-xl hover:bg-gray-100">
                 <Bell className="w-5 h-5 text-gray-600" />
                 <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
               </button>
-
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-500 to-blue-500 text-white font-bold grid place-items-center shadow">
                   A
