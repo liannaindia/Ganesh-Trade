@@ -1,4 +1,4 @@
-<DOCUMENT filename="index.css">
+/* src/index.css */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -49,4 +49,3 @@ table {
 button, a {
   transition: all 0.2s ease;
 }
-</DOCUMENT>
