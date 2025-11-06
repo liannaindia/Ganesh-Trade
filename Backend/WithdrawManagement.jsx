@@ -1,73 +1,82 @@
-import { useState, useEffect } from 'react'
-import { supabase } from '../supabaseClient'
+// src/Backend/WithdrawManagement.jsx
+import { useState, useEffect } from 'react';
+import { supabase } from '../supabaseClient';
+import { RefreshCw } from 'lucide-react';
 
-const WithdrawManagement = () => {
-  const [withdraws, setWithdraws] = useState([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    fetchWithdraws()
-  }, [])
+export default function WithdrawManagement() {
+  const [withdraws, setWithdraws] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const fetchWithdraws = async () => {
+    setLoading(true);
     try {
-      const { data, error } = await supabase.from('withdraws').select('*').order('created_at', { ascending: false })
-      if (error) throw error
-      setWithdraws(data || [])
+      const { data, error } = await supabase.from('withdraws').select('*').order('created_at', { ascending: false });
+      if (error) throw error;
+      setWithdraws(data || []);
     } catch (error) {
-      console.error('获取提款记录失败:', error)
+      alert('获取提款记录失败: ' + error.message);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleApprove = async (id) => {
-    await supabase.from('withdraws').update({ status: 'approved' }).eq('id', id)
-    fetchWithdraws()
-  }
+    await supabase.from('withdraws').update({ status: 'approved' }).eq('id', id);
+    fetchWithdraws();
+  };
 
-  if (loading) return <div className="p-6">加载中...</div>
+  useEffect(() => { fetchWithdraws(); }, []);
 
   return (
-    <div className="p-6">
-      <h2 className="text-xl font-bold mb-4">提款管理</h2>
-      <div className="bg-white shadow-md rounded-lg overflow-hidden">
-        <table className="w-full">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">用户ID</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">金额</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">时间</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">状态</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">操作</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200">
-            {withdraws.map((item) => (
-              <tr key={item.id} className="hover:bg-gray-50">
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.id}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.user_id}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${item.amount}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.created_at}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm">
-                  <span className={`px-2 py-1 rounded-full text-xs ${item.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'}`}>
-                    {item.status}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  {item.status === 'pending' && (
-                    <button onClick={() => handleApprove(item.id)} className="bg-green-500 text-white px-3 py-1 rounded mr-2 hover:bg-green-600">批准</button>
-                  )}
-                  <button className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600">详情</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+    <div className="admin-card p-6">
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-2xl font-bold text-slate-800 dark:text-white">提款管理</h2>
+        <button onClick={fetchWithdraws} className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800">
+          <RefreshCw className={`w-5 h-5 text-slate-600 dark:text-slate-400 ${loading ? 'animate-spin' : ''}`} />
+        </button>
       </div>
-    </div>
-  )
-}
 
-export default WithdrawManagement
+      {loading ? (
+        <div className="text-center py-12 text-slate-500 dark:text-slate-400">加载中...</div>
+      ) : withdraws.length === 0 ? (
+        <div className="text-center py-12 text-slate-500 dark:text-slate-400">暂无提款记录</div>
+      ) : (
+        <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>用户ID</th>
+                <th>金额</th>
+                <th>时间</th>
+                <th>状态</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              {withdraws.map((item) => (
+                <tr key={item.id}>
+                  <td>#{item.id}</td>
+                  <td>{item.user_id}</td>
+                  <td className="font-semibold text-rose-600">${item.amount}</td>
+                  <td>{new Date(item.created_at).toLocaleString("zh-CN")}</td>
+                  <td>
+                    <span className={item.status === 'pending' ? 'status-pending' : 'status-approved'}>
+                      {item.status === 'pending' ? '待审' : '已完成'}
+                    </span>
+                  </td>
+                  <td>
+                    {item.status === 'pending' && (
+                      <button onClick={() => handleApprove(item.id)} className="btn-success text-xs">批准</button>
+                    )}
+                    <button className="btn-ghost text-xs ml-2">详情</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
