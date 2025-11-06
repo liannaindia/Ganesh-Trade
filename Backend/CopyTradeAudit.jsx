@@ -1,74 +1,76 @@
-import { useState, useEffect } from 'react'
-import { supabase } from '../supabaseClient'
+// src/Backend/CopyTradeAudit.jsx
+import { useState, useEffect } from 'react';
+import { supabase } from '../supabaseClient';
+import { RefreshCw } from 'lucide-react';
 
-const CopyTradeAudit = () => {
-  const [audits, setAudits] = useState([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    fetchAudits()
-  }, [])
+export default function CopyTradeAudit() {
+  const [audits, setAudits] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const fetchAudits = async () => {
+    setLoading(true);
     try {
-      const { data, error } = await supabase.from('copytrades').select('*').eq('status', 'pending')
-      if (error) throw error
-      setAudits(data || [])
+      const { data, error } = await supabase.from('copytrades').select('*').eq('status', 'pending');
+      if (error) throw error;
+      setAudits(data || []);
     } catch (error) {
-      console.error('获取跟单审核失败:', error)
+      alert('获取跟单审核失败: ' + error.message);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
-  const handleApprove = async (id) => {
-    await supabase.from('copytrades').update({ status: 'approved' }).eq('id', id)
-    fetchAudits()
-  }
+  const handleAction = async (id, status) => {
+    await supabase.from('copytrades').update({ status }).eq('id', id);
+    fetchAudits();
+  };
 
-  const handleReject = async (id) => {
-    await supabase.from('copytrades').update({ status: 'rejected' }).eq('id', id)
-    fetchAudits()
-  }
-
-  if (loading) return <div className="p-6">加载中...</div>
+  useEffect(() => { fetchAudits(); }, []);
 
   return (
-    <div className="p-6">
-      <h2 className="text-xl font-bold mb-4">跟单审核</h2>
-      <div className="bg-white shadow-md rounded-lg overflow-hidden">
-        <table className="w-full">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">用户</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">导师</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">金额</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">状态</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">操作</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200">
-            {audits.map((item) => (
-              <tr key={item.id} className="hover:bg-gray-50">
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.id}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.user_id}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.mentor_id}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${item.amount}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm">
-                  <span className="px-2 py-1 rounded-full text-xs bg-yellow-100 text-yellow-800">待审</span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <button onClick={() => handleApprove(item.id)} className="bg-green-500 text-white px-3 py-1 rounded mr-2 hover:bg-green-600">批准</button>
-                  <button onClick={() => handleReject(item.id)} className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">拒绝</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+    <div className="admin-card p-6">
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-2xl font-bold text-slate-800 dark:text-white">跟单审核</h2>
+        <button onClick={fetchAudits} className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800">
+          <RefreshCw className={`w-5 h-5 text-slate-600 dark:text-slate-400 ${loading ? 'animate-spin' : ''}`} />
+        </button>
       </div>
-    </div>
-  )
-}
 
-export default CopyTradeAudit
+      {loading ? (
+        <div className="text-center py-12 text-slate-500 dark:text-slate-400">加载中...</div>
+      ) : audits.length === 0 ? (
+        <div className="text-center py-12 text-slate-500 dark:text-slate-400">暂无待审核跟单</div>
+      ) : (
+        <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>用户</th>
+                <th>导师</th>
+                <th>金额</th>
+                <th>状态</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              {audits.map((item) => (
+                <tr key={item.id}>
+                  <td>#{item.id}</td>
+                  <td>{item.user_id}</td>
+                  <td>{item.mentor_id}</td>
+                  <td className="font-semibold text-indigo-600">${item.amount}</td>
+                  <td><span className="status-pending">待审</span></td>
+                  <td className="space-x-2">
+                    <button onClick={() => handleAction(item.id, 'approved')} className="btn-success text-xs">批准</button>
+                    <button onClick={() => handleAction(item.id, 'rejected')} className="btn-danger text-xs">拒绝</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
