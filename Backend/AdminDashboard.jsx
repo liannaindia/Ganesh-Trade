@@ -14,13 +14,8 @@ import {
   X,
 } from "lucide-react";
 
-interface MenuItem {
-  label: string;
-  path: string;
-  icon: React.ReactNode;
-}
-
-const menuItems: MenuItem[] = [
+// 直接定义菜单数据（无需 interface）
+const menuItems = [
   { label: "用户信息", path: "/admin/users", icon: <Users className="w-5 h-5" /> },
   { label: "充值管理", path: "/admin/recharge", icon: <DollarSign className="w-5 h-5" /> },
   { label: "提款管理", path: "/admin/withdraw", icon: <CreditCard className="w-5 h-5" /> },
@@ -35,7 +30,7 @@ export default function AdminDashboard() {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
-  // ---------- 权限检查 ----------
+  // 权限检查
   useEffect(() => {
     const checkAdmin = async () => {
       const {
@@ -48,19 +43,21 @@ export default function AdminDashboard() {
     checkAdmin();
   }, [navigate]);
 
-  // ---------- 面包屑 ----------
+  // 面包屑导航
   const breadcrumbs = location.pathname
     .split("/")
     .filter((p) => p && p !== "admin")
-    .map((segment, idx, arr) => ({
-      label:
-        menuItems.find((m) => m.path.includes(segment))?.label ?? segment,
-      path: "/admin/" + arr.slice(0, idx + 1).join("/"),
-    }));
+    .map((segment, idx, arr) => {
+      const matched = menuItems.find((m) => m.path.includes(segment));
+      return {
+        label: matched?.label || segment,
+        path: "/admin/" + arr.slice(0, idx + 1).join("/"),
+      };
+    });
 
   return (
     <div className="flex h-screen bg-gray-50">
-      {/* ---------- 侧边栏 ---------- */}
+      {/* 侧边栏 */}
       <aside
         className={`${
           sidebarOpen ? "w-64" : "w-16"
@@ -110,7 +107,7 @@ export default function AdminDashboard() {
         </nav>
       </aside>
 
-      {/* ---------- 主内容区 ---------- */}
+      {/* 主内容区 */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* 顶部面包屑 */}
         <header className="bg-white shadow-sm border-b px-6 py-3">
@@ -138,7 +135,7 @@ export default function AdminDashboard() {
           </nav>
         </header>
 
-        {/* 子页面渲染区 */}
+        {/* 子页面内容 */}
         <main className="flex-1 overflow-auto p-6 bg-gray-50">
           <Outlet />
         </main>
