@@ -1,4 +1,4 @@
-<DOCUMENT filename="UserManagement.jsx">
+// src/Backend/UserManagement.jsx
 import { useState, useEffect } from "react";
 import { supabase } from "../supabaseClient";
 
@@ -29,7 +29,6 @@ export default function UserManagement() {
 
   return (
     <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-10 min-h-full">
-      {/* 标题区 */}
       <div className="mb-10 flex items-center justify-between">
         <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-3">
           <span className="w-2 h-8 bg-indigo-600 rounded-full" />
@@ -38,7 +37,6 @@ export default function UserManagement() {
         <p className="text-base text-gray-500">共 {users.length} 位用户</p>
       </div>
 
-      {/* 表格 - PC 端固定列宽，无横向滚动 */}
       <div className="border border-gray-200 rounded-xl overflow-hidden">
         <table className="min-w-full text-base text-gray-700">
           <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-300">
@@ -92,4 +90,3 @@ export default function UserManagement() {
     </div>
   );
 }
-</DOCUMENT>
