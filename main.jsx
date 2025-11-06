@@ -1,10 +1,17 @@
-// src/main.jsx (完整前后端剥离版)
+// src/main.jsx
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Link,
+  useNavigate,
+  useLocation,
+} from "react-router-dom";
 import "./index.css";
 
-// ==================== 前台页面 ====================
+// ==================== 前台组件 ====================
 import App from "./App";
 import Home from "./components/Home.jsx";
 import Markets from "./components/Markets.jsx";
@@ -15,7 +22,7 @@ import Recharge from "./components/Recharge.jsx";
 import Withdraw from "./components/Withdraw.jsx";
 import Invite from "./components/Invite.jsx";
 
-// ==================== 后台页面 ====================
+// ==================== 后台组件 ====================
 import AdminLogin from "./Backend/AdminLogin.jsx";
 import AdminDashboard from "./Backend/AdminDashboard.jsx";
 import UserManagement from "./Backend/UserManagement.jsx";
@@ -25,6 +32,26 @@ import RechargeChannel from "./Backend/RechargeChannel.jsx";
 import MentorManagement from "./Backend/MentorManagement.jsx";
 import CopyTradeAudit from "./Backend/CopyTradeAudit.jsx";
 import StockManagement from "./Backend/StockManagement.jsx";
+
+// ==================== 受保护路由组件 ====================
+function ProtectedRoute({ children }) {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  React.useEffect(() => {
+    const isAdmin = localStorage.getItem("adminLoggedIn") === "true";
+    if (!isAdmin && location.pathname.startsWith("/admin")) {
+      navigate("/admin-login", { replace: true });
+    }
+  }, [location, navigate]);
+
+  const isAdmin = localStorage.getItem("adminLoggedIn") === "true";
+  if (!isAdmin && location.pathname.startsWith("/admin")) {
+    return null; // 跳转中
+  }
+
+  return children;
+}
 
 // ==================== 404 页面 ====================
 const NotFound = () => (
@@ -50,6 +77,7 @@ const NotFound = () => (
   </div>
 );
 
+// ==================== 主渲染 ====================
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <Router>
@@ -69,7 +97,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
         {/* ==================== 后台独立登录 ==================== */}
         <Route path="/admin-login" element={<AdminLogin />} />
 
-        {/* ==================== 后台管理面板 ==================== */}
+        {/* ==================== 后台管理面板（受保护） ==================== */}
         <Route
           path="/admin"
           element={
@@ -104,23 +132,3 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     </Router>
   </React.StrictMode>
 );
-
-// ==================== 受保护路由组件 ====================
-function ProtectedRoute({ children }) {
-  const navigate = useNavigate();
-  const location = useLocation();
-
-  useEffect(() => {
-    const isAdmin = localStorage.getItem("adminLoggedIn") === "true";
-    if (!isAdmin && location.pathname.startsWith("/admin")) {
-      navigate("/admin-login", { replace: true });
-    }
-  }, [location, navigate]);
-
-  const isAdmin = localStorage.getItem("adminLoggedIn") === "true";
-  if (!isAdmin && location.pathname.startsWith("/admin")) {
-    return null; // 跳转中
-  }
-
-  return children;
-}
