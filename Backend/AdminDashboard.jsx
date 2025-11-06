@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { useNavigate, Outlet } from 'react-router-dom'
-import { supabase } from './supabaseClient' // 调整路径如果需要
+import { supabase } from '../supabaseClient' // 调整路径如果需要
 
 const AdminDashboard = () => {
   const navigate = useNavigate()
