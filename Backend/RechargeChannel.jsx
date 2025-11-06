@@ -1,71 +1,62 @@
-// src/Backend/RechargeChannel.jsx
-import { useState, useEffect } from 'react';
-import { supabase } from '../supabaseClient';
-import { RefreshCw } from 'lucide-react';
+import { useState, useEffect } from 'react'
+import { supabase } from '../supabaseClient'
 
-export default function RechargeChannel() {
-  const [channels, setChannels] = useState([]);
-  const [loading, setLoading] = useState(true);
+const RechargeChannel = () => {
+  const [channels, setChannels] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetchChannels()
+  }, [])
 
   const fetchChannels = async () => {
-    setLoading(true);
     try {
-      const { data, error } = await supabase.from('channels').select('*');
-      if (error) throw error;
-      setChannels(data || []);
+      const { data, error } = await supabase.from('channels').select('*')
+      if (error) throw error
+      setChannels(data || [])
     } catch (error) {
-      alert('获取通道失败: ' + error.message);
+      console.error('获取通道失败:', error)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
-  useEffect(() => { fetchChannels(); }, []);
+  if (loading) return <div className="p-6">加载中...</div>
 
   return (
-    <div className="admin-card p-6">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold text-slate-800 dark:text-white">充值通道管理</h2>
-        <button onClick={fetchChannels} className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800">
-          <RefreshCw className={`w-5 h-5 text-slate-600 dark:text-slate-400 ${loading ? 'animate-spin' : ''}`} />
-        </button>
-      </div>
-
-      {loading ? (
-        <div className="text-center py-12 text-slate-500 dark:text-slate-400">加载中...</div>
-      ) : channels.length === 0 ? (
-        <div className="text-center py-12 text-slate-500 dark:text-slate-400">暂无充值通道</div>
-      ) : (
-        <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
-          <table className="admin-table">
-            <thead>
-              <tr>
-                <th>通道名</th>
-                <th>费率</th>
-                <th>状态</th>
-                <th>操作</th>
+    <div className="p-6">
+      <h2 className="text-xl font-bold mb-4">充值通道管理</h2>
+      <div className="bg-white shadow-md rounded-lg overflow-hidden">
+        <table className="w-full">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">通道名</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">费率</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">状态</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">操作</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-200">
+            {channels.map((channel) => (
+              <tr key={channel.id} className="hover:bg-gray-50">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{channel.name}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{channel.rate}%</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm">
+                  <span className={`px-2 py-1 rounded-full text-xs ${channel.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                    {channel.status}
+                  </span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                  <button className="bg-blue-500 text-white px-3 py-1 rounded mr-2 hover:bg-blue-600">编辑</button>
+                  <button className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600">启用</button>
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {channels.map((c) => (
-                <tr key={c.id}>
-                  <td className="font-medium">{c.name}</td>
-                  <td>{c.rate}%</td>
-                  <td>
-                    <span className={c.status === 'active' ? 'status-approved' : 'status-rejected'}>
-                      {c.status === 'active' ? '启用' : '禁用'}
-                    </span>
-                  </td>
-                  <td className="space-x-2">
-                    <button className="btn-ghost text-xs">编辑</button>
-                    <button className="btn-success text-xs">启用</button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
-  );
+  )
 }
+
+export default RechargeChannel
