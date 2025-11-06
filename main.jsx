@@ -1,4 +1,4 @@
-// src/main.jsx
+// src/main.jsx (已添加完整登录保护 + 防止直接访问)
 import React from "react";
 import ReactDOM from "react-dom/client";
 import {
@@ -40,14 +40,15 @@ function ProtectedRoute({ children }) {
 
   React.useEffect(() => {
     const isAdmin = localStorage.getItem("adminLoggedIn") === "true";
+    // 任何 /admin 开头的路径，未登录一律跳转到登录页
     if (!isAdmin && location.pathname.startsWith("/admin")) {
-      navigate("/admin-login", { replace: true });
+      navigate("/admin-login", { replace: true, state: { from: location } });
     }
   }, [location, navigate]);
 
   const isAdmin = localStorage.getItem("adminLoggedIn") === "true";
   if (!isAdmin && location.pathname.startsWith("/admin")) {
-    return null; // 跳转中
+    return null; // 跳转中，防止闪烁
   }
 
   return children;
@@ -94,10 +95,10 @@ ReactDOM.createRoot(document.getElementById("root")).render(
           <Route path="invite" element={<Invite />} />
         </Route>
 
-        {/* ==================== 后台独立登录 ==================== */}
+        {/* ==================== 后台独立登录页 ==================== */}
         <Route path="/admin-login" element={<AdminLogin />} />
 
-        {/* ==================== 后台管理面板（受保护） ==================== */}
+        {/* ==================== 后台管理面板（必须登录） ==================== */}
         <Route
           path="/admin"
           element={
