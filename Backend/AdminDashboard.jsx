@@ -1,7 +1,6 @@
 // src/Backend/AdminDashboard.jsx
 import { useEffect, useState } from "react";
 import { Link, useLocation, Outlet, useNavigate } from "react-router-dom";
-import { supabase } from "../supabaseClient";
 import {
   Users,
   DollarSign,
@@ -12,9 +11,9 @@ import {
   TrendingUp,
   Menu,
   X,
+  LogOut,
 } from "lucide-react";
 
-// 直接定义菜单数据（无需 interface）
 const menuItems = [
   { label: "用户信息", path: "/admin/users", icon: <Users className="w-5 h-5" /> },
   { label: "充值管理", path: "/admin/recharge", icon: <DollarSign className="w-5 h-5" /> },
@@ -30,20 +29,19 @@ export default function AdminDashboard() {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
-  // 权限检查
+  // 独立登录验证
   useEffect(() => {
-    const checkAdmin = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user || !user.user_metadata?.isAdmin) {
-        navigate("/me", { replace: true });
-      }
-    };
-    checkAdmin();
+    const isAdmin = localStorage.getItem("adminLoggedIn") === "true";
+    if (!isAdmin) {
+      navigate("/admin-login", { replace: true });
+    }
   }, [navigate]);
 
-  // 面包屑导航
+  const handleLogout = () => {
+    localStorage.removeItem("adminLoggedIn");
+    navigate("/admin-login", { replace: true });
+  };
+
   const breadcrumbs = location.pathname
     .split("/")
     .filter((p) => p && p !== "admin")
@@ -61,11 +59,11 @@ export default function AdminDashboard() {
       <aside
         className={`${
           sidebarOpen ? "w-64" : "w-16"
-        } transition-all duration-300 bg-white shadow-lg flex flex-col`}
+        } transition-all duration-300 bg-gradient-to-b from-gray-900 to-gray-800 text-white shadow-2xl flex flex-col`}
       >
-        <div className="flex items-center justify-between p-4 border-b">
+        <div className="flex items-center justify-between p-4 border-b border-gray-700">
           <h1
-            className={`font-bold text-xl text-blue-600 ${
+            className={`font-bold text-xl bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent ${
               sidebarOpen ? "block" : "hidden"
             }`}
           >
@@ -73,23 +71,23 @@ export default function AdminDashboard() {
           </h1>
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-1 rounded hover:bg-gray-100"
+            className="p-2 rounded-lg hover:bg-gray-700 transition-all"
           >
             {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
         </div>
 
-        <nav className="flex-1 mt-4">
-          <ul className="space-y-1 px-2">
+        <nav className="flex-1 mt-4 px-2">
+          <ul className="space-y-1">
             {menuItems.map((item) => (
               <li key={item.path}>
                 <Link
                   to={item.path}
-                  className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors
+                  className={`flex items-center gap-3 px-3 py-3 rounded-lg transition-all duration-200
                     ${
                       location.pathname.startsWith(item.path)
-                        ? "bg-blue-100 text-blue-700"
-                        : "text-gray-700 hover:bg-gray-100"
+                        ? "bg-blue-600 text-white shadow-lg"
+                        : "text-gray-300 hover:bg-gray-700 hover:text-white"
                     }`}
                 >
                   {item.icon}
@@ -105,34 +103,55 @@ export default function AdminDashboard() {
             ))}
           </ul>
         </nav>
+
+        {/* 退出登录 */}
+        <div className="p-4 border-t border-gray-700">
+          <button
+            onClick={handleLogout}
+            className={`flex items-center gap-3 w-full px-3 py-3 rounded-lg text-red-400 hover:bg-gray-700 hover:text-red-300 transition-all ${
+              !sidebarOpen && "justify-center"
+            }`}
+          >
+            <LogOut className="w-5 h-5" />
+            <span className={`${sidebarOpen ? "block" : "hidden"} text-sm font-medium`}>
+              退出登录
+            </span>
+          </button>
+        </div>
       </aside>
 
       {/* 主内容区 */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* 顶部面包屑 */}
-        <header className="bg-white shadow-sm border-b px-6 py-3">
-          <nav className="flex items-center space-x-2 text-sm">
-            <Link to="/admin" className="text-gray-500 hover:text-gray-700">
-              Home
-            </Link>
-            {breadcrumbs.map((crumb, idx) => (
-              <span key={crumb.path}>
-                <span className="text-gray-400 mx-1">/</span>
-                {idx === breadcrumbs.length - 1 ? (
-                  <span className="text-gray-900 font-medium">
-                    {crumb.label}
-                  </span>
-                ) : (
-                  <Link
-                    to={crumb.path}
-                    className="text-gray-500 hover:text-gray-700"
-                  >
-                    {crumb.label}
-                  </Link>
-                )}
-              </span>
-            ))}
-          </nav>
+        <header className="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
+          <div className="flex items-center justify-between">
+            <nav className="flex items-center space-x-2 text-sm">
+              <Link to="/admin" className="text-gray-500 hover:text-gray-700 font-medium">
+                首页
+              </Link>
+              {breadcrumbs.map((crumb, idx) => (
+                <span key={crumb.path} className="flex items-center">
+                  <span className="text-gray-400 mx-2">/</span>
+                  {idx === breadcrumbs.length - 1 ? (
+                    <span className="text-gray-900 font-semibold">
+                      {crumb.label}
+                    </span>
+                  ) : (
+                    <Link
+                      to={crumb.path}
+                      className="text-blue-600 hover:text-blue-800 font-medium"
+                    >
+                      {crumb.label}
+                    </Link>
+                  )}
+                </span>
+              ))}
+            </nav>
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full"></div>
+              <span className="font-medium">超级管理员</span>
+            </div>
+          </div>
         </header>
 
         {/* 子页面内容 */}
