@@ -108,7 +108,7 @@ export default function AdminDashboard() {
       <div className="flex-1 flex flex-col min-w-0">
         {/* 顶部导航 */}
         <header className="bg-white border-b sticky top-0 z-30">
-          <div className="flex items-center justify-between px-5 py-3">
+          <div className="flex items-center justify-between px-6 py-3">
             {/* Breadcrumbs */}
             <nav className="flex items-center text-sm font-medium">
               <Link to="/admin" className="text-indigo-600 hover:text-indigo-700 font-semibold">
@@ -149,7 +149,7 @@ export default function AdminDashboard() {
         </header>
 
         {/* 页面内容区域 */}
-        <main className="flex-1 overflow-auto p-5 bg-gray-50">
+        <main className="flex-1 overflow-auto bg-gray-50 px-8 py-6">
           <div className="max-w-[1400px] mx-auto">
             <Outlet />
           </div>
