@@ -28,33 +28,43 @@ export default function UserManagement() {
   if (loading) return <div className="p-6 text-center">加载中...</div>;
 
   return (
-    <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-      <div className="p-6 border-b border-gray-200">
-        <h2 className="text-xl font-bold text-gray-800">用户信息管理</h2>
+    <div className="bg-white rounded-2xl shadow-md overflow-hidden border border-gray-100">
+      <div className="p-6 border-b bg-gradient-to-r from-indigo-50 to-blue-50">
+        <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+          <span className="w-1.5 h-6 bg-indigo-500 rounded-full" />
+          用户信息管理
+        </h2>
       </div>
+
       <div className="overflow-x-auto">
-        <table className="w-full table-fixed">
-          <thead className="bg-gray-50 border-b border-gray-200">
+        <table className="min-w-full text-sm">
+          <thead className="bg-gray-100 text-gray-600 uppercase text-xs">
             <tr>
-              <th className="w-20 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">手机号</th>
-              <th className="w-32 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">余额</th>
-              <th className="w-40 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">创建时间</th>
-              <th className="w-32 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+              <th className="px-6 py-3 text-left font-medium w-20">ID</th>
+              <th className="px-6 py-3 text-left font-medium">手机号</th>
+              <th className="px-6 py-3 text-left font-medium w-32">余额</th>
+              <th className="px-6 py-3 text-left font-medium w-40">创建时间</th>
+              <th className="px-6 py-3 text-left font-medium w-32">操作</th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className="divide-y divide-gray-200 bg-white">
             {users.map((user) => (
-              <tr key={user.id} className="hover:bg-gray-50 transition-colors">
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{user.id}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{user.phone_number}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${user.balance || 0}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+              <tr key={user.id} className="hover:bg-blue-50 transition">
+                <td className="px-6 py-4 font-medium text-gray-800">{user.id}</td>
+                <td className="px-6 py-4">{user.phone_number}</td>
+                <td className="px-6 py-4 font-semibold">${user.balance || 0}</td>
+                <td className="px-6 py-4 text-gray-500">
                   {new Date(user.created_at).toLocaleDateString("zh-CN")}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <button className="text-blue-600 hover:text-blue-800 mr-3">编辑</button>
-                  <button className="text-red-600 hover:text-red-800">删除</button>
+                <td className="px-6 py-4">
+                  <div className="flex items-center gap-2">
+                    <button className="px-3 py-1.5 bg-indigo-600 text-white rounded-full text-xs hover:bg-indigo-700 shadow">
+                      编辑
+                    </button>
+                    <button className="px-3 py-1.5 bg-rose-500 text-white rounded-full text-xs hover:bg-rose-600 shadow">
+                      删除
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
