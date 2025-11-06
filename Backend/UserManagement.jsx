@@ -1,16 +1,14 @@
 // src/Backend/UserManagement.jsx
 import { useState, useEffect } from "react";
 import { supabase } from "../supabaseClient";
+import { RefreshCw } from "lucide-react";
 
 export default function UserManagement() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
   const fetchUsers = async () => {
+    setLoading(true);
     try {
       const { data, error } = await supabase
         .from("users")
@@ -19,48 +17,58 @@ export default function UserManagement() {
       if (error) throw error;
       setUsers(data || []);
     } catch (error) {
-      console.error("获取用户失败:", error);
+      alert("获取用户失败: " + error.message);
     } finally {
       setLoading(false);
     }
   };
 
-  if (loading) return <div className="p-6 text-center">加载中...</div>;
+  useEffect(() => { fetchUsers(); }, []);
 
   return (
-    <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-      <div className="p-6 border-b border-gray-200">
-        <h2 className="text-xl font-bold text-gray-800">用户信息管理</h2>
+    <div className="admin-card p-6">
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-2xl font-bold text-slate-800 dark:text-white">用户信息管理</h2>
+        <button onClick={fetchUsers} className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800">
+          <RefreshCw className={`w-5 h-5 text-slate-600 dark:text-slate-400 ${loading ? 'animate-spin' : ''}`} />
+        </button>
       </div>
-      <div className="overflow-x-auto">
-        <table className="w-full table-fixed">
-          <thead className="bg-gray-50 border-b border-gray-200">
-            <tr>
-              <th className="w-20 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">手机号</th>
-              <th className="w-32 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">余额</th>
-              <th className="w-40 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">创建时间</th>
-              <th className="w-32 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {users.map((user) => (
-              <tr key={user.id} className="hover:bg-gray-50 transition-colors">
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{user.id}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{user.phone_number}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${user.balance || 0}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {new Date(user.created_at).toLocaleDateString("zh-CN")}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <button className="text-blue-600 hover:text-blue-800 mr-3">编辑</button>
-                  <button className="text-red-600 hover:text-red-800">删除</button>
-                </td>
+
+      {loading ? (
+        <div className="text-center py-12 text-slate-500 dark:text-slate-400">加载中...</div>
+      ) : users.length === 0 ? (
+        <div className="text-center py-12 text-slate-500 dark:text-slate-400">暂无用户数据</div>
+      ) : (
+        <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>手机号</th>
+                <th>余额 (USDT)</th>
+                <th>注册时间</th>
+                <th>操作</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {users.map((user) => (
+                <tr key={user.id}>
+                  <td>#{user.id}</td>
+                  <td className="font-mono">{user.phone_number}</td>
+                  <td className="font-semibold text-emerald-600 dark:text-emerald-400">
+                    ${user.balance?.toFixed(2) || "0.00"}
+                  </td>
+                  <td>{new Date(user.created_at).toLocaleDateString("zh-CN")}</td>
+                  <td className="space-x-2">
+                    <button className="btn-ghost text-xs">编辑</button>
+                    <button className="btn-danger text-xs">删除</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }
