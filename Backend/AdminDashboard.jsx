@@ -1,5 +1,5 @@
 // src/Backend/AdminDashboard.jsx
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { Link, useLocation, Outlet, useNavigate } from "react-router-dom";
 import {
   Users,
@@ -9,7 +9,6 @@ import {
   UserCheck,
   Copy,
   TrendingUp,
-  Menu,
   LogOut,
   Bell,
   ChevronDown,
@@ -28,7 +27,6 @@ const menuItems = [
 export default function AdminDashboard() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
     const isAdmin = localStorage.getItem("adminLoggedIn") === "true";
@@ -55,8 +53,8 @@ export default function AdminDashboard() {
 
   return (
     <div className="flex h-screen bg-gray-50 text-gray-800">
-      {/* ====== Sidebar (desktop) ====== */}
-      <aside className="hidden md:flex w-64 bg-white border-r border-gray-200 flex-col shadow-sm">
+      {/* 固定左侧菜单栏 */}
+      <aside className="w-64 bg-white border-r border-gray-200 flex flex-col shadow-sm">
         {/* Brand */}
         <div className="flex items-center justify-between p-4 border-b">
           <div className="flex items-center gap-3">
@@ -106,101 +104,31 @@ export default function AdminDashboard() {
         </div>
       </aside>
 
-      {/* ====== Mobile Sidebar ====== */}
-      {mobileOpen && (
-        <>
-          <div
-            className="fixed inset-0 bg-black/30 z-40 md:hidden"
-            onClick={() => setMobileOpen(false)}
-          ></div>
-          <aside className="fixed top-0 left-0 w-64 h-full bg-white border-r border-gray-200 z-50 flex flex-col shadow-xl animate-slideIn">
-            <div className="flex items-center justify-between p-4 border-b">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-500 text-white font-bold grid place-items-center shadow">
-                  G
-                </div>
-                <h1 className="font-semibold text-lg bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-blue-600">
-                  Ganesh Trade
-                </h1>
-              </div>
-            </div>
-
-            <nav className="flex-1 px-2 py-3 overflow-y-auto">
-              <ul className="space-y-1">
-                {menuItems.map((item) => {
-                  const active = location.pathname.startsWith(item.path);
-                  const Icon = item.icon;
-                  return (
-                    <li key={item.path}>
-                      <Link
-                        to={item.path}
-                        onClick={() => setMobileOpen(false)}
-                        className={`group flex items-center gap-3 px-3 py-2 rounded-xl transition-all ${
-                          active
-                            ? "bg-indigo-50 text-indigo-700 border border-indigo-100"
-                            : "hover:bg-gray-100"
-                        }`}
-                      >
-                        <Icon
-                          className={`w-5 h-5 ${active ? "text-indigo-600" : "text-gray-500"}`}
-                        />
-                        <span className="text-sm font-medium">{item.label}</span>
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ul>
-            </nav>
-
-            <div className="p-3 border-t">
-              <button
-                onClick={handleLogout}
-                className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-red-600 hover:bg-red-50"
-              >
-                <LogOut className="w-5 h-5" />
-                <span className="text-sm font-medium">退出登录</span>
-              </button>
-            </div>
-          </aside>
-        </>
-      )}
-
-      {/* ====== Main Content ====== */}
+      {/* 主体内容 */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Topbar */}
+        {/* 顶部导航 */}
         <header className="bg-white border-b sticky top-0 z-30">
           <div className="flex items-center justify-between px-5 py-3">
-            <div className="flex items-center gap-3">
-              {/* mobile toggle */}
-              <button
-                className="md:hidden p-2 rounded-lg hover:bg-gray-100"
-                onClick={() => setMobileOpen(true)}
-              >
-                <Menu className="w-5 h-5 text-gray-700" />
-              </button>
+            {/* Breadcrumbs */}
+            <nav className="flex items-center text-sm font-medium">
+              <Link to="/admin" className="text-indigo-600 hover:text-indigo-700 font-semibold">
+                控制台
+              </Link>
+              {breadcrumbs.map((crumb, idx) => (
+                <span key={crumb.path} className="flex items-center">
+                  <span className="text-gray-400 mx-2">/</span>
+                  {idx === breadcrumbs.length - 1 ? (
+                    <span className="text-gray-900 font-semibold">{crumb.label}</span>
+                  ) : (
+                    <Link to={crumb.path} className="text-indigo-600 hover:text-indigo-700 font-medium">
+                      {crumb.label}
+                    </Link>
+                  )}
+                </span>
+              ))}
+            </nav>
 
-              <nav className="flex items-center text-sm font-medium">
-                <Link to="/admin" className="text-indigo-600 hover:text-indigo-700 font-semibold">
-                  控制台
-                </Link>
-                {breadcrumbs.map((crumb, idx) => (
-                  <span key={crumb.path} className="flex items-center">
-                    <span className="text-gray-400 mx-2">/</span>
-                    {idx === breadcrumbs.length - 1 ? (
-                      <span className="text-gray-900 font-semibold">{crumb.label}</span>
-                    ) : (
-                      <Link
-                        to={crumb.path}
-                        className="text-indigo-600 hover:text-indigo-700 font-medium"
-                      >
-                        {crumb.label}
-                      </Link>
-                    )}
-                  </span>
-                ))}
-              </nav>
-            </div>
-
+            {/* 右上角用户区 */}
             <div className="flex items-center gap-3">
               <button className="relative p-2 rounded-xl hover:bg-gray-100">
                 <Bell className="w-5 h-5 text-gray-600" />
@@ -210,7 +138,7 @@ export default function AdminDashboard() {
                 <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-500 to-blue-500 text-white font-bold grid place-items-center shadow">
                   A
                 </div>
-                <div className="hidden md:block">
+                <div>
                   <p className="text-sm font-semibold">超级管理员</p>
                   <p className="text-xs text-gray-500">admin@ganesh.com</p>
                 </div>
@@ -220,7 +148,7 @@ export default function AdminDashboard() {
           </div>
         </header>
 
-        {/* Main */}
+        {/* 页面内容区域 */}
         <main className="flex-1 overflow-auto p-5 bg-gray-50">
           <div className="max-w-[1400px] mx-auto">
             <Outlet />
