@@ -1,4 +1,4 @@
-<DOCUMENT filename="AdminDashboard.jsx">
+// src/Backend/AdminDashboard.jsx
 import { useEffect, useMemo } from "react";
 import { Link, useLocation, Outlet, useNavigate } from "react-router-dom";
 import {
@@ -15,13 +15,13 @@ import {
 } from "lucide-react";
 
 const menuItems = [
-  ({ label: "用户信息", path: "/admin/users", icon: Users }),
-  ({ label: "充值管理", path: "/admin/recharge", icon: DollarSign }),
-  ({ label: "提款管理", path: "/admin/withdraw", icon: CreditCard }),
-  ({ label: "充值通道", path: "/admin/channels", icon: Settings }),
-  ({ label: "导师管理", path: "/admin/mentors", icon: UserCheck }),
-  ({ label: "跟单审核", path: "/admin/copytrade", icon: Copy }),
-  ({ label: "上股管理", path: "/admin/stocks", icon: TrendingUp }),
+  { label: "用户信息", path: "/admin/users", icon: Users },
+  { label: "充值管理", path: "/admin/recharge", icon: DollarSign },
+  { label: "提款管理", path: "/admin/withdraw", icon: CreditCard },
+  { label: "充值通道", path: "/admin/channels", icon: Settings },
+  { label: "导师管理", path: "/admin/mentors", icon: UserCheck },
+  { label: "跟单审核", path: "/admin/copytrade", icon: Copy },
+  { label: "上股管理", path: "/admin/stocks", icon: TrendingUp },
 ];
 
 export default function AdminDashboard() {
@@ -53,7 +53,6 @@ export default function AdminDashboard() {
 
   return (
     <div className="flex h-screen bg-gray-50 text-gray-800 overflow-hidden">
-      {/* 左侧菜单栏 */}
       <aside className="w-80 bg-white border-r border-gray-200 flex flex-col shadow-xl">
         <div className="flex items-center justify-between p-6 border-b">
           <div className="flex items-center gap-4">
@@ -101,7 +100,6 @@ export default function AdminDashboard() {
         </div>
       </aside>
 
-      {/* 主体内容 */}
       <div className="flex-1 flex flex-col min-w-0">
         <header className="bg-white border-b sticky top-0 z-30 shadow-sm">
           <div className="flex items-center justify-between px-8 py-4">
@@ -151,4 +149,3 @@ export default function AdminDashboard() {
     </div>
   );
 }
-</DOCUMENT>
