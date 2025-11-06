@@ -1,4 +1,3 @@
-// src/Backend/CopyTradeAudit.jsx
 import { useState, useEffect } from "react";
 import { supabase } from "../supabaseClient";
 
@@ -35,56 +34,58 @@ export default function CopyTradeAudit() {
     fetchAudits();
   };
 
-  if (loading) return <div className="p-6">加载中...</div>;
+  if (loading) return <div className="p-6 text-center text-gray-500">加载中...</div>;
 
   return (
-    <div className="bg-white rounded-2xl shadow-md overflow-hidden border border-gray-100">
-      <div className="p-6 border-b bg-gradient-to-r from-indigo-50 to-blue-50">
-        <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-          <span className="w-1.5 h-6 bg-indigo-500 rounded-full" />
-          跟单审核
-        </h2>
+    <div className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-200">
+      <div className="p-6 border-b border-gray-100 flex justify-between items-center">
+        <h2 className="text-xl font-bold text-gray-800">跟单审核</h2>
+        <button
+          onClick={fetchAudits}
+          className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition"
+        >
+          刷新
+        </button>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="min-w-full text-sm">
-          <thead className="bg-gray-100 text-gray-600 uppercase text-xs">
+      <div className="overflow-auto max-h-[80vh]">
+        <table className="w-full table-fixed text-sm text-gray-800">
+          <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
-              <th className="px-6 py-3 text-left font-medium">ID</th>
-              <th className="px-6 py-3 text-left font-medium">用户</th>
-              <th className="px-6 py-3 text-left font-medium">导师</th>
-              <th className="px-6 py-3 text-left font-medium">金额</th>
-              <th className="px-6 py-3 text-left font-medium">状态</th>
-              <th className="px-6 py-3 text-left font-medium">操作</th>
+              <th className="w-[80px] px-4 py-3 text-center font-semibold uppercase text-gray-600">ID</th>
+              <th className="w-[140px] px-4 py-3 text-center font-semibold uppercase text-gray-600">用户</th>
+              <th className="w-[140px] px-4 py-3 text-center font-semibold uppercase text-gray-600">导师</th>
+              <th className="w-[120px] px-4 py-3 text-center font-semibold uppercase text-gray-600">金额</th>
+              <th className="w-[120px] px-4 py-3 text-center font-semibold uppercase text-gray-600">状态</th>
+              <th className="w-[180px] px-4 py-3 text-center font-semibold uppercase text-gray-600">操作</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200 bg-white">
-            {audits.map((item) => (
-              <tr key={item.id} className="hover:bg-blue-50 transition">
-                <td className="px-6 py-4 font-medium text-gray-800">{item.id}</td>
-                <td className="px-6 py-4">{item.user_id}</td>
-                <td className="px-6 py-4">{item.mentor_id}</td>
-                <td className="px-6 py-4 font-semibold">${item.amount}</td>
-                <td className="px-6 py-4">
-                  <span className="px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800">
+
+          <tbody className="divide-y divide-gray-100">
+            {audits.map((a) => (
+              <tr key={a.id} className="hover:bg-gray-50 text-center align-middle">
+                <td className="px-4 py-3">{a.id}</td>
+                <td className="px-4 py-3">{a.user_id}</td>
+                <td className="px-4 py-3">{a.mentor_id}</td>
+                <td className="px-4 py-3 text-blue-600 font-semibold">${a.amount}</td>
+                <td className="px-4 py-3">
+                  <span className="px-2 py-1 rounded-full text-xs bg-yellow-100 text-yellow-800">
                     待审
                   </span>
                 </td>
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => handleApprove(item.id)}
-                      className="px-3 py-1.5 bg-emerald-600 text-white rounded-full text-xs hover:bg-emerald-700 shadow"
-                    >
-                      批准
-                    </button>
-                    <button
-                      onClick={() => handleReject(item.id)}
-                      className="px-3 py-1.5 bg-rose-500 text-white rounded-full text-xs hover:bg-rose-600 shadow"
-                    >
-                      拒绝
-                    </button>
-                  </div>
+                <td className="px-4 py-3">
+                  <button
+                    onClick={() => handleApprove(a.id)}
+                    className="text-green-600 hover:text-green-800 mr-3"
+                  >
+                    批准
+                  </button>
+                  <button
+                    onClick={() => handleReject(a.id)}
+                    className="text-red-600 hover:text-red-800"
+                  >
+                    拒绝
+                  </button>
                 </td>
               </tr>
             ))}
