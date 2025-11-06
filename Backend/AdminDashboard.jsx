@@ -28,19 +28,12 @@ const menuItems = [
 export default function AdminDashboard() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [sidebarOpen, setSidebarOpen] = useState(() => {
-    const cache = localStorage.getItem("adminSidebarOpen");
-    return cache ? cache === "true" : true;
-  });
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
     const isAdmin = localStorage.getItem("adminLoggedIn") === "true";
     if (!isAdmin) navigate("/admin-login", { replace: true });
   }, [navigate]);
-
-  useEffect(() => {
-    localStorage.setItem("adminSidebarOpen", String(sidebarOpen));
-  }, [sidebarOpen]);
 
   const breadcrumbs = useMemo(() => {
     const parts = location.pathname.split("/").filter(Boolean);
@@ -62,33 +55,18 @@ export default function AdminDashboard() {
 
   return (
     <div className="flex h-screen bg-gray-50 text-gray-800">
-      {/* Sidebar */}
-      <aside
-        className={`${
-          sidebarOpen ? "w-64" : "w-20"
-        } bg-white border-r border-gray-200 transition-all duration-300 flex flex-col shadow-sm`}
-      >
+      {/* ====== Sidebar (desktop) ====== */}
+      <aside className="hidden md:flex w-64 bg-white border-r border-gray-200 flex-col shadow-sm">
         {/* Brand */}
         <div className="flex items-center justify-between p-4 border-b">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-500 text-white font-bold grid place-items-center shadow">
               G
             </div>
-            <h1
-              className={`font-semibold text-lg bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-blue-600 ${
-                sidebarOpen ? "block" : "hidden"
-              }`}
-            >
+            <h1 className="font-semibold text-lg bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-blue-600">
               Ganesh Trade
             </h1>
           </div>
-          {/* Menu toggle (仅显示三条线，不显示 X) */}
-          <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-2 rounded-lg hover:bg-gray-100"
-          >
-            <Menu className="w-5 h-5" />
-          </button>
         </div>
 
         {/* Menu */}
@@ -101,24 +79,14 @@ export default function AdminDashboard() {
                 <li key={item.path}>
                   <Link
                     to={item.path}
-                    className={`group relative flex items-center gap-3 px-3 py-2 rounded-xl transition-all ${
+                    className={`group flex items-center gap-3 px-3 py-2 rounded-xl transition-all ${
                       active
                         ? "bg-indigo-50 text-indigo-700 border border-indigo-100"
                         : "hover:bg-gray-100"
                     }`}
                   >
                     <Icon className={`w-5 h-5 ${active ? "text-indigo-600" : "text-gray-500"}`} />
-                    <span className={`${sidebarOpen ? "block" : "hidden"} text-sm font-medium`}>
-                      {item.label}
-                    </span>
-                    {!sidebarOpen && (
-                      <span className="absolute left-full ml-2 px-2 py-1 rounded-md bg-gray-900 text-white text-xs opacity-0 group-hover:opacity-100 shadow">
-                        {item.label}
-                      </span>
-                    )}
-                    {active && (
-                      <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-indigo-500 rounded-r-full"></span>
-                    )}
+                    <span className="text-sm font-medium">{item.label}</span>
                   </Link>
                 </li>
               );
@@ -130,41 +98,109 @@ export default function AdminDashboard() {
         <div className="p-3 border-t">
           <button
             onClick={handleLogout}
-            className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-red-600 hover:bg-red-50 ${
-              !sidebarOpen && "justify-center"
-            }`}
+            className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-red-600 hover:bg-red-50"
           >
             <LogOut className="w-5 h-5" />
-            <span className={`${sidebarOpen ? "inline" : "hidden"} text-sm font-medium`}>退出登录</span>
+            <span className="text-sm font-medium">退出登录</span>
           </button>
         </div>
       </aside>
 
-      {/* Main */}
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* Topbar */}
-        <header className="bg-white border-b">
-          <div className="flex items-center justify-between px-5 py-3">
-            {/* Breadcrumbs */}
-            <nav className="flex items-center text-sm font-medium">
-              <Link to="/admin" className="text-indigo-600 hover:text-indigo-700 font-semibold">
-                控制台
-              </Link>
-              {breadcrumbs.map((crumb, idx) => (
-                <span key={crumb.path} className="flex items-center">
-                  <span className="text-gray-400 mx-2">/</span>
-                  {idx === breadcrumbs.length - 1 ? (
-                    <span className="text-gray-900 font-semibold">{crumb.label}</span>
-                  ) : (
-                    <Link to={crumb.path} className="text-indigo-600 hover:text-indigo-700 font-medium">
-                      {crumb.label}
-                    </Link>
-                  )}
-                </span>
-              ))}
+      {/* ====== Mobile Sidebar ====== */}
+      {mobileOpen && (
+        <>
+          <div
+            className="fixed inset-0 bg-black/30 z-40 md:hidden"
+            onClick={() => setMobileOpen(false)}
+          ></div>
+          <aside className="fixed top-0 left-0 w-64 h-full bg-white border-r border-gray-200 z-50 flex flex-col shadow-xl animate-slideIn">
+            <div className="flex items-center justify-between p-4 border-b">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-500 text-white font-bold grid place-items-center shadow">
+                  G
+                </div>
+                <h1 className="font-semibold text-lg bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-blue-600">
+                  Ganesh Trade
+                </h1>
+              </div>
+            </div>
+
+            <nav className="flex-1 px-2 py-3 overflow-y-auto">
+              <ul className="space-y-1">
+                {menuItems.map((item) => {
+                  const active = location.pathname.startsWith(item.path);
+                  const Icon = item.icon;
+                  return (
+                    <li key={item.path}>
+                      <Link
+                        to={item.path}
+                        onClick={() => setMobileOpen(false)}
+                        className={`group flex items-center gap-3 px-3 py-2 rounded-xl transition-all ${
+                          active
+                            ? "bg-indigo-50 text-indigo-700 border border-indigo-100"
+                            : "hover:bg-gray-100"
+                        }`}
+                      >
+                        <Icon
+                          className={`w-5 h-5 ${active ? "text-indigo-600" : "text-gray-500"}`}
+                        />
+                        <span className="text-sm font-medium">{item.label}</span>
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
             </nav>
 
-            {/* Right side */}
+            <div className="p-3 border-t">
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-red-600 hover:bg-red-50"
+              >
+                <LogOut className="w-5 h-5" />
+                <span className="text-sm font-medium">退出登录</span>
+              </button>
+            </div>
+          </aside>
+        </>
+      )}
+
+      {/* ====== Main Content ====== */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Topbar */}
+        <header className="bg-white border-b sticky top-0 z-30">
+          <div className="flex items-center justify-between px-5 py-3">
+            <div className="flex items-center gap-3">
+              {/* mobile toggle */}
+              <button
+                className="md:hidden p-2 rounded-lg hover:bg-gray-100"
+                onClick={() => setMobileOpen(true)}
+              >
+                <Menu className="w-5 h-5 text-gray-700" />
+              </button>
+
+              <nav className="flex items-center text-sm font-medium">
+                <Link to="/admin" className="text-indigo-600 hover:text-indigo-700 font-semibold">
+                  控制台
+                </Link>
+                {breadcrumbs.map((crumb, idx) => (
+                  <span key={crumb.path} className="flex items-center">
+                    <span className="text-gray-400 mx-2">/</span>
+                    {idx === breadcrumbs.length - 1 ? (
+                      <span className="text-gray-900 font-semibold">{crumb.label}</span>
+                    ) : (
+                      <Link
+                        to={crumb.path}
+                        className="text-indigo-600 hover:text-indigo-700 font-medium"
+                      >
+                        {crumb.label}
+                      </Link>
+                    )}
+                  </span>
+                ))}
+              </nav>
+            </div>
+
             <div className="flex items-center gap-3">
               <button className="relative p-2 rounded-xl hover:bg-gray-100">
                 <Bell className="w-5 h-5 text-gray-600" />
@@ -184,7 +220,7 @@ export default function AdminDashboard() {
           </div>
         </header>
 
-        {/* Content */}
+        {/* Main */}
         <main className="flex-1 overflow-auto p-5 bg-gray-50">
           <div className="max-w-[1400px] mx-auto">
             <Outlet />
