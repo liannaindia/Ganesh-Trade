@@ -10,7 +10,6 @@ import {
   Copy,
   TrendingUp,
   Menu,
-  X,
   LogOut,
   Bell,
   ChevronDown,
@@ -83,11 +82,12 @@ export default function AdminDashboard() {
               Ganesh Trade
             </h1>
           </div>
+          {/* Menu toggle (仅显示三条线，不显示 X) */}
           <button
-            onClick={() => setSidebarOpen((v) => !v)}
+            onClick={() => setSidebarOpen(!sidebarOpen)}
             className="p-2 rounded-lg hover:bg-gray-100"
           >
-            {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            <Menu className="w-5 h-5" />
           </button>
         </div>
 
