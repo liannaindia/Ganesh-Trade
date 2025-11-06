@@ -1,4 +1,3 @@
-// src/Backend/UserManagement.jsx
 import { useState, useEffect } from "react";
 import { supabase } from "../supabaseClient";
 
@@ -25,68 +24,48 @@ export default function UserManagement() {
     }
   };
 
-  if (loading) return <div className="p-12 text-center text-lg">加载中...</div>;
+  if (loading) return <div className="p-6 text-center text-gray-500">加载中...</div>;
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-10 min-h-full">
-      <div className="mb-10 flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-3">
-          <span className="w-2 h-8 bg-indigo-600 rounded-full" />
-          用户信息管理
-        </h2>
-        <p className="text-base text-gray-500">共 {users.length} 位用户</p>
+    <div className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-200">
+      <div className="p-6 border-b border-gray-100 flex justify-between items-center">
+        <h2 className="text-xl font-bold text-gray-800">用户信息管理</h2>
+        <button
+          onClick={fetchUsers}
+          className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition"
+        >
+          刷新
+        </button>
       </div>
-
-      <div className="border border-gray-200 rounded-xl overflow-hidden">
-        <table className="min-w-full text-base text-gray-700">
-          <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-300">
+      <div className="overflow-auto max-h-[80vh]">
+        <table className="w-full text-sm">
+          <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
-              <th className="px-10 py-5 text-left font-bold text-gray-700 min-w-24">ID</th>
-              <th className="px-10 py-5 text-left font-bold text-gray-700 min-w-48">手机号</th>
-              <th className="px-10 py-5 text-left font-bold text-gray-700 min-w-32">余额</th>
-              <th className="px-10 py-5 text-left font-bold text-gray-700 min-w-40">创建时间</th>
-              <th className="px-10 py-5 text-left font-bold text-gray-700 min-w-48">操作</th>
+              <th className="w-20 px-6 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">ID</th>
+              <th className="px-6 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">手机号</th>
+              <th className="w-32 px-6 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">余额</th>
+              <th className="w-40 px-6 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">创建时间</th>
+              <th className="w-32 px-6 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">操作</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200 bg-white">
-            {users.map((user, index) => (
-              <tr
-                key={user.id}
-                className={`transition-all hover:bg-indigo-50/60 ${
-                  index % 2 === 0 ? "bg-white" : "bg-gray-50/50"
-                }`}
-              >
-                <td className="px-10 py-5 font-semibold text-gray-900">{user.id}</td>
-                <td className="px-10 py-5 font-mono text-gray-700">{user.phone_number}</td>
-                <td className="px-10 py-5 font-bold text-emerald-600">
-                  ${Number(user.balance || 0).toLocaleString()}
+          <tbody className="divide-y divide-gray-100">
+            {users.map((user) => (
+              <tr key={user.id} className="hover:bg-gray-50">
+                <td className="px-6 py-4">{user.id}</td>
+                <td className="px-6 py-4">{user.phone_number}</td>
+                <td className="px-6 py-4 text-blue-600 font-semibold">${user.balance || 0}</td>
+                <td className="px-6 py-4 text-gray-500">
+                  {new Date(user.created_at).toLocaleString("zh-CN")}
                 </td>
-                <td className="px-10 py-5 text-gray-600">
-                  {new Date(user.created_at).toLocaleDateString("zh-CN", {
-                    year: "numeric",
-                    month: "2-digit",
-                    day: "2-digit",
-                  })}
-                </td>
-                <td className="px-10 py-5">
-                  <div className="flex items-center gap-4">
-                    <button className="px-6 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 shadow-sm transition">
-                      编辑
-                    </button>
-                    <button className="px-6 py-2 bg-rose-500 text-white rounded-lg text-sm font-medium hover:bg-rose-600 shadow-sm transition">
-                      删除
-                    </button>
-                  </div>
+                <td className="px-6 py-4">
+                  <button className="text-blue-600 hover:text-blue-800 mr-3">编辑</button>
+                  <button className="text-red-600 hover:text-red-800">删除</button>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-
-      {users.length === 0 && (
-        <div className="text-center text-gray-400 py-16 text-base">暂无用户数据</div>
-      )}
     </div>
   );
 }
