@@ -1,71 +1,60 @@
-// src/Backend/RechargeChannel.jsx
-import { useState, useEffect } from 'react';
-import { supabase } from '../supabaseClient';
-import { RefreshCw } from 'lucide-react';
+import { useState, useEffect } from 'react'
+import { supabase } from '../supabaseClient'
 
-export default function RechargeChannel() {
-  const [channels, setChannels] = useState([]);
-  const [loading, setLoading] = useState(true);
+const MentorManagement = () => {
+  const [mentors, setMentors] = useState([])
+  const [loading, setLoading] = useState(true)
 
-  const fetchChannels = async () => {
-    setLoading(true);
+  useEffect(() => {
+    fetchMentors()
+  }, [])
+
+  const fetchMentors = async () => {
     try {
-      const { data, error } = await supabase.from('channels').select('*');
-      if (error) throw error;
-      setChannels(data || []);
+      const { data, error } = await supabase.from('mentors').select('*')
+      if (error) throw error
+      setMentors(data || [])
     } catch (error) {
-      alert('获取通道失败: ' + error.message);
+      console.error('获取导师失败:', error)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
-  useEffect(() => { fetchChannels(); }, []);
+  if (loading) return <div className="p-6">加载中...</div>
 
   return (
-    <div className="admin-card p-6">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold text-slate-800 dark:text-white">充值通道管理</h2>
-        <button onClick={fetchChannels} className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800">
-          <RefreshCw className={`w-5 h-5 text-slate-600 dark:text-slate-400 ${loading ? 'animate-spin' : ''}`} />
-        </button>
-      </div>
-
-      {loading ? (
-        <div className="text-center py-12 text-slate-500 dark:text-slate-400">加载中...</div>
-      ) : channels.length === 0 ? (
-        <div className="text-center py-12 text-slate-500 dark:text-slate-400">暂无充值通道</div>
-      ) : (
-        <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
-          <table className="admin-table">
-            <thead>
-              <tr>
-                <th>通道名</th>
-                <th>费率</th>
-                <th>状态</th>
-                <th>操作</th>
+    <div className="p-6">
+      <h2 className="text-xl font-bold mb-4">导师管理</h2>
+      <div className="bg-white shadow-md rounded-lg overflow-hidden">
+        <table className="w-full">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">姓名</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">粉丝数</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">佣金率</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">操作</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-200">
+            {mentors.map((mentor) => (
+              <tr key={mentor.id} className="hover:bg-gray-50">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{mentor.id}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{mentor.name}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{mentor.followers}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{mentor.commission}%</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                  <button className="bg-blue-500 text-white px-3 py-1 rounded mr-2 hover:bg-blue-600">编辑</button>
+                  <button className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">移除</button>
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {channels.map((c) => (
-                <tr key={c.id}>
-                  <td className="font-medium">{c.name}</td>
-                  <td>{c.rate}%</td>
-                  <td>
-                    <span className={c.status === 'active' ? 'status-approved' : 'status-rejected'}>
-                      {c.status === 'active' ? '启用' : '禁用'}
-                    </span>
-                  </td>
-                  <td className="space-x-2">
-                    <button className="btn-ghost text-xs">编辑</button>
-                    <button className="btn-success text-xs">启用</button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
-  );
+  )
 }
+
+export default MentorManagement
