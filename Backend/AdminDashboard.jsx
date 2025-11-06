@@ -1,44 +1,65 @@
-import { useEffect } from 'react'
-import { useNavigate, Outlet } from 'react-router-dom'
-import { supabase } from '../supabaseClient' // 调整路径如果需要
+import { useState, useEffect } from 'react'
+import { supabase } from '../supabaseClient'
 
-const AdminDashboard = () => {
-  const navigate = useNavigate()
+const UserManagement = () => {
+  const [users, setUsers] = useState([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const checkAdmin = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user || !user.user_metadata?.isAdmin) {
-        navigate('/me') // 或 '/login'，重定向到用户页或登录
-        return
-      }
+    fetchUsers()
+  }, [])
+
+  const fetchUsers = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('id, phone_number, balance, created_at')
+        .order('id', { ascending: true })  // 按 ID 排序，便于查看
+      if (error) throw error
+      setUsers(data || [])
+    } catch (error) {
+      console.error('获取用户失败:', error)
+    } finally {
+      setLoading(false)
     }
-    checkAdmin()
-  }, [navigate])
+  }
+
+  if (loading) return <div className="p-6">加载中...</div>
 
   return (
-    <div className="flex h-screen bg-gray-100">
-      {/* 侧边栏 */}
-      <div className="w-64 bg-white shadow-lg">
-        <div className="p-4 text-xl font-bold text-blue-600 border-b">后台管理</div>
-        <nav className="mt-6">
-          <ul className="space-y-2">
-            <li><a href="/admin/users" className="block px-4 py-2 text-gray-700 hover:bg-blue-100">用户信息</a></li>
-            <li><a href="/admin/recharge" className="block px-4 py-2 text-gray-700 hover:bg-blue-100">充值管理</a></li>
-            <li><a href="/admin/withdraw" className="block px-4 py-2 text-gray-700 hover:bg-blue-100">提款管理</a></li>
-            <li><a href="/admin/channels" className="block px-4 py-2 text-gray-700 hover:bg-blue-100">充值通道</a></li>
-            <li><a href="/admin/mentors" className="block px-4 py-2 text-gray-700 hover:bg-blue-100">导师管理</a></li>
-            <li><a href="/admin/copytrade" className="block px-4 py-2 text-gray-700 hover:bg-blue-100">跟单审核</a></li>
-            <li><a href="/admin/stocks" className="block px-4 py-2 text-gray-700 hover:bg-blue-100">上股管理</a></li>
-          </ul>
-        </nav>
-      </div>
-      {/* 主内容区 */}
-      <div className="flex-1 p-8 overflow-auto">
-        <Outlet /> {/* 子路由渲染这里 */}
+    <div className="p-6">
+      <h2 className="text-xl font-bold mb-4">用户信息管理</h2>
+      <div className="bg-white shadow-md rounded-lg overflow-hidden">
+        <table className="w-full">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">手机号</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">余额</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">创建时间</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">操作</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-200">
+            {users.map((user) => (
+              <tr key={user.id} className="hover:bg-gray-50">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{user.id}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{user.phone_number}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${user.balance || 0}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  {new Date(user.created_at).toLocaleDateString('zh-CN')}  {/* 中文日期格式 */}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                  <button className="bg-blue-500 text-white px-3 py-1 rounded mr-2 hover:bg-blue-600">编辑</button>
+                  <button className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">删除</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   )
 }
 
-export default AdminDashboard
+export default UserManagement
