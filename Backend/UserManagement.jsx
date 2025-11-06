@@ -37,27 +37,31 @@ export default function UserManagement() {
           刷新
         </button>
       </div>
+
       <div className="overflow-auto max-h-[80vh]">
-        <table className="w-full text-sm">
+        <table className="w-full text-sm text-gray-700">
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
-              <th className="w-20 px-6 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">ID</th>
-              <th className="px-6 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">手机号</th>
-              <th className="w-32 px-6 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">余额</th>
-              <th className="w-40 px-6 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">创建时间</th>
-              <th className="w-32 px-6 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">操作</th>
+              <th className="px-6 py-3 text-left font-semibold text-gray-600 uppercase tracking-wider">ID</th>
+              <th className="px-6 py-3 text-left font-semibold text-gray-600 uppercase tracking-wider">手机号</th>
+              <th className="px-6 py-3 text-center font-semibold text-gray-600 uppercase tracking-wider">余额</th>
+              <th className="px-6 py-3 text-center font-semibold text-gray-600 uppercase tracking-wider">创建时间</th>
+              <th className="px-6 py-3 text-center font-semibold text-gray-600 uppercase tracking-wider">操作</th>
             </tr>
           </thead>
+
           <tbody className="divide-y divide-gray-100">
             {users.map((user) => (
-              <tr key={user.id} className="hover:bg-gray-50">
-                <td className="px-6 py-4">{user.id}</td>
-                <td className="px-6 py-4">{user.phone_number}</td>
-                <td className="px-6 py-4 text-blue-600 font-semibold">${user.balance || 0}</td>
-                <td className="px-6 py-4 text-gray-500">
+              <tr key={user.id} className="hover:bg-gray-50 text-sm">
+                <td className="px-6 py-3 text-gray-900 align-middle">{user.id}</td>
+                <td className="px-6 py-3 text-gray-900 align-middle">{user.phone_number}</td>
+                <td className="px-6 py-3 text-center text-blue-600 font-semibold align-middle">
+                  ${user.balance || 0}
+                </td>
+                <td className="px-6 py-3 text-center text-gray-500 align-middle">
                   {new Date(user.created_at).toLocaleString("zh-CN")}
                 </td>
-                <td className="px-6 py-4">
+                <td className="px-6 py-3 text-center align-middle">
                   <button className="text-blue-600 hover:text-blue-800 mr-3">编辑</button>
                   <button className="text-red-600 hover:text-red-800">删除</button>
                 </td>
