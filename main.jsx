@@ -12,15 +12,15 @@ import Recharge from "./components/Recharge.jsx";
 import Withdraw from "./components/Withdraw.jsx";
 import Invite from "./components/Invite.jsx";
 
-// 新增后台管理导入
-import AdminDashboard from "./components/AdminDashboard.jsx";
-import UserManagement from "./components/UserManagement.jsx";
-import RechargeManagement from "./components/RechargeManagement.jsx";
-import WithdrawManagement from "./components/WithdrawManagement.jsx";
-import RechargeChannel from "./components/RechargeChannel.jsx";
-import MentorManagement from "./components/MentorManagement.jsx";
-import CopyTradeAudit from "./components/CopyTradeAudit.jsx";
-import StockManagement from "./components/StockManagement.jsx";
+// 新增后台管理导入（路径改为 Backend/）
+import AdminDashboard from "./Backend/AdminDashboard.jsx";
+import UserManagement from "./Backend/UserManagement.jsx";
+import RechargeManagement from "./Backend/RechargeManagement.jsx";
+import WithdrawManagement from "./Backend/WithdrawManagement.jsx";
+import RechargeChannel from "./Backend/RechargeChannel.jsx";
+import MentorManagement from "./Backend/MentorManagement.jsx";
+import CopyTradeAudit from "./Backend/CopyTradeAudit.jsx";
+import StockManagement from "./Backend/StockManagement.jsx";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
