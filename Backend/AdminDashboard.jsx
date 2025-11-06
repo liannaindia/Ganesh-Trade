@@ -1,4 +1,4 @@
-// src/Backend/AdminDashboard.jsx (优化版：现代管理面板设计)
+// src/Backend/AdminDashboard.jsx (修复布局 + 完全对齐 + 现代设计)
 import { useEffect, useState } from "react";
 import { Link, useLocation, Outlet, useNavigate } from "react-router-dom";
 import {
@@ -57,17 +57,17 @@ export default function AdminDashboard() {
     });
 
   return (
-    <div className="flex h-screen bg-gray-50">
-      {/* 侧边栏 */}
+    <div className="flex h-screen bg-gray-100">
+      {/* 侧边栏 - 固定宽度 + 完全对齐 */}
       <aside
         className={`${
           sidebarOpen ? "w-64" : "w-20"
-        } transition-all duration-300 bg-gradient-to-b from-slate-900 to-slate-800 text-white shadow-2xl flex flex-col`}
+        } bg-gradient-to-b from-slate-900 to-slate-800 text-white transition-all duration-300 flex flex-col shadow-2xl z-50`}
       >
-        {/* Logo */}
+        {/* Logo 区域 */}
         <div className="flex items-center justify-between p-5 border-b border-slate-700">
           <div className={`flex items-center gap-3 ${sidebarOpen ? "block" : "justify-center"}`}>
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center">
+            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center shadow-lg">
               <span className="text-white font-bold text-xl">G</span>
             </div>
             <h1 className={`font-bold text-xl bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-400 ${sidebarOpen ? "block" : "hidden"}`}>
@@ -83,32 +83,34 @@ export default function AdminDashboard() {
         </div>
 
         {/* 导航菜单 */}
-        <nav className="flex-1 mt-6 px-3">
-          <ul className="space-y-2">
+        <nav className="flex-1 mt-4 px-3 pb-4">
+          <ul className="space-y-1">
             {menuItems.map((item) => (
               <li key={item.path}>
                 <Link
                   to={item.path}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group
+                  className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group relative
                     ${
                       location.pathname.startsWith(item.path)
                         ? "bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-lg"
                         : "text-slate-300 hover:bg-slate-700 hover:text-white"
                     }`}
                 >
-                  <div className="relative">
+                  <div className="relative z-10">
                     {item.icon}
-                    {location.pathname.startsWith(item.path) && (
-                      <div className="absolute -left-3 top-1/2 -translate-y-1/2 w-1 h-8 bg-cyan-400 rounded-r-full"></div>
-                    )}
                   </div>
-                  <span className={`font-medium ${sidebarOpen ? "block" : "hidden"}`}>
+                  <span className={`font-medium transition-opacity ${sidebarOpen ? "block" : "hidden"}`}>
                     {item.label}
                   </span>
+                  {/* 折叠时悬停提示 */}
                   {!sidebarOpen && (
-                    <div className="absolute left-full ml-2 px-3 py-2 bg-slate-700 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+                    <div className="absolute left-full ml-2 px-3 py-2 bg-slate-700 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-xl">
                       {item.label}
                     </div>
+                  )}
+                  {/* 当前页指示条 */}
+                  {location.pathname.startsWith(item.path) && (
+                    <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-cyan-400 rounded-r-full"></div>
                   )}
                 </Link>
               </li>
@@ -131,7 +133,7 @@ export default function AdminDashboard() {
       </aside>
 
       {/* 主内容区 */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col min-w-0">
         {/* 顶部栏 */}
         <header className="bg-white shadow-sm border-b border-gray-200">
           <div className="flex items-center justify-between px-6 py-4">
@@ -157,10 +159,10 @@ export default function AdminDashboard() {
             {/* 右侧操作区 */}
             <div className="flex items-center gap-4">
               {/* 全局搜索 */}
-              <div className={`relative transition-all ${searchOpen ? "w-64" : "w-10"}`}>
+              <div className={`relative transition-all duration-300 ${searchOpen ? "w-64" : "w-10"}`}>
                 <input
                   type="text"
-                  placeholder="搜索用户、订单..."
+                  placeholder="搜索用户、订单、导师..."
                   className={`w-full pl-10 pr-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
                     searchOpen ? "block" : "hidden"
                   }`}
@@ -176,12 +178,12 @@ export default function AdminDashboard() {
               {/* 通知 */}
               <button className="relative p-2 rounded-xl hover:bg-gray-100 transition-all">
                 <Bell className="w-5 h-5 text-gray-600" />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
               </button>
 
               {/* 用户信息 */}
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-full flex items-center justify-center">
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-full flex items-center justify-center shadow-md">
                   <span className="text-white font-bold">A</span>
                 </div>
                 <div className="hidden md:block">
@@ -194,9 +196,9 @@ export default function AdminDashboard() {
           </div>
         </header>
 
-        {/* 子页面内容区 */}
+        {/* 子页面内容区 - 完全对齐 */}
         <main className="flex-1 overflow-auto bg-gray-50 p-6">
-          <div className="max-w-7xl mx-auto">
+          <div className="max-w-full mx-auto">
             <Outlet />
           </div>
         </main>
