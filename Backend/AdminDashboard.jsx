@@ -2,7 +2,16 @@
 import { useEffect, useMemo } from "react";
 import { Link, useLocation, Outlet, useNavigate } from "react-router-dom";
 import {
-  Users, DollarSign, CreditCard, Settings, UserCheck, Copy, TrendingUp, LogOut, Bell, ChevronDown,
+  Users,
+  DollarSign,
+  CreditCard,
+  Settings,
+  UserCheck,
+  Copy,
+  TrendingUp,
+  LogOut,
+  Bell,
+  ChevronDown
 } from "lucide-react";
 
 const menuItems = [
@@ -44,9 +53,8 @@ export default function AdminDashboard() {
 
   return (
     <div className="flex h-screen bg-gray-50 text-gray-800 overflow-hidden">
-      {/* 固定左侧菜单栏 - PC 端更宽 */}
+      {/* 固定左侧菜单栏 */}
       <aside className="w-80 bg-white border-r border-gray-200 flex flex-col shadow-xl">
-        {/* Brand */}
         <div className="flex items-center justify-between p-6 border-b">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-blue-600 text-white font-bold text-xl grid place-items-center shadow-lg">
@@ -58,7 +66,6 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* Menu */}
         <nav className="flex-1 px-4 py-4 overflow-y-auto">
           <ul className="space-y-2">
             {menuItems.map((item) => {
@@ -83,7 +90,6 @@ export default function AdminDashboard() {
           </ul>
         </nav>
 
-        {/* Logout */}
         <div className="p-4 border-t">
           <button
             onClick={handleLogout}
@@ -95,12 +101,9 @@ export default function AdminDashboard() {
         </div>
       </aside>
 
-      {/* 主体内容 */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* 顶部导航 */}
         <header className="bg-white border-b sticky top-0 z-30 shadow-sm">
           <div className="flex items-center justify-between px-8 py-4">
-            {/* Breadcrumbs */}
             <nav className="flex items-center text-base font-medium">
               <Link to="/admin" className="text-indigo-600 hover:text-indigo-700 font-bold">
                 控制台
@@ -119,7 +122,6 @@ export default function AdminDashboard() {
               ))}
             </nav>
 
-            {/* 右上角用户区 */}
             <div className="flex items-center gap-6">
               <button className="relative p-3 rounded-xl hover:bg-gray-100 transition">
                 <Bell className="w-6 h-6 text-gray-600" />
@@ -139,7 +141,6 @@ export default function AdminDashboard() {
           </div>
         </header>
 
-        {/* 页面内容区域 - 最大化宽度 */}
         <main className="flex-1 overflow-auto bg-gray-50 px-10 py-8">
           <div className="max-w-[1600px] mx-auto w-full">
             <Outlet />
