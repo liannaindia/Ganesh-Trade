@@ -147,7 +147,6 @@ export default function RechargeManagement() {
           <tbody className="divide-y divide-gray-100">
             {recharges.map((r) => (
               <tr key={r.id} className="hover:bg-gray-50 text-center align-middle">
-                <td className="px-4 py-3">{r.id}</td>
                 <td className="px-4 py-3">{r.user_id}</td>
                 <td className="px-4 py-3 text-blue-600 font-semibold">${r.amount}</td>
                 <td className="px-4 py-3">{r.channels?.currency_name}</td>
