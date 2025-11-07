@@ -1,11 +1,37 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { ArrowLeft } from "lucide-react";  // 引入箭头图标
+import { supabase } from "../supabaseClient";  // 引入supabase客户端
 
 export default function Recharge({ setTab }) {
+  const [channels, setChannels] = useState([]); // 存储通道数据
+  const [loading, setLoading] = useState(true);  // 加载状态
+
+  useEffect(() => {
+    // 获取通道数据
+    const fetchChannels = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("channels")  // 从 channels 表获取数据
+          .select("id, currency_name, wallet_address, status")
+          .eq("status", "active");  // 只获取启用状态的通道
+
+        if (error) throw error;
+        setChannels(data);  // 将获取的数据存入 channels 状态
+      } catch (error) {
+        console.error("获取充值通道失败:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchChannels(); // 页面加载时调用 fetchChannels 函数
+  }, []);
+
+  if (loading) return <div className="p-6 text-center text-gray-500">加载中...</div>;
+
   return (
     <div className="px-4 pb-24 max-w-md mx-auto">
       <div className="flex items-center gap-3 py-3">
-       
         <ArrowLeft
           className="h-5 w-5 text-slate-700 cursor-pointer"
           onClick={() => setTab("home")} 
@@ -15,35 +41,26 @@ export default function Recharge({ setTab }) {
 
       {/* 充值页面的内容 */}
       <div className="space-y-2">
-        <div
-          className="flex items-center gap-3 bg-white border border-slate-200 rounded-xl px-4 py-3 shadow-sm cursor-pointer"
-        >
-          <img
-            src="https://i.imgur.com/b5NYPsZ.png"
-            className="w-8 h-8 rounded-full"
-            alt="Payment Channel"
-          />
-          <div>
-            <div className="font-medium text-slate-800 text-sm">OKPay (三方钱包充值)</div>
-            <div className="text-[12px] text-slate-500">快捷到账，即时到账</div>
-          </div>
-        </div>
-
-        <div
-          className="flex items-center gap-3 bg-white border border-slate-200 rounded-xl px-4 py-3 shadow-sm cursor-pointer"
-        >
-          <img
-            src="https://i.imgur.com/ThAc0qB.png"
-            className="w-8 h-8 rounded-full"
-            alt="Payment Channel"
-          />
-          <div>
-            <div className="font-medium text-slate-800 text-sm">AAPay (三方钱包充值)</div>
-            <div className="text-[12px] text-slate-500">快捷到账，即时到账</div>
-          </div>
-        </div>
-
-        {/* 更多支付方式... */}
+        {channels.length > 0 ? (
+          channels.map((channel) => (
+            <div
+              key={channel.id}
+              className="flex items-center gap-3 bg-white border border-slate-200 rounded-xl px-4 py-3 shadow-sm cursor-pointer"
+            >
+              <img
+                src="https://i.imgur.com/b5NYPsZ.png" // 这里你可以根据 channel.currency_name 或其他数据动态加载图片
+                className="w-8 h-8 rounded-full"
+                alt="Payment Channel"
+              />
+              <div>
+                <div className="font-medium text-slate-800 text-sm">{channel.currency_name}</div>
+                <div className="text-[12px] text-slate-500">快捷到账，即时到账</div>
+              </div>
+            </div>
+          ))
+        ) : (
+          <div className="text-center text-gray-500">没有可用的充值通道</div>
+        )}
       </div>
 
       {/* 输入充值金额 */}
