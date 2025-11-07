@@ -3,8 +3,8 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 const ADMIN_CREDENTIALS = {
-  username: "admin",
-  password: "ganesh2025",
+  username: "admin@gmail.com",
+  password: "qwe123",
 };
 
 export default function AdminLogin() {
