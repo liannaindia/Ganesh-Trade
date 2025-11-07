@@ -7,7 +7,7 @@ export default function Recharge({ setTab, isLoggedIn, userId }) {
   const [amount, setAmount] = useState("");
   const [selectedChannel, setSelectedChannel] = useState(null);
   const [channels, setChannels] = useState([]);
-  const [loading, setLoading UST] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
   const [error, setError] = useState("");
 
