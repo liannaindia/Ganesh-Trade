@@ -1,77 +1,64 @@
-// Recharge (1).jsx
-import React, { useState, useEffect } from "react";
-import { supabase } from "../supabaseClient"; 
-import { ArrowLeft } from "lucide-react"; // 确保正确导入 ArrowLeft
+// components/Recharge.jsx
+import React, { useState } from "react";
+import { supabase } from "../supabaseClient";
+import { ArrowLeft } from "lucide-react";
 
-// 修复点1：接收 userId prop
-export default function Recharge({ setTab, balance, isLoggedIn, userId }) {
-  const [amount, setAmount] = useState(""); 
-  const [selectedChannel, setSelectedChannel] = useState(null); 
+export default function Recharge({ setTab, isLoggedIn, userId }) {
+  const [amount, setAmount] = useState("");
   const [loading, setLoading] = useState(false);
-  const [channels, setChannels] = useState([]);
+  const [error, setError] = useState("");
 
-  useEffect(() => {
-    const fetchChannels = async () => {
-      const { data, error } = await supabase
-        .from("channels")
-        .select("*")
-        .eq("status", "active");
-
-      if (error) {
-        console.error("Error fetching channels:", error);
-      } else {
-        setChannels(data); 
-      }
-    };
-
-    fetchChannels();
-  }, []);
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!selectedChannel || !amount || isNaN(amount) || amount <= 0) {
-      alert("Please select a channel and enter a valid amount.");
+  const handleSubmit = async () => {
+    // 登录校验
+    if (!isLoggedIn || !userId) {
+      alert("Please log in to recharge.");
+      setTab("login");
       return;
     }
 
-    try {
-      setLoading(true);
-      
-      // 修复点2：使用 props 传来的 userId，而不是 localStorage
-      if (!userId) {
-        alert("User is not logged in.");
-        return;
-      }
+    // 金额校验
+    const numAmount = parseFloat(amount);
+    if (!amount || isNaN(numAmount) || numAmount < 1) {
+      setError("Minimum recharge amount is 1 USDT.");
+      return;
+    }
 
-      const { data, error } = await supabase.from("recharges").insert([
-        {
-          user_id: userId,  // 使用 userId
-          channel_id: selectedChannel.id,
-          amount: parseFloat(amount),
-          status: "pending", 
-        },
-      ]);
+    setLoading(true);
+    setError("");
+
+    try {
+      const { error } = await supabase.from("recharges").insert({
+        user_id: userId,
+        amount: numAmount,
+        status: "pending",
+        method: "manual", // 可扩展为实际支付方式
+      });
 
       if (error) throw error;
 
-      alert("Recharge request submitted successfully.");
-      setAmount(""); 
-      setSelectedChannel(null);
-    } catch (error) {
-      console.error("Error submitting recharge:", error);
-      alert("Failed to submit recharge request.");
+      alert("Recharge request submitted successfully!");
+      setAmount("");
+      setTab("home"); // 返回首页
+    } catch (err) {
+      console.error("Recharge error:", err);
+      setError("Submission failed. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
-  // 保留原始登录判断
+  // 未登录提示
   if (!isLoggedIn) {
-    return <div>Please log in to proceed with the recharge.</div>;
+    return (
+      <div className="px-4 pt-10 text-center text-slate-600">
+        Please log in to proceed with the recharge.
+      </div>
+    );
   }
 
   return (
     <div className="px-4 pb-24 max-w-md mx-auto">
+      {/* Header */}
       <div className="flex items-center gap-3 py-3">
         <ArrowLeft
           className="h-5 w-5 text-slate-700 cursor-pointer"
@@ -80,43 +67,49 @@ export default function Recharge({ setTab, balance, isLoggedIn, userId }) {
         <h2 className="font-semibold text-slate-800 text-lg">Recharge</h2>
       </div>
 
-      <div className="space-y-2">
-        <h3 className="text-gray-700">Select Recharge Channel</h3>
-        {channels.map((channel) => (
-          <div
-            key={channel.id}
-            onClick={() => setSelectedChannel(channel)}
-            className={`flex items-center gap-3 bg-white border border-slate-200 rounded-xl px-4 py-3 shadow-sm cursor-pointer ${
-              selectedChannel?.id === channel.id ? "bg-gray-100" : ""
-            }`}
-          >
-            <div className="font-medium text-slate-800 text-sm">
-              {channel.currency_name}
-            </div>
-            <div className="text-xs text-slate-500">{channel.wallet_address}</div>
-          </div>
-        ))}
-      </div>
-
+      {/* Amount Input */}
       <div className="mt-5 bg-white rounded-xl border border-slate-200 shadow-sm p-4">
-        <div className="text-sm text-slate-500 mb-1">Amount</div>
+        <div className="text-sm text-slate-500 mb-1">
+          Recharge Amount{" "}
+          <span className="text-slate-400">1 USDT = 1 USDT</span>
+        </div>
         <input
           type="number"
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
-          className="w-full border border-slate-200 rounded-xl p-2 text-sm outline-none"
-          placeholder="Enter amount"
+          className="w-full border border-slate-200 rounded-xl p-2 text-sm outline-none focus:ring-2 focus:ring-yellow-400"
+          placeholder="Minimum recharge amount 1 USDT"
+          min="1"
+          step="0.01"
         />
+        <div className="text-[12px] text-slate-500 mt-1 text-right">USDT</div>
       </div>
 
+      {/* Error Message */}
+      {error && (
+        <div className="mt-3 bg-red-50 border border-red-200 rounded-xl p-3 text-xs text-red-700">
+          {error}
+        </div>
+      )}
+
+      {/* Important Reminder */}
+      <div className="mt-3 bg-yellow-50 border border-yellow-200 rounded-xl p-3 text-xs text-slate-700">
+        <strong>Important Reminder:</strong>
+        <br />
+        If the funds do not arrive after a long time, please refresh the page or contact customer service.
+      </div>
+
+      {/* Submit Button */}
       <button
         onClick={handleSubmit}
-        disabled={loading}
-        className={`mt-4 w-full bg-yellow-400 hover:bg-yellow-500 text-slate-900 font-semibold py-3 rounded-xl ${
-          loading ? "cursor-not-allowed" : ""
+        disabled={loading || !amount}
+        className={`mt-4 w-full font-semibold py-3 rounded-xl transition ${
+          loading || !amount
+            ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+            : "bg-yellow-400 hover:bg-yellow-500 text-slate-900"
         }`}
       >
-        {loading ? "Submitting..." : "Submit"}
+        {loading ? "Submitting..." : "Continue"}
       </button>
     </div>
   );
