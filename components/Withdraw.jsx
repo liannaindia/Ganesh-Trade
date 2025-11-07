@@ -35,6 +35,7 @@ export default function Withdraw({ setTab, userId, balance }) {
   const handleRequestWithdraw = async () => {
     console.log("Continue button clicked");
 
+    // 验证提款金额和钱包地址
     if (!newAddress) {
       setError("Please enter a valid address.");
       return;
@@ -177,7 +178,7 @@ export default function Withdraw({ setTab, userId, balance }) {
               placeholder="Enter new wallet address (USDT TRC20)"
             />
             <button
-              onClick={handleSaveAddress}
+              onClick={handleRequestWithdraw}
               className="mt-2 w-full bg-yellow-400 hover:bg-yellow-500 text-slate-900 font-semibold py-3 rounded-xl"
             >
               Save Address
