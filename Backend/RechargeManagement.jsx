@@ -23,7 +23,7 @@ export default function RechargeManagement() {
       // 将时间转换为中国时间
       const formattedData = data.map((recharge) => ({
         ...recharge,
-        created_at: convertToChinaTime(recharge.created_at), // 转换时间为中国时间
+        created_at: convertToChinaTime(recharge.created_at),
       }));
 
       setRecharges(formattedData || []);
@@ -46,7 +46,7 @@ export default function RechargeManagement() {
     }
   };
 
-  // 将 UTC 时间转换为中国时间
+  // 将UTC时间转换为中国时间
   const convertToChinaTime = (utcTime) => {
     const date = new Date(utcTime); // 将 UTC 时间转换为 Date 对象
     const options = {
@@ -157,10 +157,10 @@ export default function RechargeManagement() {
                   <span
                     className={`px-2 py-1 rounded-full text-xs ${
                       r.status === "pending"
-                        ? " text-yellow-800" // 黄色背景，黑色字体
+                        ? "bg-yellow-100 text-yellow-800"
                         : r.status === "approved"
-                        ? " text-green-800" // 绿色背景，绿色字体
-                        : " text-red-800" // 红色背景，红色字体
+                        ? "bg-green-100 text-green-800"
+                        : "bg-red-100 text-red-800"
                     }`}
                   >
                     {r.status === "pending"
