@@ -93,9 +93,9 @@ export default function App() {
       case "me":
         return <MePage setTab={setTab} isLoggedIn={isLoggedIn} balance={balance} />;
       case "recharge":
-        return <RechargePage setTab={setTab} balance={balance} />; // 示例：如果 Recharge 需要余额
+        return <RechargePage setTab={setTab} isLoggedIn={isLoggedIn} balance={balance} />; // 示例：如果 Recharge 需要余额
       case "withdraw":
-        return <WithdrawPage setTab={setTab} balance={balance} />; // 示例：如果 Withdraw 需要余额
+        return <WithdrawPage setTab={setTab} isLoggedIn={isLoggedIn} balance={balance} />; // 示例：如果 Withdraw 需要余额
       case "invite":
         return <InvitePage setTab={setTab} isLoggedIn={isLoggedIn} />;
       default:
