@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { supabase } from "../supabaseClient"; 
+import { ArrowLeft } from "lucide-react";
 
 export default function Recharge({ setTab, balance, isLoggedIn }) {
   const [amount, setAmount] = useState(""); 
