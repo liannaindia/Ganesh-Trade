@@ -135,7 +135,6 @@ export default function RechargeManagement() {
         <table className="w-full table-fixed text-sm text-gray-800">
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
-              <th className="w-[80px] px-4 py-3 text-center font-semibold uppercase text-gray-600">ID</th>
               <th className="w-[140px] px-4 py-3 text-center font-semibold uppercase text-gray-600">用户ID</th>
               <th className="w-[120px] px-4 py-3 text-center font-semibold uppercase text-gray-600">金额</th>
               <th className="w-[200px] px-4 py-3 text-center font-semibold uppercase text-gray-600">通道</th>
