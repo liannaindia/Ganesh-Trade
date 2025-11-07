@@ -5,11 +5,13 @@ export default function RechargeChannel() {
   const [channels, setChannels] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [showEditForm, setShowEditForm] = useState(false); // 新增编辑表单显示状态
   const [newChannel, setNewChannel] = useState({
     currency_name: "",
     wallet_address: "",
     status: "active",
   });
+  const [editingChannel, setEditingChannel] = useState(null); // 用于存储编辑时的通道数据
 
   // 初始化加载
   useEffect(() => {
@@ -72,6 +74,41 @@ export default function RechargeChannel() {
     } catch (error) {
       console.error("删除失败:", error);
       alert("删除失败，请稍后重试。");
+    }
+  };
+
+  // 编辑通道
+  const handleEditChannel = (channel) => {
+    setEditingChannel(channel); // 设置正在编辑的通道
+    setShowEditForm(true); // 显示编辑表单
+  };
+
+  // 更新通道
+  const handleUpdateChannel = async (e) => {
+    e.preventDefault();
+    if (!editingChannel.currency_name || !editingChannel.wallet_address) {
+      alert("请输入币种名称和钱包地址！");
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from("channels")
+        .update({
+          currency_name: editingChannel.currency_name,
+          wallet_address: editingChannel.wallet_address,
+          status: editingChannel.status,
+        })
+        .eq("id", editingChannel.id);
+
+      if (error) throw error;
+
+      setEditingChannel(null); // 清空编辑的通道数据
+      setShowEditForm(false); // 隐藏编辑表单
+      fetchChannels(); // 刷新通道列表
+    } catch (error) {
+      console.error("更新失败:", error);
+      alert("更新失败，请检查 Supabase 权限或网络。");
     }
   };
 
@@ -154,6 +191,62 @@ export default function RechargeChannel() {
         </form>
       )}
 
+      {/* 编辑表单 */}
+      {showEditForm && editingChannel && (
+        <form onSubmit={handleUpdateChannel} className="p-6 border-b border-gray-100 bg-gray-50">
+          <div className="grid grid-cols-3 gap-4 items-center">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">币种名称</label>
+              <input
+                type="text"
+                value={editingChannel.currency_name}
+                onChange={(e) =>
+                  setEditingChannel({ ...editingChannel, currency_name: e.target.value })
+                }
+                placeholder="例如：USDT (TRC20)"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">钱包地址</label>
+              <input
+                type="text"
+                value={editingChannel.wallet_address}
+                onChange={(e) =>
+                  setEditingChannel({ ...editingChannel, wallet_address: e.target.value })
+                }
+                placeholder="输入该币种对应的充值地址"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">状态</label>
+              <select
+                value={editingChannel.status}
+                onChange={(e) =>
+                  setEditingChannel({ ...editingChannel, status: e.target.value })
+                }
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="active">启用</option>
+                <option value="inactive">停用</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="mt-4 flex justify-end">
+            <button
+              type="submit"
+              className="px-5 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+            >
+              更新
+            </button>
+          </div>
+        </form>
+      )}
+
       {/* 表格显示 */}
       <div className="overflow-auto max-h-[80vh]">
         <table className="w-full table-fixed text-sm text-gray-800">
@@ -199,7 +292,12 @@ export default function RechargeChannel() {
                   >
                     删除
                   </button>
-                  <button className="text-blue-600 hover:text-blue-800">编辑</button>
+                  <button
+                    onClick={() => handleEditChannel(ch)} // 点击编辑按钮时传入通道数据
+                    className="text-blue-600 hover:text-blue-800"
+                  >
+                    编辑
+                  </button>
                 </td>
               </tr>
             ))}
