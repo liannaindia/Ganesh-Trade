@@ -1,20 +1,17 @@
 import React, { useState, useEffect } from "react";
 import { ArrowLeft } from "lucide-react";
-import { supabase } from "../supabaseClient";
+import { supabase } from "../supabaseClient"; // 引入 supabase
 
 export default function Withdraw({ setTab, userId, balance }) {
   const [tab, setTabState] = useState("request");
-  const [walletAddress, setWalletAddress] = useState(""); // 当前保存的地址
-  const [newAddress, setNewAddress] = useState("");       // 新输入的地址
-  const [withdrawAmount, setWithdrawAmount] = useState(""); // 提现金额（字符串）
+  const [walletAddress, setWalletAddress] = useState(""); // 当前保存的用户钱包地址
+  const [newAddress, setNewAddress] = useState(""); // 用户输入的新钱包地址
+  const [withdrawAmount, setWithdrawAmount] = useState(""); // 提现金额
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false); // 防止重复提交
 
-  // 1. 获取用户钱包地址
+  // 1. 获取用户的钱包地址
   useEffect(() => {
     const fetchWalletAddress = async () => {
-      if (!userId) return;
-
       const { data, error } = await supabase
         .from("users")
         .select("wallet_address")
@@ -22,107 +19,102 @@ export default function Withdraw({ setTab, userId, balance }) {
         .single();
 
       if (error) {
-        console.error("Fetch wallet error:", error);
-        setError("Failed to load wallet address.");
-      } else if (data?.wallet_address) {
-        setWalletAddress(data.wallet_address);
+        setError("Failed to fetch wallet address.");
+        console.error(error);
+      } else if (data) {
+        setWalletAddress(data.wallet_address); // 设置当前保存的钱包地址
       }
     };
 
-    fetchWalletAddress();
+    if (userId) {
+      fetchWalletAddress(); // 获取用户钱包地址
+    }
   }, [userId]);
 
   // 2. 提交提款请求
   const handleRequestWithdraw = async () => {
-    if (loading) return;
-    setLoading(true);
-    setError("");
+    console.log("Continue button clicked");
 
+    // 验证提款金额和钱包地址
+    if (!newAddress) {
+      setError("Please enter a valid address.");
+      return;
+    }
+
+    // 简单验证地址格式（确保是 TRC20 地址）
+    const isValidTRC20Address = newAddress.startsWith("T") && newAddress.length === 34;
+    if (!isValidTRC20Address) {
+      setError("Invalid USDT (TRC20) address.");
+      return;
+    }
+
+    if (!withdrawAmount || withdrawAmount <= 0 || withdrawAmount > balance) {
+      setError("Invalid withdraw amount.");
+      return;
+    }
+
+    console.log("Proceeding with withdraw request...");
+
+    // 插入提款记录到数据库
     try {
-      // 验证钱包地址（使用当前保存的地址）
-      if (!walletAddress) {
-        setError("No wallet address set. Please save an address first.");
-        return;
-      }
-
-      const isValidTRC20 = walletAddress.startsWith("T") && walletAddress.length === 34;
-      if (!isValidTRC20) {
-        setError("Invalid saved wallet address format.");
-        return;
-      }
-
-      // 验证金额
-      const amount = parseFloat(withdrawAmount);
-      if (isNaN(amount) || amount < 100 || amount > 9999 || amount > balance) {
-        setError("Amount must be between 100–9999 USDT and not exceed balance.");
-        return;
-      }
-
-      console.log("Submitting withdraw:", { userId, amount, walletAddress });
-
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("withdraws")
-        .insert({
-          user_id: userId,
-          amount: amount,
-          wallet_address: walletAddress,
-          status: "pending",
-        });
+        .insert([
+          {
+            user_id: userId,
+            amount: withdrawAmount,
+            wallet_address: newAddress, // 保存钱包地址
+            status: "pending", // 初始状态为 pending
+          },
+        ]);
 
       if (error) {
-        console.error("Withdraw insert error:", error);
-        setError("Failed to submit withdraw request.");
+        setError("Failed to request withdraw.");
+        console.error(error);
       } else {
-        setWithdrawAmount("");
-        alert("Withdraw request submitted successfully!");
+        setError(""); // 清除错误
+        setWithdrawAmount(""); // 清空金额输入框
+        setNewAddress(""); // 清空钱包地址输入框
+        setWalletAddress(newAddress); // 更新钱包地址
+        console.log("Withdraw request submitted successfully.");
+        alert("Withdraw request submitted successfully.");
       }
-    } catch (err) {
-      console.error("Unexpected error:", err);
-      setError("An unexpected error occurred.");
-    } finally {
-      setLoading(false);
+    } catch (error) {
+      console.error("Error in withdraw request:", error);
+      setError("An error occurred while submitting the withdraw request.");
     }
   };
 
   // 3. 保存新钱包地址
   const handleSaveAddress = async () => {
-    if (loading) return;
-    setLoading(true);
-    setError("");
+    console.log("Save Address button clicked");
 
-    const trimmed = newAddress.trim();
-    if (!trimmed) {
-      setError("Please enter a wallet address.");
-      setLoading(false);
+    if (!newAddress) {
+      setError("Please enter a valid address.");
       return;
     }
 
-    const isValidTRC20 = trimmed.startsWith("T") && trimmed.length === 34;
-    if (!isValidTRC20) {
-      setError("Invalid USDT (TRC20) address. Must start with 'T' and be 34 characters.");
-      setLoading(false);
+    // 简单验证地址格式（确保是 TRC20 地址）
+    const isValidTRC20Address = newAddress.startsWith("T") && newAddress.length === 34;
+    if (!isValidTRC20Address) {
+      setError("Invalid USDT (TRC20) address.");
       return;
     }
 
-    try {
-      const { error } = await supabase
-        .from("users")
-        .update({ wallet_address: trimmed })
-        .eq("id", userId);
+    // 更新用户钱包地址
+    const { error } = await supabase
+      .from("users")
+      .update({ wallet_address: newAddress })
+      .eq("id", userId);
 
-      if (error) {
-        console.error("Save address error:", error);
-        setError("Failed to save address.");
-      } else {
-        setWalletAddress(trimmed);
-        setNewAddress("");
-        alert("Wallet address saved successfully!");
-      }
-    } catch (err) {
-      console.error("Unexpected error:", err);
-      setError("An error occurred while saving.");
-    } finally {
-      setLoading(false);
+    if (error) {
+      setError("Failed to update wallet address.");
+      console.error(error);
+    } else {
+      setWalletAddress(newAddress); // 更新钱包地址
+      setNewAddress(""); // 清空输入框
+      setError(""); // 清除错误消息
+      alert("Wallet address updated successfully.");
     }
   };
 
@@ -136,11 +128,10 @@ export default function Withdraw({ setTab, userId, balance }) {
         <h2 className="font-semibold text-slate-800 text-lg">Withdraw</h2>
       </div>
 
-      {/* 标签页切换 */}
       <div className="flex border-b border-slate-200 mb-3">
         <button
           onClick={() => setTabState("request")}
-          className={`flex-1 py-2 text-sm font-semibold border-b-2 transition-colors ${
+          className={`flex-1 py-2 text-sm font-semibold border-b-2 ${
             tab === "request"
               ? "border-yellow-500 text-yellow-600"
               : "border-transparent text-slate-500"
@@ -150,7 +141,7 @@ export default function Withdraw({ setTab, userId, balance }) {
         </button>
         <button
           onClick={() => setTabState("address")}
-          className={`flex-1 py-2 text-sm font-semibold border-b-2 transition-colors ${
+          className={`flex-1 py-2 text-sm font-semibold border-b-2 ${
             tab === "address"
               ? "border-yellow-500 text-yellow-600"
               : "border-transparent text-slate-500"
@@ -160,14 +151,6 @@ export default function Withdraw({ setTab, userId, balance }) {
         </button>
       </div>
 
-      {/* 错误提示（统一显示） */}
-      {error && (
-        <div className="mb-3 p-3 bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg">
-          {error}
-        </div>
-      )}
-
-      {/* Request Withdraw 页面 */}
       {tab === "request" ? (
         <>
           <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm mb-3">
@@ -180,8 +163,8 @@ export default function Withdraw({ setTab, userId, balance }) {
           <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm space-y-3">
             <div>
               <div className="text-sm text-slate-500 mb-1">Withdraw Account</div>
-              <div className="w-full border border-slate-200 rounded-lg p-2 text-sm text-slate-900 break-all">
-                {walletAddress || "No wallet address set"}
+              <div className="w-full border border-slate-200 rounded-lg p-2 text-sm text-slate-900">
+                {walletAddress || "No wallet address available"}
               </div>
             </div>
 
@@ -190,14 +173,10 @@ export default function Withdraw({ setTab, userId, balance }) {
                 Withdraw Amount <span className="text-slate-400">100–9999 USDT</span>
               </div>
               <input
-                type="number"
                 className="w-full border border-slate-200 rounded-lg p-2 text-sm outline-none"
                 placeholder="Enter amount"
                 value={withdrawAmount}
                 onChange={(e) => setWithdrawAmount(e.target.value)}
-                min="100"
-                max="9999"
-                step="0.01"
               />
             </div>
 
@@ -214,24 +193,18 @@ export default function Withdraw({ setTab, userId, balance }) {
           </div>
 
           <button
-            onClick={handleRequestWithdraw}
-            disabled={loading || !walletAddress}
-            className={`mt-4 w-full font-semibold py-3 rounded-xl transition-colors ${
-              loading || !walletAddress
-                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                : "bg-yellow-400 hover:bg-yellow-500 text-slate-900"
-            }`}
+            onClick={handleRequestWithdraw} // 绑定到正确的函数
+            className="mt-4 w-full bg-yellow-400 hover:bg-yellow-500 text-slate-900 font-semibold py-3 rounded-xl"
           >
-            {loading ? "Submitting..." : "Continue"}
+            Continue
           </button>
         </>
       ) : (
-        /* Receiving Address 页面 */
         <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm space-y-3">
-          <div className="text-sm text-slate-500 mb-1">Current Receiving Address</div>
+          <div className="text-sm text-slate-500 mb-1">Receiving Address</div>
           <div className="text-sm font-semibold text-slate-700 mb-2">USDT (TRC20)</div>
-          <div className="w-full border border-slate-200 rounded-lg p-2 text-sm text-slate-900 break-all">
-            {walletAddress || "No address saved yet"}
+          <div className="w-full border border-slate-200 rounded-lg p-2 text-sm text-slate-900">
+            {walletAddress || "No wallet address available"}
           </div>
 
           <div className="mt-4">
@@ -240,21 +213,18 @@ export default function Withdraw({ setTab, userId, balance }) {
               value={newAddress}
               onChange={(e) => setNewAddress(e.target.value)}
               className="w-full border border-slate-200 rounded-lg p-2 text-sm outline-none"
-              placeholder="Enter new USDT TRC20 address (starts with T)"
-              maxLength="34"
+              placeholder="Enter new wallet address (USDT TRC20)"
             />
             <button
-              onClick={handleSaveAddress}
-              disabled={loading}
-              className={`mt-2 w-full font-semibold py-3 rounded-xl transition-colors ${
-                loading
-                  ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                  : "bg-yellow-400 hover:bg-yellow-500 text-slate-900"
-              }`}
+              onClick={handleSaveAddress} // 绑定到正确的函数
+              className="mt-2 w-full bg-yellow-400 hover:bg-yellow-500 text-slate-900 font-semibold py-3 rounded-xl"
             >
-              {loading ? "Saving..." : "Save Address"}
+              Save Address
             </button>
           </div>
+
+          {/* 显示错误消息 */}
+          {error && <div className="text-red-500 text-sm mt-2 p-2 bg-red-50 rounded">{error}</div>}
         </div>
       )}
     </div>
