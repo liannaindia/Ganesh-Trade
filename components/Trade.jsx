@@ -1,47 +1,24 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Search, Filter } from "lucide-react";
+import { supabase } from "../supabaseClient"; // 确保正确导入supabase
 
 export default function Trade() {
   const [query, setQuery] = useState("");
+  const [mentors, setMentors] = useState([]); // 从数据库获取的导师数据
 
-  // === 模拟导师数据 ===
-  const mentors = [
-    {
-      id: 1,
-      name: "刘半仙",
-      years: 9,
-      assets: 15368,
-      img: "https://randomuser.me/api/portraits/men/32.jpg",
-    },
-    {
-      id: 2,
-      name: "特朗朗",
-      years: 11,
-      assets: 652122,
-      img: "https://randomuser.me/api/portraits/men/51.jpg",
-    },
-    {
-      id: 3,
-      name: "上官熊二",
-      years: 9,
-      assets: 995219,
-      img: "https://randomuser.me/api/portraits/men/44.jpg",
-    },
-    {
-      id: 4,
-      name: "alessia1",
-      years: 14,
-      assets: 123134134,
-      img: "https://randomuser.me/api/portraits/women/33.jpg",
-    },
-    {
-      id: 5,
-      name: "alessia",
-      years: 15,
-      assets: 54654445,
-      img: "https://randomuser.me/api/portraits/women/65.jpg",
-    },
-  ];
+  useEffect(() => {
+    fetchMentors();
+  }, []);
+
+  const fetchMentors = async () => {
+    try {
+      const { data, error } = await supabase.from("mentors").select("*");
+      if (error) throw error;
+      setMentors(data || []);
+    } catch (error) {
+      console.error("获取导师失败:", error);
+    }
+  };
 
   const filtered = mentors.filter((m) =>
     m.name.toLowerCase().includes(query.toLowerCase())
