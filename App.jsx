@@ -9,19 +9,22 @@ import WithdrawPage from "./components/Withdraw.jsx";
 import InvitePage from "./components/Invite.jsx";
 import LoginPage from "./components/Login.jsx"; 
 import RegisterPage from "./components/Register.jsx"; 
-import BottomNav from "./BottomNav";  // 引入底部导航栏
-import { supabase } from "./supabaseClient"; // 新增：引入 supabase（调整路径如果不同）
+import BottomNav from "./BottomNav"; 
+import { supabase } from "./supabaseClient"; 
 
 export default function App() {
   const [tab, setTab] = useState("home");
   const [isLoggedIn, setIsLoggedIn] = useState(false); // 全局登录状态
-  const [balance, setBalance] = useState(0); // 新增：全局余额状态
+  const [balance, setBalance] = useState(0); // 全局余额状态
+  const [userId, setUserId] = useState(null); // 保存 user_id
 
   // 初始化登录状态，从 localStorage 恢复
   useEffect(() => {
     const savedPhone = localStorage.getItem('phone_number');
-    if (savedPhone) {
+    const savedUserId = localStorage.getItem('user_id'); // 获取 user_id
+    if (savedPhone && savedUserId) {
       setIsLoggedIn(true);
+      setUserId(savedUserId); // 设置 user_id
     }
   }, []);
 
@@ -29,15 +32,16 @@ export default function App() {
   useEffect(() => {
     let realtimeSubscription = null;
     const phoneNumber = localStorage.getItem('phone_number');
+    const user_id = localStorage.getItem('user_id'); // 获取 user_id
 
     const setupBalance = async () => {
-      if (!phoneNumber) return;
+      if (!phoneNumber || !user_id) return; // 确保用户已登录
 
       // 初始查询余额
       const { data, error } = await supabase
         .from('users')
         .select('balance')
-        .eq('phone_number', phoneNumber)
+        .eq('id', user_id)
         .single();
 
       if (error) {
@@ -48,14 +52,14 @@ export default function App() {
 
       // 实时订阅余额变化
       realtimeSubscription = supabase
-        .channel('global-balance-updates') // 全局 channel 名
+        .channel('global-balance-updates') 
         .on(
           'postgres_changes',
           {
             event: 'UPDATE',
             schema: 'public',
             table: 'users',
-            filter: `phone_number=eq.${phoneNumber}`,
+            filter: `id=eq.${user_id}`,
           },
           (payload) => {
             console.log('Global balance updated via Realtime:', payload.new.balance);
@@ -69,15 +73,13 @@ export default function App() {
 
     setupBalance();
 
-    // 清理订阅
     return () => {
       if (realtimeSubscription) {
         supabase.removeChannel(realtimeSubscription);
       }
     };
-  }, []); // 空依赖：只订阅一次
+  }, []); 
 
-  // 页面渲染逻辑
   const renderPage = () => {
     switch (tab) {
       case "markets":
@@ -93,24 +95,22 @@ export default function App() {
       case "me":
         return <MePage setTab={setTab} isLoggedIn={isLoggedIn} balance={balance} />;
       case "recharge":
-        return <RechargePage setTab={setTab} isLoggedIn={isLoggedIn} balance={balance} />; // 示例：如果 Recharge 需要余额
+        return <RechargePage setTab={setTab} balance={balance} userId={userId} />; // 传递 userId
       case "withdraw":
-        return <WithdrawPage setTab={setTab} isLoggedIn={isLoggedIn} balance={balance} />; // 示例：如果 Withdraw 需要余额
+        return <WithdrawPage setTab={setTab} balance={balance} />;
       case "invite":
         return <InvitePage setTab={setTab} isLoggedIn={isLoggedIn} />;
       default:
-        return <HomePage setTab={setTab} isLoggedIn={isLoggedIn} balance={balance} />; // 新增：传递 balance
+        return <HomePage setTab={setTab} isLoggedIn={isLoggedIn} balance={balance} />;
     }
   };
 
   return (
     <div className="min-h-screen bg-slate-100 text-slate-900">
-      {/* 页面内容 */}
       <div className="max-w-md mx-auto bg-[#f5f7fb] pb-24 min-h-screen text-slate-900">
         {renderPage()}
       </div>
 
-      {/* 固定底部导航栏，并对齐内容 */}
       <div className="max-w-md mx-auto w-full fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 shadow-none">
         <BottomNav tab={tab} setTab={setTab} />
       </div>
