@@ -67,12 +67,12 @@ export default function RechargeManagement() {
   return (
     <div className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-200">
       <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-        <h2 className="text-xl font-bold text-gray-800">Recharge Management</h2>
+        <h2 className="text-xl font-bold text-gray-800">充值管理</h2>
         <button
           onClick={fetchRecharges}
           className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition"
         >
-          Refresh
+          刷新
         </button>
       </div>
 
@@ -81,12 +81,12 @@ export default function RechargeManagement() {
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
               <th className="w-[80px] px-4 py-3 text-center font-semibold uppercase text-gray-600">ID</th>
-              <th className="w-[140px] px-4 py-3 text-center font-semibold uppercase text-gray-600">User ID</th>
-              <th className="w-[120px] px-4 py-3 text-center font-semibold uppercase text-gray-600">Amount</th>
-              <th className="w-[200px] px-4 py-3 text-center font-semibold uppercase text-gray-600">Channel</th> {/* 显示通道 */}
-              <th className="w-[200px] px-4 py-3 text-center font-semibold uppercase text-gray-600">Time</th>
-              <th className="w-[120px] px-4 py-3 text-center font-semibold uppercase text-gray-600">Status</th>
-              <th className="w-[180px] px-4 py-3 text-center font-semibold uppercase text-gray-600">Action</th>
+              <th className="w-[140px] px-4 py-3 text-center font-semibold uppercase text-gray-600">用户ID</th>
+              <th className="w-[120px] px-4 py-3 text-center font-semibold uppercase text-gray-600">金额</th>
+              <th className="w-[200px] px-4 py-3 text-center font-semibold uppercase text-gray-600">通道</th> {/* 显示通道 */}
+              <th className="w-[200px] px-4 py-3 text-center font-semibold uppercase text-gray-600">时间</th>
+              <th className="w-[120px] px-4 py-3 text-center font-semibold uppercase text-gray-600">状态</th>
+              <th className="w-[180px] px-4 py-3 text-center font-semibold uppercase text-gray-600">操作</th>
             </tr>
           </thead>
 
@@ -106,7 +106,7 @@ export default function RechargeManagement() {
                         : "bg-green-100 text-green-800"
                     }`}
                   >
-                    {r.status}
+                    {r.status === "pending" ? "待审批" : "已批准"}
                   </span>
                 </td>
                 <td className="px-4 py-3">
@@ -115,10 +115,10 @@ export default function RechargeManagement() {
                       onClick={() => handleApprove(r.id, r.user_id, r.amount)} // 调用 handleApprove 函数
                       className="text-green-600 hover:text-green-800 mr-3"
                     >
-                      Approve
+                      批准
                     </button>
                   )}
-                  <button className="text-blue-600 hover:text-blue-800">Details</button>
+                  <button className="text-blue-600 hover:text-blue-800">详情</button>
                 </td>
               </tr>
             ))}
