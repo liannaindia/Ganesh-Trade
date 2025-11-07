@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { supabase } from "../supabaseClient";  // 引入supabase客户端
+import { supabase } from "../supabaseClient"; 
 
 export default function Recharge({ setTab, balance, isLoggedIn }) {
-  const [amount, setAmount] = useState(""); // 充值金额
-  const [selectedChannel, setSelectedChannel] = useState(null); // 选择的充值通道
+  const [amount, setAmount] = useState(""); 
+  const [selectedChannel, setSelectedChannel] = useState(null); 
   const [loading, setLoading] = useState(false);
-
-  // 充值通道列表
   const [channels, setChannels] = useState([]);
 
   useEffect(() => {
@@ -14,19 +12,18 @@ export default function Recharge({ setTab, balance, isLoggedIn }) {
       const { data, error } = await supabase
         .from("channels")
         .select("*")
-        .eq("status", "active"); // 获取启用的充值通道
+        .eq("status", "active");
 
       if (error) {
         console.error("Error fetching channels:", error);
       } else {
-        setChannels(data); // 存储通道数据
+        setChannels(data); 
       }
     };
 
     fetchChannels();
   }, []);
 
-  // 提交充值请求
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!selectedChannel || !amount || isNaN(amount) || amount <= 0) {
@@ -36,29 +33,26 @@ export default function Recharge({ setTab, balance, isLoggedIn }) {
 
     try {
       setLoading(true);
-
-      // 从 localStorage 获取用户ID
       const user_id = localStorage.getItem('user_id');
       if (!user_id) {
         alert("User is not logged in.");
         return;
       }
 
-      // 提交充值数据到后台
       const { data, error } = await supabase.from("recharges").insert([
         {
-          user_id: user_id, // 使用从 localStorage 获取的 user_id
+          user_id: user_id,
           channel_id: selectedChannel.id,
           amount: parseFloat(amount),
-          status: "pending", // 初始状态为 pending
+          status: "pending", 
         },
       ]);
 
       if (error) throw error;
 
       alert("Recharge request submitted successfully.");
-      setAmount(""); // 清空金额
-      setSelectedChannel(null); // 重置选中的通道
+      setAmount(""); 
+      setSelectedChannel(null);
     } catch (error) {
       console.error("Error submitting recharge:", error);
       alert("Failed to submit recharge request.");
@@ -81,7 +75,6 @@ export default function Recharge({ setTab, balance, isLoggedIn }) {
         <h2 className="font-semibold text-slate-800 text-lg">Recharge</h2>
       </div>
 
-      {/* 选择充值通道 */}
       <div className="space-y-2">
         <h3 className="text-gray-700">Select Recharge Channel</h3>
         {channels.map((channel) => (
@@ -100,7 +93,6 @@ export default function Recharge({ setTab, balance, isLoggedIn }) {
         ))}
       </div>
 
-      {/* 输入充值金额 */}
       <div className="mt-5 bg-white rounded-xl border border-slate-200 shadow-sm p-4">
         <div className="text-sm text-slate-500 mb-1">Amount</div>
         <input
@@ -112,7 +104,6 @@ export default function Recharge({ setTab, balance, isLoggedIn }) {
         />
       </div>
 
-      {/* 提交按钮 */}
       <button
         onClick={handleSubmit}
         disabled={loading}
