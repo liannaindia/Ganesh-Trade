@@ -1,21 +1,22 @@
+// RechargeManagement (1).jsx
 import { useState, useEffect } from "react";
 import { supabase } from "../supabaseClient";
 
 export default function RechargeManagement() {
   const [recharges, setRecharges] = useState([]);
-  const [channels, setChannels] = useState([]); // 存储充值通道信息
+  const [channels, setChannels] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchRecharges();
-    fetchChannels(); // 获取充值通道数据
+    fetchChannels();
   }, []);
 
   const fetchRecharges = async () => {
     try {
       const { data, error } = await supabase
         .from("recharges")
-        .select("*, channels(currency_name)") // 获取通道的币种名称
+        .select("*, channels(currency_name)")
         .order("created_at", { ascending: false });
       if (error) throw error;
       setRecharges(data || []);
@@ -38,17 +39,18 @@ export default function RechargeManagement() {
     }
   };
 
+  // 通过（批准 + 加余额）
   const handleApprove = async (id, user_id, amount) => {
     try {
-      // 批准充值并更新状态为 approved
-      const { error: updateError } = await supabase
+      // 1. 更新充值记录状态为 approved
+      const { error: updateRechargeError } = await supabase
         .from("recharges")
         .update({ status: "approved" })
         .eq("id", id);
 
-      if (updateError) throw updateError;
+      if (updateRechargeError) throw updateRechargeError;
 
-      // 更新用户余额
+      // 2. 增加用户余额
       const { error: balanceError } = await supabase
         .from("users")
         .update({ balance: supabase.raw("balance + ?", [amount]) })
@@ -56,9 +58,30 @@ export default function RechargeManagement() {
 
       if (balanceError) throw balanceError;
 
-      fetchRecharges(); // 刷新充值记录
+      // 3. 刷新列表
+      fetchRecharges();
     } catch (error) {
-      console.error("Error approving recharge:", error);
+      console.error("批准充值失败:", error);
+      alert("操作失败，请重试");
+    }
+  };
+
+  // 拒绝
+  const handleReject = async (id) => {
+    if (!window.confirm("确定要拒绝此充值申请吗？")) return;
+
+    try {
+      const { error } = await supabase
+        .from("recharges")
+        .update({ status: "rejected" })
+        .eq("id", id);
+
+      if (error) throw error;
+
+      fetchRecharges();
+    } catch (error) {
+      console.error("拒绝充值失败:", error);
+      alert("操作失败，请重试");
     }
   };
 
@@ -83,7 +106,7 @@ export default function RechargeManagement() {
               <th className="w-[80px] px-4 py-3 text-center font-semibold uppercase text-gray-600">ID</th>
               <th className="w-[140px] px-4 py-3 text-center font-semibold uppercase text-gray-600">用户ID</th>
               <th className="w-[120px] px-4 py-3 text-center font-semibold uppercase text-gray-600">金额</th>
-              <th className="w-[200px] px-4 py-3 text-center font-semibold uppercase text-gray-600">通道</th> {/* 显示通道 */}
+              <th className="w-[200px] px-4 py-3 text-center font-semibold uppercase text-gray-600">通道</th>
               <th className="w-[200px] px-4 py-3 text-center font-semibold uppercase text-gray-600">时间</th>
               <th className="w-[120px] px-4 py-3 text-center font-semibold uppercase text-gray-600">状态</th>
               <th className="w-[180px] px-4 py-3 text-center font-semibold uppercase text-gray-600">操作</th>
@@ -96,29 +119,41 @@ export default function RechargeManagement() {
                 <td className="px-4 py-3">{r.id}</td>
                 <td className="px-4 py-3">{r.user_id}</td>
                 <td className="px-4 py-3 text-blue-600 font-semibold">${r.amount}</td>
-                <td className="px-4 py-3">{r.channels?.currency_name}</td> {/* 显示通道的币种名称 */}
-                <td className="px-4 py-3 text-gray-500">{r.created_at}</td>
-                <td className="px-4 py-3">
-                  <span
-                    className={`px-2 py-1 rounded-full text-xs ${
-                      r.status === "pending"
-                        ? "bg-yellow-100 text-yellow-800"
-                        : "bg-green-100 text-green-800"
-                    }`}
-                  >
-                    {r.status === "pending" ? "待审批" : "已批准"}
-                  </span>
+                <td className="px-4 py-3">{r.channels?.currency_name || "-"}</td>
+                <td className="px-4 py-3 text-gray-500">
+                  {new Date(r.created_at).toLocaleString()}
                 </td>
                 <td className="px-4 py-3">
+                  <span
+                    className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      r.status === "pending"
+                        ? "bg-yellow-100 text-yellow-800"
+                        : r.status === "approved"
+                        ? "bg-green-100 text-green-800"
+                        : "bg-red-100 text-red-800"
+                    }`}
+                  >
+                    {r.status === "pending" ? "待审批" : r.status === "approved" ? "已通过" : "已拒绝"}
+                  </span>
+                </td>
+                <td className="px-4 py-3 space-x-2">
                   {r.status === "pending" && (
-                    <button
-                      onClick={() => handleApprove(r.id, r.user_id, r.amount)} // 调用 handleApprove 函数
-                      className="text-green-600 hover:text-green-800 mr-3"
-                    >
-                      批准
-                    </button>
+                    <>
+                      <button
+                        onClick={() => handleApprove(r.id, r.user_id, r.amount)}
+                        className="text-green-600 hover:text-green-800 font-medium"
+                      >
+                        通过
+                      </button>
+                      <button
+                        onClick={() => handleReject(r.id)}
+                        className="text-red-600 hover:text-red-800 font-medium"
+                      >
+                        拒绝
+                      </button>
+                    </>
                   )}
-                  <button className="text-blue-600 hover:text-blue-800">详情</button>
+                  {r.status !== "pending" && <span className="text-gray-400">已处理</span>}
                 </td>
               </tr>
             ))}
