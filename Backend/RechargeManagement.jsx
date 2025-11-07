@@ -50,9 +50,10 @@ export default function RechargeManagement() {
 
       // 更新用户余额
       const { error: balanceError } = await supabase
-        .from("users")
-        .update({ balance: supabase.raw("balance + ?", [amount]) })
-        .eq("id", user_id);
+    .from("users")
+    .update({ balance: supabase.sql(`balance + ${amount}`) }) // 使用正确的原生 SQL 语法
+    .eq("id", user_id);
+
 
       if (balanceError) throw balanceError;
 
