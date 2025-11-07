@@ -1,7 +1,7 @@
 // components/Recharge.jsx
 import React, { useState, useEffect } from "react";
 import { supabase } from "../supabaseClient";
-import { ArrowLeft, Shield, Zap, CheckCircle } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 
 export default function Recharge({ setTab, isLoggedIn, userId }) {
   const [amount, setAmount] = useState("");
@@ -11,10 +11,7 @@ export default function Recharge({ setTab, isLoggedIn, userId }) {
   const [fetching, setFetching] = useState(true);
   const [error, setError] = useState("");
 
-  // 快速金额（USDT）
-  const quickAmounts = [10, 50, 100, 500];
-
-  // 读取 channels
+  // ---------- 读取 channels ----------
   useEffect(() => {
     const fetchChannels = async () => {
       setFetching(true);
@@ -22,7 +19,7 @@ export default function Recharge({ setTab, isLoggedIn, userId }) {
         .from("channels")
         .select("id, currency_name, wallet_address")
         .eq("status", "active")
-        .order("id");
+        .order("id", { ascending: true });
 
       if (error) {
         console.error("Load channels error:", error);
@@ -32,22 +29,29 @@ export default function Recharge({ setTab, isLoggedIn, userId }) {
       }
       setFetching(false);
     };
+
     fetchChannels();
   }, []);
 
+  // ---------- 提交充值 ----------
   const handleSubmit = async () => {
+    // 登录校验
     if (!isLoggedIn || !userId) {
       alert("Please log in first.");
       setTab("login");
       return;
     }
+
+    // 通道校验
     if (!selectedChannel) {
-      setError("Please select a network.");
+      setError("Please select a payment channel.");
       return;
     }
+
+    // 金额校验
     const num = parseFloat(amount);
     if (!amount || isNaN(num) || num < 1) {
-      setError("Minimum 1 USDT.");
+      setError("Minimum recharge amount is 1 USDT.");
       return;
     }
 
@@ -64,154 +68,125 @@ export default function Recharge({ setTab, isLoggedIn, userId }) {
 
       if (error) throw error;
 
-      alert("Recharge request submitted! Please complete payment.");
+      alert("Recharge request submitted successfully!");
       setAmount("");
       setSelectedChannel(null);
+      // 可选：跳转到支付详情页或返回首页
+      // setTab("home");
     } catch (err) {
-      setError("Submission failed. Try again.");
+      console.error("Recharge error:", err);
+      setError("Submission failed. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
+  // ---------- 未登录 ----------
   if (!isLoggedIn) {
     return (
-      <div className="p-6 text-center">
-        <div className="bg-orange-100 text-orange-700 p-4 rounded-xl">
-          Please log in to recharge
-        </div>
+      <div className="px-4 pt-10 text-center text-slate-600">
+        Please log in to proceed with the recharge.
       </div>
     );
   }
 
+  // ---------- 主界面 ----------
   return (
-    <div className="px-4 pb-24 max-w-md mx-auto bg-gradient-to-b from-orange-50 to-white min-h-screen">
+    <div className="px-4 pb-24 max-w-md mx-auto">
       {/* Header */}
-      <div className="flex items-center gap-3 py-4 sticky top-0 bg-white/80 backdrop-blur z-10 border-b">
+      <div className="flex items-center gap-3 py-3">
         <ArrowLeft
-          className="h-6 w-6 text-orange-600 cursor-pointer"
+          className="h-5 w-5 text-slate-700 cursor-pointer"
           onClick={() => setTab("home")}
         />
-        <h2 className="text-xl font-bold text-orange-800">Recharge USDT</h2>
-      </div>
-
-      {/* Trust Badges */}
-      <div className="flex justify-center gap-4 my-4">
-        <div className="flex items-center gap-1 text-green-600 text-xs font-medium">
-          <Shield className="w-4 h-4" /> 100% Safe
-        </div>
-        <div className="flex items-center gap-1 text-green-600 text-xs font-medium">
-          <Zap className="w-4 h-4" /> Instant Arrival
-        </div>
+        <h2 className="font-semibold text-slate-800 text-lg">Recharge</h2>
       </div>
 
       {/* Channels */}
-      <div className="space-y-3">
-        <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-          <span className="text-orange-600">Select Network</span>
+      <div className="space-y-2">
+        <h3 className="text-sm font-medium text-gray-700">
+          Select Payment Channel
         </h3>
 
         {fetching ? (
-          <div className="text-center py-6 text-gray-500">Loading...</div>
+          <p className="text-center text-sm text-slate-500 py-4">
+            Loading channels...
+          </p>
         ) : channels.length === 0 ? (
-          <div className="text-center py-6 text-gray-500">No channels</div>
+          <p className="text-center text-sm text-slate-500 py-4">
+            No active channels available.
+          </p>
         ) : (
           channels.map((ch) => (
             <div
               key={ch.id}
               onClick={() => setSelectedChannel(ch)}
-              className={`relative bg-white rounded-2xl p-4 shadow-lg border-2 transition-all cursor-pointer transform hover:scale-[1.02] ${
+              className={`flex items-center justify-between bg-white border rounded-xl px-4 py-3 shadow-sm cursor-pointer transition-all ${
                 selectedChannel?.id === ch.id
-                  ? "border-orange-500 ring-4 ring-orange-100"
-                  : "border-gray-200"
+                  ? "border-yellow-400 bg-yellow-50 ring-2 ring-yellow-300"
+                  : "border-slate-200"
               }`}
             >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-gradient-to-br from-orange-400 to-pink-400 rounded-xl flex items-center justify-center text-white font-bold text-lg">
-                    {ch.currency_name.includes("TRC20") ? "T" : "E"}
-                  </div>
-                  <div>
-                    <div className="font-bold text-gray-800">
-                      {ch.currency_name}
-                    </div>
-                    <div className="text-xs text-gray-500 truncate max-w-[180px]">
-                      {ch.wallet_address}
-                    </div>
-                  </div>
+              <div>
+                <div className="font-medium text-slate-800 text-sm">
+                  {ch.currency_name}
                 </div>
-                {selectedChannel?.id === ch.id && (
-                  <CheckCircle className="w-6 h-6 text-orange-600" />
-                )}
+                <div className="text-xs text-slate-500 truncate max-w-[200px]">
+                  {ch.wallet_address}
+                </div>
               </div>
+              {selectedChannel?.id === ch.id && (
+                <div className="w-5 h-5 rounded-full border-2 border-yellow-400 bg-yellow-400" />
+              )}
             </div>
           ))
         )}
       </div>
 
-      {/* Quick Amounts */}
-      <div className="mt-6">
-        <h3 className="text-sm font-semibold text-gray-700 mb-2">Quick Amount</h3>
-        <div className="grid grid-cols-4 gap-2">
-          {quickAmounts.map((amt) => (
-            <button
-              key={amt}
-              onClick={() => setAmount(amt)}
-              className="bg-gradient-to-r from-orange-400 to-pink-400 text-white font-bold py-3 rounded-xl text-sm hover:scale-105 transition"
-            >
-              {amt} USDT
-            </button>
-          ))}
+      {/* Amount */}
+      <div className="mt-5 bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+        <div className="text-sm text-slate-500 mb-1">
+          Recharge Amount{" "}
+          <span className="text-slate-400">1 USDT = 1 USDT</span>
         </div>
-      </div>
-
-      {/* Custom Amount */}
-      <div className="mt-5 bg-white rounded-2xl p-4 shadow-lg border border-gray-200">
-        <div className="text-sm text-gray-600 mb-2">Enter Amount</div>
-        <div className="relative">
-          <input
-            type="number"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            className="w-full p-3 pr-20 border-2 border-orange-200 rounded-xl text-lg font-bold text-orange-700 outline-none focus:border-orange-500"
-            placeholder="1.00"
-            min="1"
-            step="0.01"
-          />
-          <div className="absolute right-3 top-1/2 -translate-y-1/2 text-orange-600 font-bold text-lg">
-            USDT
-          </div>
-        </div>
-        <div className="text-xs text-gray-500 mt-1 text-right">
-          Min: 1 USDT
-        </div>
+        <input
+          type="number"
+          value={amount}
+          onChange={(e) => setAmount(e.target.value)}
+          className="w-full border border-slate-200 rounded-xl p-2 text-sm outline-none focus:ring-2 focus:ring-yellow-400"
+          placeholder="Minimum recharge amount 1 USDT"
+          min="1"
+          step="0.01"
+        />
+        <div className="text-[12px] text-slate-500 mt-1 text-right">USDT</div>
       </div>
 
       {/* Error */}
       {error && (
-        <div className="mt-3 bg-red-100 border border-red-300 text-red-700 p-3 rounded-xl text-sm">
+        <div className="mt-3 bg-red-50 border border-red-200 rounded-xl p-3 text-xs text-red-700">
           {error}
         </div>
       )}
 
       {/* Reminder */}
-      <div className="mt-4 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-2xl p-4 text-xs">
-        <strong className="text-green-800">Important:</strong>
+      <div className="mt-3 bg-yellow-50 border border-yellow-200 rounded-xl p-3 text-xs text-slate-700">
+        <strong>Important Reminder:</strong>
         <br />
-        After payment, funds arrive in <strong>30 seconds</strong>. If delayed, refresh or contact support.
+        If the funds do not arrive after a long time, please refresh the page
+        or contact customer service.
       </div>
 
-      {/* Submit Button */}
+      {/* Submit */}
       <button
         onClick={handleSubmit}
         disabled={loading || !selectedChannel || !amount || fetching}
-        className={`mt-6 w-full py-4 rounded-2xl font-bold text-lg transition-all shadow-xl transform active:scale-95 ${
+        className={`mt-4 w-full font-semibold py-3 rounded-xl transition ${
           loading || !selectedChannel || !amount || fetching
-            ? "bg-gray-300 text-gray-600 cursor-not-allowed"
-            : "bg-gradient-to-r from-orange-500 to-pink-500 text-white hover:from-orange-600 hover:to-pink-600"
+            ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+            : "bg-yellow-400 hover:bg-yellow-500 text-slate-900"
         }`}
       >
-        {loading ? "Submitting..." : "Continue to Pay"}
+        {loading ? "Submitting..." : "Continue"}
       </button>
     </div>
   );
