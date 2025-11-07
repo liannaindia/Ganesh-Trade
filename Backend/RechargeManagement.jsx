@@ -48,18 +48,32 @@ export default function RechargeManagement() {
 
       if (updateError) throw updateError;
 
+      // 获取当前用户的余额
+      const { data: userData, error: fetchError } = await supabase
+        .from("users")
+        .select("balance")
+        .eq("id", user_id)
+        .single();
+
+      if (fetchError) {
+        console.error("获取用户余额失败:", fetchError);
+        return;
+      }
+
+      // 计算新的余额
+      const newBalance = userData.balance + amount;
+
       // 更新用户余额
       const { error: balanceError } = await supabase
-    .from("users")
-    .update({ balance: supabase.sql(`balance + ${amount}`) }) // 使用正确的原生 SQL 语法
-    .eq("id", user_id);
-
+        .from("users")
+        .update({ balance: newBalance })
+        .eq("id", user_id);
 
       if (balanceError) throw balanceError;
 
       fetchRecharges(); // 刷新充值记录
     } catch (error) {
-      console.error("Error approving recharge:", error);
+      console.error("批准充值时出错:", error);
     }
   };
 
@@ -75,7 +89,7 @@ export default function RechargeManagement() {
 
       fetchRecharges(); // 刷新充值记录
     } catch (error) {
-      console.error("Error rejecting recharge:", error);
+      console.error("拒绝充值时出错:", error);
     }
   };
 
