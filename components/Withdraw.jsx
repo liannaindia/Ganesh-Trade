@@ -37,6 +37,13 @@ export default function Withdraw({ setTab, userId, balance }) {
       return;
     }
 
+    // 3. 验证地址格式是否是USDT (TRC20)
+    const isValidTRC20Address = newAddress.startsWith("T") && newAddress.length === 34; // 简单验证（假设TRC20地址以T开头，长度为34）
+    if (!isValidTRC20Address) {
+      setError("Invalid USDT (TRC20) address. Please enter a valid TRC20 address.");
+      return;
+    }
+
     const { error } = await supabase
       .from("users")
       .update({ wallet_address: newAddress })
@@ -132,6 +139,8 @@ export default function Withdraw({ setTab, userId, balance }) {
       ) : (
         <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm space-y-3">
           <div className="text-sm text-slate-500 mb-1">Receiving Address</div>
+          {/* 显示固定的 USDT (TRC20) 标签 */}
+          <div className="text-sm font-semibold text-slate-700 mb-2">USDT (TRC20)</div>
           {/* 显示已保存的钱包地址 */}
           <div className="w-full border border-slate-200 rounded-lg p-2 text-sm text-slate-900">
             {walletAddress || "No wallet address available"}
@@ -143,7 +152,7 @@ export default function Withdraw({ setTab, userId, balance }) {
               value={newAddress}
               onChange={(e) => setNewAddress(e.target.value)}
               className="w-full border border-slate-200 rounded-lg p-2 text-sm outline-none"
-              placeholder="Enter new wallet address"
+              placeholder="Enter new wallet address (USDT TRC20)"
             />
             <button
               onClick={handleSaveAddress}
