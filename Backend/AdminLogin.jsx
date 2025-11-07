@@ -1,11 +1,6 @@
-// src/Backend/AdminLogin.jsx
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-
-const ADMIN_CREDENTIALS = {
-  username: "admin@gmail.com",
-  password: "qwe123",
-};
+import { supabase } from './supabaseClient'; // 引入supabase实例
 
 export default function AdminLogin() {
   const [username, setUsername] = useState("");
@@ -13,13 +8,25 @@ export default function AdminLogin() {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
-      localStorage.setItem("adminLoggedIn", "true");
-      navigate("/admin", { replace: true });
-    } else {
+
+    // 使用 Supabase 进行登录
+    const { data, error: loginError } = await supabase.auth.signInWithPassword({
+      email: username,
+      password: password,
+    });
+
+    if (loginError) {
       setError("用户名或密码错误");
+    } else {
+      // 登录成功，跳转到后台管理页面
+      if (data.user.email === "admin@gmail.com") {
+        localStorage.setItem("adminLoggedIn", "true");
+        navigate("/admin", { replace: true });
+      } else {
+        setError("用户名或密码错误");
+      }
     }
   };
 
@@ -76,7 +83,7 @@ export default function AdminLogin() {
         </form>
 
         <div className="mt-8 text-center text-xs text-gray-400">
-          <p>默认账号：admin / ganesh2025</p>
+          <p>我是自己人</p>
         </div>
       </div>
     </div>
