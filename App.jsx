@@ -22,6 +22,7 @@ export default function App() {
   useEffect(() => {
     const savedPhone = localStorage.getItem('phone_number');
     const savedUserId = localStorage.getItem('user_id'); // 获取 user_id
+    console.log("恢复登录状态:", { savedPhone, savedUserId }); // 调试用
     if (savedPhone && savedUserId) {
       setIsLoggedIn(true);
       setUserId(savedUserId); // 设置 user_id
