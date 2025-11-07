@@ -106,7 +106,7 @@ export default function App() {
       case "recharge":
         return <RechargePage setTab={setTab} balance={balance} isLoggedIn={isLoggedIn} userId={userId} />; // 传 userId
       case "withdraw":
-        return <WithdrawPage setTab={setTab} balance={balance} />;
+        return <WithdrawPage setTab={setTab} balance={balance} isLoggedIn={isLoggedIn} userId={userId} />;
       case "invite":
         return <InvitePage setTab={setTab} isLoggedIn={isLoggedIn} />;
       default:
