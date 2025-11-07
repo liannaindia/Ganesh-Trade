@@ -1,3 +1,4 @@
+// components/Recharge.jsx
 import React, { useState, useEffect } from "react";
 import { supabase } from "../supabaseClient";
 import { ArrowLeft, Shield, Zap, CheckCircle } from "lucide-react";
@@ -98,7 +99,8 @@ export default function Recharge({ setTab, isLoggedIn, userId }) {
         margin: "0 auto",
         background: "linear-gradient(to bottom, #fff7ed, #ffffff)",
         minHeight: "100vh",
-        overflowY: "auto", // 允许页面滚动
+        height: "100vh", // 添加高度限制
+        overflowY: "auto", // 添加垂直滚动
       }}
     >
       {/* Header */}
