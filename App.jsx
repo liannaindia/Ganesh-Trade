@@ -1,103 +1,129 @@
-// App.jsx
+// App (3).jsx
 import React, { useState, useEffect } from "react";
 import HomePage from "./components/Home.jsx";
+import MarketsPage from "./components/Markets.jsx";
+import TradePage from "./components/Trade.jsx";
+import PositionsPage from "./components/Positions.jsx";
+import MePage from "./components/Me.jsx";
 import RechargePage from "./components/Recharge.jsx";
-import LoginPage from "./components/Login.jsx";
-import BottomNav from "./BottomNav";
-import { supabase } from "./supabaseClient";
+import WithdrawPage from "./components/Withdraw.jsx";
+import InvitePage from "./components/Invite.jsx";
+import LoginPage from "./components/Login.jsx"; 
+import RegisterPage from "./components/Register.jsx"; 
+import BottomNav from "./BottomNav"; 
+import { supabase } from "./supabaseClient"; 
 
 export default function App() {
   const [tab, setTab] = useState("home");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [balance, setBalance] = useState(0);
   const [userId, setUserId] = useState(null);
-  const [realtimeChannel, setRealtimeChannel] = useState(null);
 
-  // 恢复登录状态
+  // 1. 页面加载时恢复登录状态（修复：必须恢复 user_id）
   useEffect(() => {
-    const phone = localStorage.getItem('phone_number');
-    const uid = localStorage.getItem('user_id');
+    const savedPhone = localStorage.getItem('phone_number');
+    const savedUserId = localStorage.getItem('user_id'); // 必须有
 
-    console.log("App 启动，localStorage:", { phone, uid });
+    console.log("App 启动 - localStorage:", { savedPhone, savedUserId });
 
-    if (phone && uid) {
+    if (savedPhone && savedUserId) {
       setIsLoggedIn(true);
-      setUserId(uid);
+      setUserId(savedUserId);
     }
   }, []);
 
-  // 只有登录后才订阅余额
+  // 2. 全局实时余额订阅（修复：只有登录后才订阅，避免 CLOSED 循环）
   useEffect(() => {
-    if (!isLoggedIn || !userId) {
-      // 清理旧订阅
-      if (realtimeChannel) {
-        supabase.removeChannel(realtimeChannel);
-        setRealtimeChannel(null);
+    let realtimeSubscription = null;
+
+    const setupBalance = async () => {
+      const phoneNumber = localStorage.getItem('phone_number');
+      const user_id = localStorage.getItem('user_id');
+
+      if (!phoneNumber || !user_id || !isLoggedIn) {
+        // 未登录 → 不订阅
+        if (realtimeSubscription) {
+          supabase.removeChannel(realtimeSubscription);
+          realtimeSubscription = null;
+        }
+        return;
       }
-      return;
-    }
 
-    let channel = null;
-
-    const setupRealtime = async () => {
-      // 初始余额
-      const { data } = await supabase
+      // 初始查询余额
+      const { data, error } = await supabase
         .from('users')
         .select('balance')
-        .eq('id', userId)
+        .eq('id', user_id)
         .single();
 
-      if (data) setBalance(data.balance || 0);
+      if (error) {
+        console.error('Error fetching initial balance:', error);
+      } else if (data) {
+        setBalance(data.balance || 0);
+      }
 
       // 实时订阅
-      channel = supabase
-        .channel(`balance-${userId}`)
+      realtimeSubscription = supabase
+        .channel('global-balance-updates')
         .on(
           'postgres_changes',
           {
             event: 'UPDATE',
             schema: 'public',
             table: 'users',
-            filter: `id=eq.${userId}`,
+            filter: `id=eq.${user_id}`,
           },
           (payload) => {
-            console.log("Realtime 余额更新:", payload.new.balance);
+            console.log('Global balance updated via Realtime:', payload.new.balance);
             setBalance(payload.new.balance || 0);
           }
         )
         .subscribe((status) => {
-          console.log("Realtime 订阅状态:", status);
+          console.log('Global Realtime subscription status:', status);
         });
-
-      setRealtimeChannel(channel);
     };
 
-    setupRealtime();
+    setupBalance();
 
     return () => {
-      if (channel) {
-        supabase.removeChannel(channel);
+      if (realtimeSubscription) {
+        supabase.removeChannel(realtimeSubscription);
       }
     };
-  }, [isLoggedIn, userId]);
+  }, [isLoggedIn]); // 依赖 isLoggedIn，登录状态变了才重连
 
   const renderPage = () => {
     switch (tab) {
-      case "recharge":
-        return <RechargePage setTab={setTab} balance={balance} isLoggedIn={isLoggedIn} userId={userId} />;
+      case "markets":
+        return <MarketsPage setTab={setTab} />;
       case "login":
         return <LoginPage setTab={setTab} setIsLoggedIn={setIsLoggedIn} />;
+      case "register":
+        return <RegisterPage setTab={setTab} setIsLoggedIn={setIsLoggedIn} />;
+      case "trade":
+        return <TradePage setTab={setTab} isLoggedIn={isLoggedIn} balance={balance}/>;
+      case "positions":
+        return <PositionsPage setTab={setTab} isLoggedIn={isLoggedIn} balance={balance}  />;
+      case "me":
+        return <MePage setTab={setTab} isLoggedIn={isLoggedIn} balance={balance} />;
+      case "recharge":
+        return <RechargePage setTab={setTab} balance={balance} isLoggedIn={isLoggedIn} userId={userId} />; // 传 userId
+      case "withdraw":
+        return <WithdrawPage setTab={setTab} balance={balance} />;
+      case "invite":
+        return <InvitePage setTab={setTab} isLoggedIn={isLoggedIn} />;
       default:
         return <HomePage setTab={setTab} isLoggedIn={isLoggedIn} balance={balance} />;
     }
   };
 
   return (
-    <div className="min-h-screen bg-slate-100">
-      <div className="max-w-md mx-auto bg-[#f5f7fb] pb-24 min-h-screen">
+    <div className="min-h-screen bg-slate-100 text-slate-900">
+      <div className="max-w-md mx-auto bg-[#f5f7fb] pb-24 min-h-screen text-slate-900">
         {renderPage()}
       </div>
-      <div className="max-w-md mx-auto w-full fixed bottom-0 left-0 right-0 bg-white border-t">
+
+      <div className="max-w-md mx-auto w-full fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 shadow-none">
         <BottomNav tab={tab} setTab={setTab} />
       </div>
     </div>
