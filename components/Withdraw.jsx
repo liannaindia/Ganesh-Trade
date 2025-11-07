@@ -33,6 +33,8 @@ export default function Withdraw({ setTab, userId, balance }) {
 
   // 2. 提交提款请求
   const handleRequestWithdraw = async () => {
+    console.log("Continue button clicked");
+
     if (!newAddress) {
       setError("Please enter a valid address.");
       return;
@@ -49,6 +51,8 @@ export default function Withdraw({ setTab, userId, balance }) {
       setError("Invalid withdraw amount.");
       return;
     }
+
+    console.log("Proceeding with withdraw request...");
 
     // 插入提款记录到数据库
     const { data, error } = await supabase
@@ -70,6 +74,7 @@ export default function Withdraw({ setTab, userId, balance }) {
       setWithdrawAmount(""); // 清空金额输入框
       setNewAddress(""); // 清空钱包地址输入框
       setWalletAddress(newAddress); // 更新钱包地址
+      console.log("Withdraw request submitted successfully.");
       alert("Withdraw request submitted successfully.");
     }
   };
@@ -158,9 +163,7 @@ export default function Withdraw({ setTab, userId, balance }) {
       ) : (
         <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm space-y-3">
           <div className="text-sm text-slate-500 mb-1">Receiving Address</div>
-          {/* 显示固定的 USDT (TRC20) 标签 */}
           <div className="text-sm font-semibold text-slate-700 mb-2">USDT (TRC20)</div>
-          {/* 显示已保存的钱包地址 */}
           <div className="w-full border border-slate-200 rounded-lg p-2 text-sm text-slate-900">
             {walletAddress || "No wallet address available"}
           </div>
