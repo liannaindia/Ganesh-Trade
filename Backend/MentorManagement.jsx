@@ -11,6 +11,8 @@ export default function MentorManagement() {
     commission: 0,
     img: "",
   });
+  const [isAdding, setIsAdding] = useState(false); // 控制是否显示添加导师表单
+  const [editingMentor, setEditingMentor] = useState(null); // 控制编辑导师
 
   useEffect(() => {
     fetchMentors();
@@ -42,8 +44,9 @@ export default function MentorManagement() {
           },
         ]);
       if (error) throw error;
-      fetchMentors(); // Refresh the list after adding
-      setNewMentor({ name: "", years: 0, assets: 0, commission: 0, img: "" }); // Reset the form
+      fetchMentors(); // 刷新导师列表
+      setNewMentor({ name: "", years: 0, assets: 0, commission: 0, img: "" }); // 重置表单
+      setIsAdding(false); // 关闭添加导师表单
     } catch (error) {
       console.error("添加导师失败:", error);
     }
@@ -53,28 +56,27 @@ export default function MentorManagement() {
     try {
       const { error } = await supabase.from("mentors").delete().eq("id", id);
       if (error) throw error;
-      fetchMentors(); // Refresh the list after deleting
+      fetchMentors(); // 刷新导师列表
     } catch (error) {
       console.error("删除导师失败:", error);
     }
   };
 
-  const editMentor = async (id) => {
-    const updatedMentor = mentors.find((mentor) => mentor.id === id);
-    if (!updatedMentor) return;
+  const editMentor = async () => {
     try {
       const { error } = await supabase
         .from("mentors")
         .update({
-          name: updatedMentor.name,
-          years: updatedMentor.years,
-          assets: updatedMentor.assets,
-          commission: updatedMentor.commission,
-          img: updatedMentor.img,
+          name: editingMentor.name,
+          years: editingMentor.years,
+          assets: editingMentor.assets,
+          commission: editingMentor.commission,
+          img: editingMentor.img,
         })
-        .eq("id", id);
+        .eq("id", editingMentor.id);
       if (error) throw error;
-      fetchMentors(); // Refresh the list after editing
+      fetchMentors(); // 刷新导师列表
+      setEditingMentor(null); // 关闭编辑模式
     } catch (error) {
       console.error("编辑导师失败:", error);
     }
@@ -87,57 +89,120 @@ export default function MentorManagement() {
       <div className="p-6 border-b border-gray-100 flex justify-between items-center">
         <h2 className="text-xl font-bold text-gray-800">导师管理</h2>
         <button
-          onClick={fetchMentors}
-          className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition"
-        >
-          刷新
-        </button>
-      </div>
-
-      <div className="p-6">
-        <h3 className="text-lg font-semibold">添加新导师</h3>
-        <input
-          type="text"
-          className="mt-2 w-full p-2 border border-gray-300 rounded-lg"
-          placeholder="导师姓名"
-          value={newMentor.name}
-          onChange={(e) => setNewMentor({ ...newMentor, name: e.target.value })}
-        />
-        <input
-          type="number"
-          className="mt-2 w-full p-2 border border-gray-300 rounded-lg"
-          placeholder="经验年数"
-          value={newMentor.years}
-          onChange={(e) => setNewMentor({ ...newMentor, years: parseInt(e.target.value) })}
-        />
-        <input
-          type="number"
-          className="mt-2 w-full p-2 border border-gray-300 rounded-lg"
-          placeholder="资产总额"
-          value={newMentor.assets}
-          onChange={(e) => setNewMentor({ ...newMentor, assets: parseInt(e.target.value) })}
-        />
-        <input
-          type="number"
-          className="mt-2 w-full p-2 border border-gray-300 rounded-lg"
-          placeholder="佣金率"
-          value={newMentor.commission}
-          onChange={(e) => setNewMentor({ ...newMentor, commission: parseInt(e.target.value) })}
-        />
-        <input
-          type="text"
-          className="mt-2 w-full p-2 border border-gray-300 rounded-lg"
-          placeholder="头像URL"
-          value={newMentor.img}
-          onChange={(e) => setNewMentor({ ...newMentor, img: e.target.value })}
-        />
-        <button
-          onClick={addMentor}
-          className="mt-4 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+          onClick={() => setIsAdding(true)} // 显示添加导师表单
+          className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition"
         >
           添加导师
         </button>
       </div>
+
+      {/* 添加导师表单 */}
+      {isAdding && (
+        <div className="p-6 border-b border-gray-100">
+          <h3 className="text-lg font-semibold">添加新导师</h3>
+          <input
+            type="text"
+            className="mt-2 w-full p-2 border border-gray-300 rounded-lg"
+            placeholder="导师姓名"
+            value={newMentor.name}
+            onChange={(e) => setNewMentor({ ...newMentor, name: e.target.value })}
+          />
+          <input
+            type="number"
+            className="mt-2 w-full p-2 border border-gray-300 rounded-lg"
+            placeholder="经验年数"
+            value={newMentor.years}
+            onChange={(e) => setNewMentor({ ...newMentor, years: parseInt(e.target.value) })}
+          />
+          <input
+            type="number"
+            className="mt-2 w-full p-2 border border-gray-300 rounded-lg"
+            placeholder="资产总额"
+            value={newMentor.assets}
+            onChange={(e) => setNewMentor({ ...newMentor, assets: parseInt(e.target.value) })}
+          />
+          <input
+            type="number"
+            className="mt-2 w-full p-2 border border-gray-300 rounded-lg"
+            placeholder="佣金率"
+            value={newMentor.commission}
+            onChange={(e) => setNewMentor({ ...newMentor, commission: parseInt(e.target.value) })}
+          />
+          <input
+            type="text"
+            className="mt-2 w-full p-2 border border-gray-300 rounded-lg"
+            placeholder="头像URL"
+            value={newMentor.img}
+            onChange={(e) => setNewMentor({ ...newMentor, img: e.target.value })}
+          />
+          <button
+            onClick={addMentor}
+            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+          >
+            提交
+          </button>
+          <button
+            onClick={() => setIsAdding(false)} // 关闭添加表单
+            className="mt-4 ml-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition"
+          >
+            取消
+          </button>
+        </div>
+      )}
+
+      {/* 编辑导师表单 */}
+      {editingMentor && (
+        <div className="p-6 border-b border-gray-100">
+          <h3 className="text-lg font-semibold">编辑导师</h3>
+          <input
+            type="text"
+            className="mt-2 w-full p-2 border border-gray-300 rounded-lg"
+            placeholder="导师姓名"
+            value={editingMentor.name}
+            onChange={(e) => setEditingMentor({ ...editingMentor, name: e.target.value })}
+          />
+          <input
+            type="number"
+            className="mt-2 w-full p-2 border border-gray-300 rounded-lg"
+            placeholder="经验年数"
+            value={editingMentor.years}
+            onChange={(e) => setEditingMentor({ ...editingMentor, years: parseInt(e.target.value) })}
+          />
+          <input
+            type="number"
+            className="mt-2 w-full p-2 border border-gray-300 rounded-lg"
+            placeholder="资产总额"
+            value={editingMentor.assets}
+            onChange={(e) => setEditingMentor({ ...editingMentor, assets: parseInt(e.target.value) })}
+          />
+          <input
+            type="number"
+            className="mt-2 w-full p-2 border border-gray-300 rounded-lg"
+            placeholder="佣金率"
+            value={editingMentor.commission}
+            onChange={(e) => setEditingMentor({ ...editingMentor, commission: parseInt(e.target.value) })}
+          />
+          <input
+            type="text"
+            className="mt-2 w-full p-2 border border-gray-300 rounded-lg"
+            placeholder="头像URL"
+            value={editingMentor.img}
+            onChange={(e) => setEditingMentor({ ...editingMentor, img: e.target.value })}
+          />
+          <button
+            onClick={editMentor}
+            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+          >
+            提交
+          </button>
+          <button
+            onClick={() => setEditingMentor(null)} // 关闭编辑表单
+            className="mt-4 ml-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition"
+          >
+            取消
+          </button>
+        </div>
+      )}
 
       <div className="overflow-auto max-h-[80vh]">
         <table className="w-full table-fixed text-sm text-gray-800">
@@ -162,7 +227,7 @@ export default function MentorManagement() {
                 <td className="px-4 py-3">{m.commission}%</td>
                 <td className="px-4 py-3">
                   <button
-                    onClick={() => editMentor(m.id)}
+                    onClick={() => setEditingMentor(m)} // 启用编辑模式
                     className="text-blue-600 hover:text-blue-800 mr-3"
                   >
                     编辑
