@@ -1,13 +1,13 @@
 // components/Login.jsx
 import React, { useState } from "react";
-import { supabase } from "../supabaseClient"; 
-import { ArrowLeft } from "lucide-react"; 
+import { supabase } from "../supabaseClient";
+import { ArrowLeft } from "lucide-react";
 
 export default function Login({ setTab, setIsLoggedIn }) {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false); 
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async () => {
     if (isLoading) return;
@@ -23,7 +23,7 @@ export default function Login({ setTab, setIsLoggedIn }) {
     try {
       const { data, error: queryError } = await supabase
         .from('users')
-        .select('id, password_hash')  // 同时查询 id 和 password_hash
+        .select('id, password_hash')
         .eq('phone_number', phoneNumber)
         .single();
 
@@ -33,16 +33,19 @@ export default function Login({ setTab, setIsLoggedIn }) {
         return;
       }
 
-      if (password === data.password_hash) {
-        // 保存 phone_number 和 user_id
-        localStorage.setItem('phone_number', phoneNumber);
-        localStorage.setItem('user_id', data.id);  // 保存 user_id
-
-        setIsLoggedIn(true);
-        setTab("home");
-      } else {
+      if (password !== data.password_hash) {
         setError("Incorrect password");
+        setIsLoading(false);
+        return;
       }
+
+      // 关键：保存 user_id 和 phone_number
+      localStorage.setItem('phone_number', phoneNumber);
+      localStorage.setItem('user_id', data.id);
+      console.log("登录成功，user_id 已保存:", data.id);
+
+      setIsLoggedIn(true);
+      setTab("home");
     } catch (error) {
       setError("An error occurred during login");
       console.error(error);
@@ -63,11 +66,11 @@ export default function Login({ setTab, setIsLoggedIn }) {
           <label className="text-sm text-slate-500">Phone Number</label>
           <input
             type="text"
-            className="w-full py-2 px-3 text-sm text-slate-700 rounded-lg border focus:ring-2 focus:ring-yellow-400"
-            placeholder="Enter your phone number"
             value={phoneNumber}
             onChange={(e) => setPhoneNumber(e.target.value)}
             disabled={isLoading}
+            className="w-full py-2 px-3 text-sm text-slate-700 rounded-lg border focus:ring-2 focus:ring-yellow-400"
+            placeholder="Enter your phone number"
           />
         </div>
 
@@ -75,13 +78,13 @@ export default function Login({ setTab, setIsLoggedIn }) {
           <label className="text-sm text-slate-500">Password</label>
           <input
             type="password"
-            className="w-full py-2 px-3 text-sm text-slate-700 rounded-lg border focus:ring-2 focus:ring-yellow-400"
-            placeholder="Enter your password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             disabled={isLoading}
+            className="w-full py-2 px-3 text-sm text-slate-700 rounded-lg border focus:ring-2 focus:ring-yellow-400"
+            placeholder="Enter your password"
           />
-        </div>
+       </div>
 
         {error && <div className="text-red-500 text-sm mt-2 p-2 bg-red-50 rounded">{error}</div>}
 
@@ -96,12 +99,10 @@ export default function Login({ setTab, setIsLoggedIn }) {
         </button>
 
         <div className="mt-6 text-center text-sm text-slate-500">
-          <span>
-            Don't have an account?{" "}
-            <button onClick={() => setTab("register")} className="text-yellow-500 font-semibold" disabled={isLoading}>
-              Create an account
-            </button>
-          </span>
+          Don't have an account?{" "}
+          <button onClick={() => setTab("register")} className="text-yellow-500 font-semibold" disabled={isLoading}>
+            Create an account
+          </button>
         </div>
       </div>
     </div>
