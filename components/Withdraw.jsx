@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { ArrowLeft } from "lucide-react";
 
-export default function Withdraw({ setTab }) {
+export default function Withdraw({ setTab, balance }) {
   const [tab, setTabState] = useState("request");
 
   return (
@@ -42,7 +42,7 @@ export default function Withdraw({ setTab }) {
           <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm mb-3">
             <div className="text-sm text-slate-500">Available Balance</div>
             <div className="text-2xl font-bold text-slate-900">
-              8912.06<span className="text-sm ml-1 text-slate-500">USDT</span>
+              {balance} <span className="text-sm ml-1 text-slate-500">USDT</span>
             </div>
           </div>
 
