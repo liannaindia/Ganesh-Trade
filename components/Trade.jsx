@@ -134,7 +134,7 @@ export default function Trade({ setTab }) {
                   onClick={() => handleFollow(m)}
                   className="ml-auto bg-yellow-400 hover:bg-yellow-500 text-slate-900 font-semibold text-sm px-4 py-1.5 rounded-lg shadow"
                 >
-                  跟单
+                  Follow
                 </button>
               </div>
             ))}
