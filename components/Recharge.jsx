@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { ArrowLeft } from "lucide-react";  // 引入箭头图标
 import { supabase } from "../supabaseClient";  // 引入supabase客户端
 
 export default function Recharge({ setTab, balance, isLoggedIn }) {
@@ -38,10 +37,17 @@ export default function Recharge({ setTab, balance, isLoggedIn }) {
     try {
       setLoading(true);
 
+      // 从 localStorage 获取用户ID
+      const user_id = localStorage.getItem('user_id');
+      if (!user_id) {
+        alert("User is not logged in.");
+        return;
+      }
+
       // 提交充值数据到后台
       const { data, error } = await supabase.from("recharges").insert([
         {
-          user_id: localStorage.getItem("user_id"), // 假设用户ID存储在localStorage
+          user_id: user_id, // 使用从 localStorage 获取的 user_id
           channel_id: selectedChannel.id,
           amount: parseFloat(amount),
           status: "pending", // 初始状态为 pending
