@@ -1,3 +1,4 @@
+// components/Login.jsx
 import React, { useState } from "react";
 import { supabase } from "../supabaseClient"; 
 import { ArrowLeft } from "lucide-react"; 
@@ -22,7 +23,7 @@ export default function Login({ setTab, setIsLoggedIn }) {
     try {
       const { data, error: queryError } = await supabase
         .from('users')
-        .select('password_hash')
+        .select('id, password_hash')  // 同时查询 id 和 password_hash
         .eq('phone_number', phoneNumber)
         .single();
 
@@ -33,7 +34,10 @@ export default function Login({ setTab, setIsLoggedIn }) {
       }
 
       if (password === data.password_hash) {
+        // 保存 phone_number 和 user_id
         localStorage.setItem('phone_number', phoneNumber);
+        localStorage.setItem('user_id', data.id);  // 保存 user_id
+
         setIsLoggedIn(true);
         setTab("home");
       } else {
@@ -41,6 +45,7 @@ export default function Login({ setTab, setIsLoggedIn }) {
       }
     } catch (error) {
       setError("An error occurred during login");
+      console.error(error);
     } finally {
       setIsLoading(false);
     }
