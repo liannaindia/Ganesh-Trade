@@ -46,23 +46,10 @@ export default function Trade({ setTab }) {
       {isFollowing ? (
         <div className="p-6">
           <h2 className="text-xl font-bold text-gray-800 mb-4">Daily Follow</h2>
-          <div className="mb-4">
-            <label className="text-sm text-gray-600">Available Balance: 5106.75 USDT</label>
-          </div>
-          <div className="mb-4">
-            <label className="text-sm text-gray-600">
-              Following Limit (100 USDT - 9999 USDT)
-            </label>
-          </div>
-          <input
-            type="number"
-            className="w-full p-2 border border-gray-300 rounded-lg mb-4"
-            placeholder="Enter Following Amount"
-            value={followingAmount}
-            onChange={(e) => setFollowingAmount(e.target.value)}
-          />
+          
+          {/* 使用 flex 布局使 "Go recharge" 按钮和 "Daily Follow" 同一行 */}
           <div className="mb-4 flex justify-between items-center">
-            {/* 充值按钮与日常跟单文字同一排，充值按钮靠右 */}
+            <span className="text-sm text-gray-600">Available Balance: 5106.75 USDT</span>
             <button
               onClick={handleRecharge}
               className="px-4 py-2 bg-yellow-400 text-white rounded-lg hover:bg-yellow-500"
@@ -70,6 +57,21 @@ export default function Trade({ setTab }) {
               Go recharge
             </button>
           </div>
+
+          <div className="mb-4">
+            <label className="text-sm text-gray-600">
+              Following Limit (100 USDT - 9999 USDT)
+            </label>
+          </div>
+
+          <input
+            type="number"
+            className="w-full p-2 border border-gray-300 rounded-lg mb-4"
+            placeholder="Enter Following Amount"
+            value={followingAmount}
+            onChange={(e) => setFollowingAmount(e.target.value)}
+          />
+          
           <div className="mb-4">
             <label className="flex items-center text-sm">
               <input type="checkbox" className="mr-2" />
@@ -79,6 +81,7 @@ export default function Trade({ setTab }) {
               </a>
             </label>
           </div>
+
           <button
             onClick={handleBack}
             className="w-full px-4 py-2 bg-gray-500 text-white rounded-lg"
