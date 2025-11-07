@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../supabaseClient"; // 确保正确导入supabase
 
-export default function Trade() {
+export default function Trade({ setTab }) {
   const [query, setQuery] = useState("");
   const [mentors, setMentors] = useState([]); // 从数据库获取的导师数据
   const [isFollowing, setIsFollowing] = useState(false); // 控制是否显示跟单页面
@@ -35,6 +35,11 @@ export default function Trade() {
     setIsFollowing(false);
   };
 
+  const handleRecharge = () => {
+    // 跳转到充值页面
+    setTab("recharge"); // 这里通过 setTab 控制页面切换
+  };
+
   return (
     <div className="px-4 pb-24 max-w-md mx-auto">
       {/* 如果正在跟单，显示跟单页面 */}
@@ -56,8 +61,12 @@ export default function Trade() {
             value={followingAmount}
             onChange={(e) => setFollowingAmount(e.target.value)}
           />
-          <div className="mb-4">
-            <button className="px-4 py-2 bg-yellow-400 text-white rounded-lg hover:bg-yellow-500">
+          <div className="mb-4 flex justify-between items-center">
+            {/* 充值按钮与日常跟单文字同一排，充值按钮靠右 */}
+            <button
+              onClick={handleRecharge}
+              className="px-4 py-2 bg-yellow-400 text-white rounded-lg hover:bg-yellow-500"
+            >
               Go recharge
             </button>
           </div>
@@ -122,7 +131,7 @@ export default function Trade() {
                   onClick={() => handleFollow(m)}
                   className="ml-auto bg-yellow-400 hover:bg-yellow-500 text-slate-900 font-semibold text-sm px-4 py-1.5 rounded-lg shadow"
                 >
-                  follow
+                  跟单
                 </button>
               </div>
             ))}
