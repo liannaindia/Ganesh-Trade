@@ -1,4 +1,4 @@
-// App (3).jsx
+// App (4).jsx
 import React, { useState, useEffect } from "react";
 import HomePage from "./components/Home.jsx";
 import MarketsPage from "./components/Markets.jsx";
@@ -37,11 +37,8 @@ export default function App() {
     let realtimeSubscription = null;
 
     const setupBalance = async () => {
-      const phoneNumber = localStorage.getItem('phone_number');
-      const user_id = localStorage.getItem('user_id');
-
-      if (!phoneNumber || !user_id || !isLoggedIn) {
-        // 未登录 → 不订阅
+      // 修复点：直接用 state 的 userId，不要再读 localStorage
+      if (!isLoggedIn || !userId) {
         if (realtimeSubscription) {
           supabase.removeChannel(realtimeSubscription);
           realtimeSubscription = null;
@@ -53,7 +50,7 @@ export default function App() {
       const { data, error } = await supabase
         .from('users')
         .select('balance')
-        .eq('id', user_id)
+        .eq('id', userId)  // 使用 state 的 userId
         .single();
 
       if (error) {
@@ -71,7 +68,7 @@ export default function App() {
             event: 'UPDATE',
             schema: 'public',
             table: 'users',
-            filter: `id=eq.${user_id}`,
+            filter: `id=eq.${userId}`,  // 使用 state 的 userId
           },
           (payload) => {
             console.log('Global balance updated via Realtime:', payload.new.balance);
@@ -90,7 +87,7 @@ export default function App() {
         supabase.removeChannel(realtimeSubscription);
       }
     };
-  }, [isLoggedIn]); // 依赖 isLoggedIn，登录状态变了才重连
+  }, [isLoggedIn, userId]); // 修复点：加上 userId 依赖
 
   const renderPage = () => {
     switch (tab) {
