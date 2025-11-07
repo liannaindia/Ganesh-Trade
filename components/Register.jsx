@@ -1,129 +1,148 @@
-import React, { useState, useEffect } from "react";
-import { supabase } from "../supabaseClient";  // 引入supabase客户端
-import { ArrowLeft } from "lucide-react";  // 引入ArrowLeft组件
+import React, { useState } from "react";
+import { supabase } from "../supabaseClient"; // 引入supabase客户端
+import { ArrowLeft } from "lucide-react"; // 引入返回箭头组件
 
-export default function Recharge({ setTab, balance, isLoggedIn }) {
-  const [amount, setAmount] = useState(""); // 充值金额
-  const [selectedChannel, setSelectedChannel] = useState(null); // 选择的充值通道
-  const [loading, setLoading] = useState(false);
+export default function Register({ setTab, setIsLoggedIn }) {
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false); // 加载状态
 
-  // 充值通道列表
-  const [channels, setChannels] = useState([]);
+  const handleRegister = async () => {
+    if (isLoading) return;
+    setIsLoading(true);
+    setError(""); // 清空旧错误
 
-  useEffect(() => {
-    const fetchChannels = async () => {
-      const { data, error } = await supabase
-        .from("channels")
-        .select("*")
-        .eq("status", "active"); // 获取启用的充值通道
+    // Prop 检查（调试用）
+    if (typeof setIsLoggedIn !== 'function') {
+      console.error('setIsLoggedIn is not a function!', setIsLoggedIn);
+      setError('Internal error: Invalid login state handler');
+      setIsLoading(false);
+      return;
+    }
+    if (typeof setTab !== 'function') {
+      console.error('setTab is not a function!', setTab);
+      setError('Internal error: Invalid tab handler');
+      setIsLoading(false);
+      return;
+    }
 
-      if (error) {
-        console.error("Error fetching channels:", error);
-      } else {
-        setChannels(data); // 存储通道数据
-      }
-    };
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
+      setIsLoading(false);
+      return;
+    }
 
-    fetchChannels();
-  }, []);
-
-  // 提交充值请求
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!selectedChannel || !amount || isNaN(amount) || amount <= 0) {
-      alert("Please select a channel and enter a valid amount.");
+    if (phoneNumber.length < 10) { // 简单验证手机号
+      setError("Phone number must be at least 10 digits");
+      setIsLoading(false);
       return;
     }
 
     try {
-      setLoading(true);
+      const { data, error: insertError } = await supabase
+        .from('users')
+        .insert([
+          {
+            phone_number: phoneNumber,
+            password_hash: password,  // TODO: 生产环境用哈希 (e.g., bcrypt)
+            balance: 0.00,
+          }
+        ])
+        .select(); // 返回插入数据，便于调试
 
-      // 从 localStorage 获取用户ID
-      const user_id = localStorage.getItem('user_id');
-      if (!user_id) {
-        alert("User is not logged in.");
+      if (insertError) {
+        console.error("Supabase insert error:", insertError);
+        setError(insertError.message || "Registration failed");
+        setIsLoading(false);
         return;
       }
 
-      // 提交充值数据到后台
-      const { data, error } = await supabase.from("recharges").insert([
-        {
-          user_id: user_id, // 使用从 localStorage 获取的 user_id
-          channel_id: selectedChannel.id,
-          amount: parseFloat(amount),
-          status: "pending", // 初始状态为 pending
-        },
-      ]);
-
-      if (error) throw error;
-
-      alert("Recharge request submitted successfully.");
-      setAmount(""); // 清空金额
-      setSelectedChannel(null); // 重置选中的通道
+      console.log("Registration successful:", data); // 调试日志
+      localStorage.setItem('phone_number', phoneNumber);
+      setIsLoggedIn(true);
+      setTab("home");
     } catch (error) {
-      console.error("Error submitting recharge:", error);
-      alert("Failed to submit recharge request.");
+      console.error("Unexpected error during registration:", error);
+      setError("An error occurred during registration: " + error.message);
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
-  // 如果没有登录，显示登录提示
-  if (!isLoggedIn) {
-    return <div>Please log in to proceed with the recharge.</div>;
-  }
-
   return (
-    <div className="px-4 pb-24 max-w-md mx-auto">
+    <div className="max-w-md mx-auto bg-[#f5f7fb] pb-24 min-h-screen text-slate-900">
       <div className="flex items-center gap-3 py-3">
         <ArrowLeft
           className="h-5 w-5 text-slate-700 cursor-pointer"
           onClick={() => setTab("home")}
         />
-        <h2 className="font-semibold text-slate-800 text-lg">Recharge</h2>
+        <h2 className="font-semibold text-slate-800 text-lg">Register</h2>
       </div>
 
-      {/* 选择充值通道 */}
-      <div className="space-y-2">
-        <h3 className="text-gray-700">Select Recharge Channel</h3>
-        {channels.map((channel) => (
-          <div
-            key={channel.id}
-            onClick={() => setSelectedChannel(channel)}
-            className={`flex items-center gap-3 bg-white border border-slate-200 rounded-xl px-4 py-3 shadow-sm cursor-pointer ${
-              selectedChannel?.id === channel.id ? "bg-gray-100" : ""
-            }`}
-          >
-            <div className="font-medium text-slate-800 text-sm">
-              {channel.currency_name}
-            </div>
-            <div className="text-xs text-slate-500">{channel.wallet_address}</div>
-          </div>
-        ))}
-      </div>
+      <div className="px-4 mt-8 space-y-4">
+        <div>
+          <label className="text-sm text-slate-500">Phone Number</label>
+          <input
+            type="text"
+            className="w-full py-2 px-3 text-sm text-slate-700 rounded-lg border focus:ring-2 focus:ring-yellow-400"
+            placeholder="Enter your phone number"
+            value={phoneNumber}
+            onChange={(e) => setPhoneNumber(e.target.value)}
+            disabled={isLoading}
+          />
+        </div>
 
-      {/* 输入充值金额 */}
-      <div className="mt-5 bg-white rounded-xl border border-slate-200 shadow-sm p-4">
-        <div className="text-sm text-slate-500 mb-1">Amount</div>
-        <input
-          type="number"
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-          className="w-full border border-slate-200 rounded-xl p-2 text-sm outline-none"
-          placeholder="Enter amount"
-        />
-      </div>
+        <div>
+          <label className="text-sm text-slate-500">Password</label>
+          <input
+            type="password"
+            className="w-full py-2 px-3 text-sm text-slate-700 rounded-lg border focus:ring-2 focus:ring-yellow-400"
+            placeholder="Enter your password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            disabled={isLoading}
+          />
+        </div>
 
-      {/* 提交按钮 */}
-      <button
-        onClick={handleSubmit}
-        disabled={loading}
-        className={`mt-4 w-full bg-yellow-400 hover:bg-yellow-500 text-slate-900 font-semibold py-3 rounded-xl ${
-          loading ? "cursor-not-allowed" : ""
-        }`}
-      >
-        {loading ? "Submitting..." : "Submit"}
-      </button>
+        <div>
+          <label className="text-sm text-slate-500">Confirm Password</label>
+          <input
+            type="password"
+            className="w-full py-2 px-3 text-sm text-slate-700 rounded-lg border focus:ring-2 focus:ring-yellow-400"
+            placeholder="Confirm your password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            disabled={isLoading}
+          />
+        </div>
+
+        {error && <div className="text-red-500 text-sm mt-2 p-2 bg-red-50 rounded">{error}</div>}
+
+        <button
+          onClick={handleRegister}
+          disabled={isLoading}
+          className={`w-full text-slate-900 font-semibold py-3 rounded-xl mt-4 transition ${
+            isLoading ? 'bg-yellow-300 cursor-not-allowed' : 'bg-yellow-400 hover:bg-yellow-500'
+          }`}
+        >
+          {isLoading ? 'Registering...' : 'Register'}
+        </button>
+
+        <div className="mt-6 text-center text-sm text-slate-500">
+          <span>
+            Already have an account?{" "}
+            <button
+              onClick={() => setTab("login")}
+              className="text-yellow-500 font-semibold"
+              disabled={isLoading}
+            >
+              Login
+            </button>
+          </span>
+        </div>
+      </div>
     </div>
   );
 }
