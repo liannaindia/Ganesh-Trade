@@ -129,7 +129,7 @@ export default function App() {
       case "trade":
         return <TradePage setTab={setTab} isLoggedIn={isLoggedIn} balance={balance} availableBalance={availableBalance} userId={userId} />;
       case "positions":
-        return <PositionsPage setTab={setTab} isLoggedIn={isLoggedIn} balance={balance}  />;
+        return <PositionsPage setTab={setTab} isLoggedIn={isLoggedIn} balance={balance}  availableBalance={availableBalance} userId={userId}  />;
       case "me":
         return <MePage setTab={setTab} balance={balance} availableBalance={availableBalance} isLoggedIn={isLoggedIn} userId={userId} />;
       case "recharge":
