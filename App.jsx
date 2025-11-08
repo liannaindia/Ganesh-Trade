@@ -49,7 +49,7 @@ export default function App() {
       // 初始查询余额
       const { data, error } = await supabase
         .from('users')
-        .select('balance')
+        .select('balance, available_balance')
         .eq('id', userId)  // 使用 state 的 userId
         .single();
 
@@ -57,6 +57,7 @@ export default function App() {
         console.error('Error fetching initial balance:', error);
       } else if (data) {
         setBalance(data.balance || 0);
+        setAvailableBalance(data.available_balance || 0);  // 设置可用余额
       }
 
       // 实时订阅
@@ -71,8 +72,9 @@ export default function App() {
             filter: `id=eq.${userId}`,  // 使用 state 的 userId
           },
           (payload) => {
-            console.log('Global balance updated via Realtime:', payload.new.balance);
+            console.log('Global balance updated via Realtime:', payload.new);
             setBalance(payload.new.balance || 0);
+            setAvailableBalance(payload.new.available_balance || 0); 
           }
         )
         .subscribe((status) => {
