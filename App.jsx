@@ -34,15 +34,20 @@ export default function App() {
   }, []);
 
   // 2. 全局实时余额订阅（修复：只有登录后才订阅，避免 CLOSED 循环）
-  useEffect(() => {
-    let realtimeSubscription = null;
+ useEffect(() => {
+    let realtimeSubscriptionBalance = null;
+    let realtimeSubscriptionAvailableBalance = null;
 
     const setupBalance = async () => {
-      // 修复点：直接用 state 的 userId，不要再读 localStorage
+      // 只有用户登录并且有 userId 时才进行订阅
       if (!isLoggedIn || !userId) {
-        if (realtimeSubscription) {
-          supabase.removeChannel(realtimeSubscription);
-          realtimeSubscription = null;
+        if (realtimeSubscriptionBalance) {
+          supabase.removeChannel(realtimeSubscriptionBalance);
+          realtimeSubscriptionBalance = null;
+        }
+        if (realtimeSubscriptionAvailableBalance) {
+          supabase.removeChannel(realtimeSubscriptionAvailableBalance);
+          realtimeSubscriptionAvailableBalance = null;
         }
         return;
       }
