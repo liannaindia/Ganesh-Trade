@@ -9,19 +9,18 @@ export default function CopyTradeAudit() {
     fetchAudits();
   }, []);
 
-  // 从 copytrades 表获取待审核的跟单数据
+  // 从 copytrades 表获取所有的跟单数据，不过滤状态
   const fetchAudits = async () => {
     try {
       const { data, error } = await supabase
         .from("copytrades")
-        .select("*")
-        .eq("status", "pending");
+        .select("*");  // 移除状态筛选，获取所有数据
       if (error) throw error;
-      setAudits(data || []);
+      setAudits(data || []);  // 更新显示的数据
     } catch (error) {
       console.error("获取跟单审核失败:", error);
     } finally {
-      setLoading(false);
+      setLoading(false);  // 加载完成
     }
   };
 
@@ -55,8 +54,8 @@ export default function CopyTradeAudit() {
 
       if (updateUserError) throw updateUserError;
 
-      // 刷新审核列表
-      fetchAudits();
+      // 成功后刷新审核列表
+      fetchAudits();  // 确保数据刷新
     } catch (error) {
       console.error("批准操作失败:", error);
     }
@@ -74,7 +73,7 @@ export default function CopyTradeAudit() {
       if (rejectError) throw rejectError;
 
       // 刷新审核列表
-      fetchAudits();
+      fetchAudits();  // 确保数据刷新
     } catch (error) {
       console.error("拒绝操作失败:", error);
     }
