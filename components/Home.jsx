@@ -94,9 +94,8 @@ export default function Home({ setTab, isLoggedIn: propIsLoggedIn }) { // 新增
   const navigate = useNavigate();
 
   const banners = [
-    "https://public.bnbstatic.com/image/banner/binance-futures.jpg",
-    "https://public.bnbstatic.com/image/banner/spk-fixed-term.jpg",
-    "https://public.bnbstatic.com/image/banner/binance-earn.jpg",
+     "/image/1.png",
+  "/image/2.png",
   ];
 
   // 检查用户是否登录并获取用户的资产信息（优先 prop，fallback localStorage）
