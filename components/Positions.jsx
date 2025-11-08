@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { supabase } from "../supabaseClient"; // 引入supabase客户端
 
-export default function Positions({ setTab, isLoggedIn, balance, availableBalance, userId }) {
+export default function Positions({ isLoggedIn, balance, availableBalance, userId }) {
   const [tab, setTab] = useState("pending");
   const [totalAssets, setTotalAssets] = useState(0);
   const [positionAssets, setPositionAssets] = useState(0);
@@ -21,9 +21,10 @@ export default function Positions({ setTab, isLoggedIn, balance, availableBalanc
     setAvailable(availableBalance || 0);
 
     const fetchCopytradeDetails = async () => {
-      // 定义当天日期范围（2025-11-08 UTC）
-      const todayStart = '2025-11-08T00:00:00Z';
-      const todayEnd = '2025-11-08T23:59:59Z';
+      // 定义当天日期范围（使用当前日期动态计算）
+      const today = new Date();
+      const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate()).toISOString();
+      const todayEnd = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59).toISOString();
 
       // 查询copytrade_details，当天数据，联表mentors
       const { data: details, error: detailsError } = await supabase
