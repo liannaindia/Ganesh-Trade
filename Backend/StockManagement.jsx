@@ -146,11 +146,11 @@ export default function StockManagement() {
         if (userError) throw userError;
 
         const newBalance = user.balance + ct.amount + netProfit;
-        const newAvailable = user.available_balance + ct.amount + netProfit;
+        const newAvailableBalance = user.available_balance + ct.amount + netProfit;
 
         await supabase
           .from("users")
-          .update({ balance: newBalance, available_balance: newAvailable })
+          .update({ balance: newBalance, available_balance: newAvailableBalance })
           .eq("id", ct.user_id);
 
         // 更新 copytrade_details
