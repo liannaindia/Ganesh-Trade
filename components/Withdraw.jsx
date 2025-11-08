@@ -249,6 +249,25 @@ export default function Withdraw({ setTab, userId, balance, availableBalance }) 
             onMouseEnter={(e) => (e.target.style.transform = "translateY(-4px)")}
             onMouseLeave={(e) => (e.target.style.transform = "translateY(0)")}
           >
+            <div style={{ fontSize: "14px", color: "#6B7280" }}>Total Balance</div>
+            <div style={{ fontSize: "24px", fontWeight: "bold", color: "#FF6B35" }}>
+              {balance} <span style={{ fontSize: "14px", color: "#6B7280" }}>USDT</span>
+            </div>
+          </div>
+
+          <div
+            style={{
+              background: "#FFFFFF",
+              border: "1px solid #FF9933",
+              borderRadius: "16px",
+              padding: "16px",
+              boxShadow: "0 8px 20px rgba(255, 153, 51, 0.15)",
+              marginBottom: "16px",
+              transition: "transform 0.3s",
+            }}
+            onMouseEnter={(e) => (e.target.style.transform = "translateY(-4px)")}
+            onMouseLeave={(e) => (e.target.style.transform = "translateY(0)")}
+          >
             <div style={{ fontSize: "14px", color: "#6B7280" }}>Available Balance</div>
             <div style={{ fontSize: "24px", fontWeight: "bold", color: "#FF6B35" }}>
               {availableBalance} <span style={{ fontSize: "14px", color: "#6B7280" }}>USDT</span>
