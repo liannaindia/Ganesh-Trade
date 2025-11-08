@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { ArrowLeft } from "lucide-react";
 import { supabase } from "../supabaseClient";
 
-export default function Withdraw({ setTab, userId, balance }) {
+export default function Withdraw({ setTab, userId, balance, availableBalance }) {
   const [tab, setTabState] = useState("request");
   const [walletAddress, setWalletAddress] = useState("");
   const [newAddress, setNewAddress] = useState("");
@@ -49,8 +49,14 @@ export default function Withdraw({ setTab, userId, balance }) {
       }
 
       const amount = parseFloat(withdrawAmount);
-      if (isNaN(amount) || amount < 100 || amount > 9999 || amount > balance) {
-        setError("Amount must be 100–9999 USDT and not exceed your balance.");
+      if (isNaN(amount) || amount < 100 || amount > 9999) {
+        setError("Amount must be 100–9999 USDT.");
+        return;
+      }
+
+      // 确保提款金额不超过有效余额
+      if (amount > availableBalance) {
+        setError("Insufficient available balance.");
         return;
       }
 
@@ -245,7 +251,7 @@ export default function Withdraw({ setTab, userId, balance }) {
           >
             <div style={{ fontSize: "14px", color: "#6B7280" }}>Available Balance</div>
             <div style={{ fontSize: "24px", fontWeight: "bold", color: "#FF6B35" }}>
-              {balance} <span style={{ fontSize: "14px", color: "#6B7280" }}>USDT</span>
+              {availableBalance} <span style={{ fontSize: "14px", color: "#6B7280" }}>USDT</span>
             </div>
           </div>
 
