@@ -14,7 +14,7 @@ export default function CopyTradeAudit() {
     try {
       const { data, error } = await supabase
         .from("copytrades")
-        .select("*");  // 移除状态筛选，获取所有数据
+        .select("*");  // 获取所有跟单数据
       if (error) throw error;
       setAudits(data || []);  // 更新显示的数据
     } catch (error) {
@@ -123,18 +123,25 @@ export default function CopyTradeAudit() {
                   </span>
                 </td>
                 <td className="px-4 py-3">
-                  <button
-                    onClick={() => handleApprove(a.id, a.user_id, a.amount)}
-                    className="text-green-600 hover:text-green-800 mr-3"
-                  >
-                    批准
-                  </button>
-                  <button
-                    onClick={() => handleReject(a.id)}
-                    className="text-red-600 hover:text-red-800"
-                  >
-                    拒绝
-                  </button>
+                  {/* 只有在状态为 'pending' 时，才显示批准和拒绝按钮 */}
+                  {a.status === "pending" ? (
+                    <>
+                      <button
+                        onClick={() => handleApprove(a.id, a.user_id, a.amount)}
+                        className="text-green-600 hover:text-green-800 mr-3"
+                      >
+                        批准
+                      </button>
+                      <button
+                        onClick={() => handleReject(a.id)}
+                        className="text-red-600 hover:text-red-800"
+                      >
+                        拒绝
+                      </button>
+                    </>
+                  ) : (
+                    <span className="text-gray-400">操作已完成</span>  {/* 已操作的订单不显示按钮 */}
+                  )}
                 </td>
               </tr>
             ))}
