@@ -33,7 +33,7 @@ export default function Trade({ setTab, balance, userId, isLoggedIn }) {
         .single();
 
       if (error) throw error;
-      setUserPhoneNumber(data?.phone_number || ""); // 如果为空，设置为空字符串
+      setUserPhoneNumber(data?.phone_number || "");
     } catch (error) {
       console.error("获取用户手机号码失败:", error);
     }
@@ -66,12 +66,6 @@ export default function Trade({ setTab, balance, userId, isLoggedIn }) {
       return;
     }
 
-    // 确保 phone_number 不为空
-    if (!userPhoneNumber) {
-      alert("User phone number is missing.");
-      return;
-    }
-
     // 插入数据到 copytrades 表
     try {
       const { data, error } = await supabase.from("copytrades").insert([{
@@ -79,7 +73,6 @@ export default function Trade({ setTab, balance, userId, isLoggedIn }) {
         mentor_id: selectedMentor.id,
         amount: parseFloat(followingAmount),
         status: "pending",  // 初始状态为 pending
-        user_phone_number: userPhoneNumber, // 新增手机号码
         mentor_commission: selectedMentor.commission, // 新增导师佣金率
       }]);
 
