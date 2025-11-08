@@ -26,47 +26,51 @@ export default function WithdrawManagement() {
   };
 
   // 批准提款并扣除金额
-  const handleApprove = async (id, amount, userId) => {
-    try {
-      // 批准提款
-      const { error: updateError } = await supabase
-        .from("withdraws")
-        .update({ status: "approved" })
-        .eq("id", id);
+  // 批准提款并扣除金额
+const handleApprove = async (id, amount, userId) => {
+  try {
+    // 批准提款
+    const { error: updateError } = await supabase
+      .from("withdraws")
+      .update({ status: "approved" })
+      .eq("id", id);
 
-      if (updateError) {
-        throw updateError;
-      }
-
-      // 扣除金额
-      const { data: userData, error: userError } = await supabase
-        .from("users")
-        .select("balance")
-        .eq("id", userId)
-        .single();
-
-      if (userError) {
-        throw userError;
-      }
-
-      const newBalance = userData.balance - amount;
-
-      // 更新用户余额
-      const { error: balanceError } = await supabase
-        .from("users")
-        .update({ balance: newBalance })
-        .eq("id", userId);
-
-      if (balanceError) {
-        throw balanceError;
-      }
-
-      // 刷新数据
-      fetchWithdraws();
-    } catch (error) {
-      console.error("批准提款失败:", error);
+    if (updateError) {
+      throw updateError;
     }
-  };
+
+    // 获取用户数据，包含余额和有效余额
+    const { data: userData, error: userError } = await supabase
+      .from("users")
+      .select("balance, available_balance")
+      .eq("id", userId)
+      .single();
+
+    if (userError) {
+      throw userError;
+    }
+
+    // 计算新的总余额和有效余额
+    const newBalance = userData.balance - amount;
+    const newAvailableBalance = userData.available_balance - amount;
+
+    // 更新用户余额和有效余额
+    const { error: balanceError } = await supabase
+      .from("users")
+      .update({ balance: newBalance, available_balance: newAvailableBalance })
+      .eq("id", userId);
+
+    if (balanceError) {
+      throw balanceError;
+    }
+
+    // 刷新提款记录
+    fetchWithdraws();
+  } catch (error) {
+    console.error("批准提款失败:", error);
+  }
+};
+
 
   // 拒绝提款
   const handleReject = async (id) => {
