@@ -1,4 +1,3 @@
-// App (4).jsx
 import React, { useState, useEffect } from "react";
 import HomePage from "./components/Home.jsx";
 import MarketsPage from "./components/Markets.jsx";
@@ -6,7 +5,7 @@ import TradePage from "./components/Trade.jsx";
 import PositionsPage from "./components/Positions.jsx";
 import MePage from "./components/Me.jsx";
 import RechargePage from "./components/Recharge.jsx";
-import WithdrawPage from "./components/Withdraw.jsx";
+import WithdrawPage from "./components/Withdraw.jsx"; // 引入 WithdrawPage
 import InvitePage from "./components/Invite.jsx";
 import LoginPage from "./components/Login.jsx"; 
 import RegisterPage from "./components/Register.jsx"; 
@@ -34,7 +33,7 @@ export default function App() {
   }, []);
 
   // 2. 全局实时余额订阅（修复：只有登录后才订阅，避免 CLOSED 循环）
- useEffect(() => {
+  useEffect(() => {
     let realtimeSubscriptionBalance = null;
     let realtimeSubscriptionAvailableBalance = null;
 
@@ -63,11 +62,11 @@ export default function App() {
         console.error('Error fetching initial balance:', error);
       } else if (data) {
         setBalance(data.balance || 0);
-        setAvailableBalance(data.available_balance || 0);  // 设置可用余额
+        setAvailableBalance(data.available_balance || 0); // 设置可用余额
       }
 
-      // 实时订阅
-      realtimeSubscription = supabase
+      // 实时订阅 balance
+      realtimeSubscriptionBalance = supabase
         .channel('global-balance-updates')
         .on(
           'postgres_changes',
@@ -79,20 +78,42 @@ export default function App() {
           },
           (payload) => {
             console.log('Global balance updated via Realtime:', payload.new);
-            setBalance(payload.new.balance || 0);
-            setAvailableBalance(payload.new.available_balance || 0); 
+            setBalance(payload.new.balance || 0);  // 更新总余额
           }
         )
         .subscribe((status) => {
-          console.log('Global Realtime subscription status:', status);
+          console.log('Global Realtime subscription status for balance:', status);
+        });
+
+      // 实时订阅 available_balance
+      realtimeSubscriptionAvailableBalance = supabase
+        .channel('global-available-balance-updates')
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'users',
+            filter: `id=eq.${userId}`,  // 使用 state 的 userId
+          },
+          (payload) => {
+            console.log('Global available_balance updated via Realtime:', payload.new);
+            setAvailableBalance(payload.new.available_balance || 0);  // 更新有效余额
+          }
+        )
+        .subscribe((status) => {
+          console.log('Global Realtime subscription status for available_balance:', status);
         });
     };
 
     setupBalance();
 
     return () => {
-      if (realtimeSubscription) {
-        supabase.removeChannel(realtimeSubscription);
+      if (realtimeSubscriptionBalance) {
+        supabase.removeChannel(realtimeSubscriptionBalance);
+      }
+      if (realtimeSubscriptionAvailableBalance) {
+        supabase.removeChannel(realtimeSubscriptionAvailableBalance);
       }
     };
   }, [isLoggedIn, userId]); // 修复点：加上 userId 依赖
