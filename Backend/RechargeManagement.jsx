@@ -125,9 +125,8 @@ export default function RechargeManagement() {
         <table className="w-full text-sm text-gray-800">
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
-              <th className="w-[80px] px-4 py-3 text-center font-semibold uppercase text-gray-600">ID</th>
-              <th className="w-[140px] px-4 py-3 text-center font-semibold uppercase text-gray-600">手机号</th>
-              <th className="w-[100px] px-4 py-3 text-center font-semibold uppercase text-gray-600">用户ID</th>
+             
+              <th className="w-[140px] px-4 py-3 text-center font-semibold uppercase text-gray-600">手机号</th> 
               <th className="w-[100px] px-4 py-3 text-center font-semibold uppercase text-gray-600">金额</th>
               <th className="w-[100px] px-4 py-3 text-center font-semibold uppercase text-gray-600">通道</th>
               <th className="w-[160px] px-4 py-3 text-center font-semibold uppercase text-gray-600">时间</th>
@@ -145,9 +144,8 @@ export default function RechargeManagement() {
             ) : (
               recharges.data.map((r) => (
                 <tr key={r.id} className="hover:bg-gray-50 text-center align-middle">
-                  <td className="px-4 py-3">{r.id}</td>
+                 
                   <td className="px-4 py-3 font-medium text-blue-600">{r.phone_number}</td>
-                  <td className="px-4 py-3">{r.user_id}</td>
                   <td className="px-4 py-3 text-green-600 font-semibold">${r.amount}</td>
                   <td className="px-4 py-3">{r.currency_name}</td>
                   <td className="px-4 py-3 text-gray-500">{r.created_at}</td>
