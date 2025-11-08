@@ -109,7 +109,7 @@ export default function Positions({ isLoggedIn, balance, availableBalance, userI
   const list = tab === "pending" ? pendingOrders : completedOrders;
 
   return (
-    <div className="px-4 pb-24 max-w-md mx-auto">
+    <div className="px-4 pb-24 max-w-md mx-auto overflow-y-auto"> {/* 添加 overflow-y-auto 以支持页面滚动 */}
       {/* ===== 顶部标题 ===== */}
       <div className="mt-3 mb-3 text-center">
         <h2 className="text-lg font-bold text-slate-800 border-b-2 border-yellow-400 inline-block pb-1">
