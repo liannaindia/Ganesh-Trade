@@ -6,6 +6,7 @@ export default function Trade({ setTab, balance, userId, isLoggedIn }) {
   const [mentors, setMentors] = useState([]);
   const [isFollowing, setIsFollowing] = useState(false);
   const [followingAmount, setFollowingAmount] = useState("");
+  const [selectedMentor, setSelectedMentor] = useState(null);  // 新增：保存选择的导师
 
   useEffect(() => {
     fetchMentors();
@@ -25,8 +26,44 @@ export default function Trade({ setTab, balance, userId, isLoggedIn }) {
     m.name.toLowerCase().includes(query.toLowerCase())
   );
 
-  const handleFollow = (mentor) => {
-    setIsFollowing(true);
+  const handleFollow = async () => {
+    if (!followingAmount || parseFloat(followingAmount) <= 0) {
+      alert("Please enter a valid amount.");
+      return;
+    }
+
+    if (parseFloat(followingAmount) > balance) {
+      alert("You do not have enough balance.");
+      return;
+    }
+
+    if (!selectedMentor) {
+      alert("Please select a mentor to follow.");
+      return;
+    }
+
+    // 插入数据到 copytrades 表
+    try {
+      const { data, error } = await supabase.from("copytrades").insert([
+        {
+          user_id: userId,
+          mentor_id: selectedMentor.id,
+          amount: parseFloat(followingAmount),
+          status: "pending",  // 初始状态为 pending
+        },
+      ]);
+
+      if (error) throw error;
+      
+      // 成功后提示用户
+      alert("Follow request submitted. Waiting for approval.");
+      setIsFollowing(false);
+      setFollowingAmount(""); // 清空金额
+      setSelectedMentor(null);  // 清空导师选择
+    } catch (error) {
+      console.error("Follow request failed:", error);
+      alert("Something went wrong. Please try again.");
+    }
   };
 
   const handleBack = () => {
@@ -178,7 +215,9 @@ export default function Trade({ setTab, balance, userId, isLoggedIn }) {
           >
             Back
           </button>
+
           <button
+            onClick={handleFollow} // 触发跟单操作
             style={{
               width: "100%",
               padding: "12px",
@@ -273,7 +312,7 @@ export default function Trade({ setTab, balance, userId, isLoggedIn }) {
                   </div>
                 </div>
                 <button
-                  onClick={() => handleFollow(m)}
+                  onClick={() => setSelectedMentor(m)} // 选择导师
                   style={{
                     padding: "8px 16px",
                     background: "linear-gradient(135deg, #FFD700, #FF6B35)",
@@ -288,7 +327,7 @@ export default function Trade({ setTab, balance, userId, isLoggedIn }) {
                   onMouseEnter={(e) => (e.target.style.transform = "scale(1.05)")}
                   onMouseLeave={(e) => (e.target.style.transform = "scale(1)")}
                 >
-                  Follow
+                  Select Mentor
                 </button>
               </div>
             ))}
