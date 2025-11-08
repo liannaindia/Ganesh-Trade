@@ -104,8 +104,7 @@ export default function WithdrawManagement() {
         <table className="w-full text-sm text-gray-800">
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
-              <th className="w-[140px] px-4 py-3 text-center font-semibold uppercase text-gray-600">手机号</th>
-              <th className="w-[100px] px-4 py-3 text-center font-semibold uppercase text-gray-600">用户ID</th>
+              <th className="w-[140px] px-4 py-3 text-center font-semibold uppercase text-gray-600">手机号</th>              
               <th className="w-[100px] px-4 py-3 text-center font-semibold uppercase text-gray-600">金额</th>
               <th className="w-[160px] px-4 py-3 text-center font-semibold uppercase text-gray-600">时间</th>
               <th className="w-[100px] px-4 py-3 text-center font-semibold uppercase text-gray-600">状态</th>
@@ -122,8 +121,7 @@ export default function WithdrawManagement() {
             ) : (
               withdraws.map((item) => (
                 <tr key={item.id} className="hover:bg-gray-50 text-center align-middle">
-                  <td className="px-4 py-3 font-medium text-blue-600">{item.phone_number}</td>
-                  <td className="px-4 py-3">{item.user_id}</td>
+                  <td className="px-4 py-3 font-medium text-blue-600">{item.phone_number}</td>           
                   <td className="px-4 py-3 text-red-600 font-semibold">-${item.amount}</td>
                   <td className="px-4 py-3 text-gray-500">{item.created_at}</td>
                   <td className="px-4 py-3">
