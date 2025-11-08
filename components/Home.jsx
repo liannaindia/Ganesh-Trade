@@ -94,8 +94,8 @@ export default function Home({ setTab, isLoggedIn: propIsLoggedIn }) { // 新增
   const navigate = useNavigate();
 
   const banners = [
-     "/image/1.png",
-  "/image/2.png",
+  "https://httpbin.org/image/png",  // 这是一个测试用的 PNG 图片
+  "https://httpbin.org/image/jpeg", // 测试 JPEG
   ];
 
   // 检查用户是否登录并获取用户的资产信息（优先 prop，fallback localStorage）
