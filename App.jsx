@@ -98,7 +98,7 @@ export default function App() {
       case "register":
         return <RegisterPage setTab={setTab} setIsLoggedIn={setIsLoggedIn} />;
       case "trade":
-        return <TradePage setTab={setTab} isLoggedIn={isLoggedIn} balance={balance}/>;
+        return <TradePage setTab={setTab} isLoggedIn={isLoggedIn} balance={balance} userId={userId} />;
       case "positions":
         return <PositionsPage setTab={setTab} isLoggedIn={isLoggedIn} balance={balance}  />;
       case "me":
