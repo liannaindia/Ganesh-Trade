@@ -4,36 +4,50 @@ import { supabase } from "../supabaseClient";
 export default function CopyTradeAudit() {
   const [audits, setAudits] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const pageSize = 10; // 每页显示10条数据
 
   useEffect(() => {
-    fetchAudits();
-  }, []);
+    fetchAudits(currentPage);
+  }, [currentPage]);
 
-  // 从 copytrades 表获取所有的跟单数据，不过滤状态
-  const fetchAudits = async () => {
+  // 从 copytrades 表获取分页的跟单数据
+  const fetchAudits = async (page) => {
     try {
+      setLoading(true);
+      // 获取总条数
+      const { count, error: countError } = await supabase
+        .from("copytrades")
+        .select("*", { count: "exact", head: true });
+      if (countError) throw countError;
+      setTotalCount(count || 0);
+
+      // 获取分页数据
+      const from = (page - 1) * pageSize;
+      const to = from + pageSize - 1;
       const { data, error } = await supabase
         .from("copytrades")
-        .select("*");  // 获取所有跟单数据
+        .select("*")
+        .range(from, to)
+        .order("id", { ascending: false }); // 可选：按ID降序排序，新数据在前
       if (error) throw error;
-      setAudits(data || []);  // 更新显示的数据
+      setAudits(data || []);
     } catch (error) {
       console.error("获取跟单审核失败:", error);
+      alert("获取数据失败: " + error.message);
     } finally {
-      setLoading(false);  // 加载完成
+      setLoading(false);
     }
   };
 
   // 批准跟单操作
   const handleApprove = async (id, userId, amount) => {
     try {
-      // 更新 copytrades 表中的 status 为 "approved"
-      const { error: updateError } = await supabase
-        .from("copytrades")
-        .update({ status: "approved" })
-        .eq("id", id);
-
-      if (updateError) throw updateError;
+      const parsedAmount = parseFloat(amount);
+      if (isNaN(parsedAmount) || parsedAmount <= 0) {
+        throw new Error("无效的金额");
+      }
 
       // 获取用户可用余额
       const { data: userData, error: userError } = await supabase
@@ -41,23 +55,35 @@ export default function CopyTradeAudit() {
         .select("available_balance")
         .eq("id", userId)
         .single();
-
       if (userError) throw userError;
 
-      const newBalance = userData.available_balance - amount;
+      if (userData.available_balance < parsedAmount) {
+        alert("用户余额不足，无法批准");
+        return;
+      }
+
+      const newBalance = userData.available_balance - parsedAmount;
+
+      // 更新 copytrades 表中的 status 为 "approved"
+      const { error: updateError } = await supabase
+        .from("copytrades")
+        .update({ status: "approved" })
+        .eq("id", id);
+      if (updateError) throw updateError;
 
       // 更新用户的 available_balance 和 follow_status
       const { error: updateUserError } = await supabase
         .from("users")
         .update({ available_balance: newBalance, follow_status: "following" })
         .eq("id", userId);
-
       if (updateUserError) throw updateUserError;
 
-      // 成功后刷新审核列表
-      fetchAudits();  // 确保数据刷新
+      // 成功后刷新当前页
+      fetchAudits(currentPage);
+      alert("批准成功");
     } catch (error) {
       console.error("批准操作失败:", error);
+      alert("操作失败: " + error.message);
     }
   };
 
@@ -69,13 +95,22 @@ export default function CopyTradeAudit() {
         .from("copytrades")
         .update({ status: "rejected" })
         .eq("id", id);
-
       if (rejectError) throw rejectError;
 
-      // 刷新审核列表
-      fetchAudits();  // 确保数据刷新
+      // 刷新当前页
+      fetchAudits(currentPage);
+      alert("拒绝成功");
     } catch (error) {
       console.error("拒绝操作失败:", error);
+      alert("操作失败: " + error.message);
+    }
+  };
+
+  const totalPages = Math.ceil(totalCount / pageSize);
+
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setCurrentPage(newPage);
     }
   };
 
@@ -86,13 +121,12 @@ export default function CopyTradeAudit() {
       <div className="p-6 border-b border-gray-100 flex justify-between items-center">
         <h2 className="text-xl font-bold text-gray-800">跟单审核</h2>
         <button
-          onClick={fetchAudits}
+          onClick={() => fetchAudits(currentPage)}
           className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition"
         >
           刷新
         </button>
       </div>
-
       <div className="overflow-auto max-h-[80vh]">
         <table className="w-full table-fixed text-sm text-gray-800">
           <thead className="bg-gray-50 border-b border-gray-200">
@@ -105,48 +139,72 @@ export default function CopyTradeAudit() {
               <th className="w-[180px] px-4 py-3 text-center font-semibold uppercase text-gray-600">操作</th>
             </tr>
           </thead>
-
           <tbody className="divide-y divide-gray-100">
-            {audits.map((a) => (
-              <tr key={a.id} className="hover:bg-gray-50 text-center align-middle">
-                <td className="px-4 py-3">{a.user_phone_number || "无"}</td>
-                <td className="px-4 py-3">{a.mentor_id}</td>
-                <td className="px-4 py-3 text-blue-600 font-semibold">{a.amount}</td>
-                <td className="px-4 py-3">
-                  <span className="px-2 py-1 rounded-full text-xs bg-yellow-100 text-yellow-800">
-                    {a.status === "pending" ? "待审" : a.status === "approved" ? "已批准" : "已拒绝"}
-                  </span>
-                </td>
-                <td className="px-4 py-3">
-                  <span className="px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">
-                    {a.mentor_commission}%  {/* 显示导师佣金 */}
-                  </span>
-                </td>
-                <td className="px-4 py-3">
-                  {/* 只有在状态为 'pending' 时，才显示批准和拒绝按钮 */}
-                  {a.status === "pending" ? (
-                    <>
-                      <button
-                        onClick={() => handleApprove(a.id, a.user_id, a.amount)}
-                        className="text-green-600 hover:text-green-800 mr-3"
-                      >
-                        批准
-                      </button>
-                      <button
-                        onClick={() => handleReject(a.id)}
-                        className="text-red-600 hover:text-red-800"
-                      >
-                        拒绝
-                      </button>
-                    </>
-                  ) : (
-                    <span className="text-gray-400">操作已完成</span>  {/* 已操作的订单不显示按钮 */}
-                  )}
-                </td>
+            {audits.length === 0 ? (
+              <tr>
+                <td colSpan="6" className="px-4 py-3 text-center text-gray-500">无数据</td>
               </tr>
-            ))}
+            ) : (
+              audits.map((a) => (
+                <tr key={a.id} className="hover:bg-gray-50 text-center align-middle">
+                  <td className="px-4 py-3">{a.user_phone_number || "无"}</td>
+                  <td className="px-4 py-3">{a.mentor_id}</td>
+                  <td className="px-4 py-3 text-blue-600 font-semibold">{a.amount}</td>
+                  <td className="px-4 py-3">
+                    <span className="px-2 py-1 rounded-full text-xs bg-yellow-100 text-yellow-800">
+                      {a.status === "pending" ? "待审" : a.status === "approved" ? "已批准" : a.status === "rejected" ? "已拒绝" : "未知"}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className="px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">
+                      {a.mentor_commission}% {/* 显示导师佣金 */}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3">
+                    {a.status === "pending" ? (
+                      <>
+                        <button
+                          onClick={() => handleApprove(a.id, a.user_id, a.amount)}
+                          className="text-green-600 hover:text-green-800 mr-3"
+                        >
+                          批准
+                        </button>
+                        <button
+                          onClick={() => handleReject(a.id)}
+                          className="text-red-600 hover:text-red-800"
+                        >
+                          拒绝
+                        </button>
+                      </>
+                    ) : (
+                      <span className="text-gray-400">操作已完成</span>
+                    )}
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
+      </div>
+      {/* 分页控件 */}
+      <div className="p-4 border-t border-gray-200 flex justify-center items-center space-x-2">
+        <button
+          onClick={() => handlePageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+          className="px-3 py-1 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 disabled:opacity-50"
+        >
+          上一页
+        </button>
+        <span className="text-sm text-gray-600">
+          第 {currentPage} 页 / 共 {totalPages} 页 (总 {totalCount} 条)
+        </span>
+        <button
+          onClick={() => handlePageChange(currentPage + 1)}
+          disabled={currentPage === totalPages}
+          className="px-3 py-1 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 disabled:opacity-50"
+        >
+          下一页
+        </button>
       </div>
     </div>
   );
