@@ -3,26 +3,31 @@ import { supabase } from "../supabaseClient";
 
 export default function RechargeManagement() {
   const [recharges, setRecharges] = useState([]);
-  const [channels, setChannels] = useState([]); // 存储充值通道信息
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
 
   useEffect(() => {
     fetchRecharges();
-    fetchChannels(); // 获取充值通道数据
-  }, []);
+  }, [currentPage]);
 
   const fetchRecharges = async () => {
     try {
       setLoading(true);
-      // 1. 查询所有充值记录
-      const { data: rechargesData, error: rechargeError } = await supabase
+
+      // 1. 查询当前页的充值记录
+      const from = (currentPage - 1) * pageSize;
+      const to = from + pageSize - 1;
+
+      const { data: rechargesData, error: rechargeError, count } = await supabase
         .from("recharges")
-        .select("id, user_id, amount, channel_id, status, created_at")
+        .select("id, user_id, amount, channel_id, status, created_at", { count: "exact" })
+        .range(from, to)
         .order("created_at", { ascending: false });
 
       if (rechargeError) throw rechargeError;
 
-      // 2. 提取所有 channel_id（去重）
+      // 2. 提取 channel_id 去重
       const channelIds = [...new Set(rechargesData.map(r => r.channel_id).filter(Boolean))];
 
       // 3. 批量查询 channels
@@ -35,44 +40,32 @@ export default function RechargeManagement() {
 
         if (channelError) throw channelError;
 
-        // 构建 id → name 映射
         channelMap = Object.fromEntries(
           channelsData.map(c => [c.id, c.currency_name])
         );
       }
 
-      // 4. 合并数据 + 格式化时间
+      // 4. 合并 + 格式化时间
       const formattedData = rechargesData.map((r) => ({
         ...r,
         currency_name: channelMap[r.channel_id] || "未知通道",
         created_at: convertToChinaTime(r.created_at),
       }));
 
-      setRecharges(formattedData || []);
+      setRecharges({ data: formattedData, total: count || 0 });
     } catch (error) {
       console.error("获取充值记录失败:", error);
-      alert("加载充值记录失败，请刷新页面重试。");
+      alert("加载失败，请刷新重试。");
+      setRecharges({ data: [], total: 0 });
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchChannels = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("channels")
-        .select("*");
-      if (error) throw error;
-      setChannels(data || []);
-    } catch (error) {
-      console.error("获取充值通道失败:", error);
-    }
-  };
-
-  // 将UTC时间转换为中国时间
+  // 中国时间格式化
   const convertToChinaTime = (utcTime) => {
-    const date = new Date(utcTime); // 将 UTC 时间转换为 Date 对象
-    const options = {
+    const date = new Date(utcTime);
+    return new Intl.DateTimeFormat("zh-CN", {
       year: "numeric",
       month: "2-digit",
       day: "2-digit",
@@ -80,55 +73,35 @@ export default function RechargeManagement() {
       minute: "2-digit",
       second: "2-digit",
       hour12: false,
-      timeZone: "Asia/Shanghai", // 设置时区为中国时间
-    };
-    return new Intl.DateTimeFormat("zh-CN", options).format(date);
+      timeZone: "Asia/Shanghai",
+    }).format(date);
   };
 
   const handleApprove = async (id, user_id, amount) => {
     try {
-      // 批准充值并更新状态为 approved
       const { error: updateError } = await supabase
         .from("recharges")
         .update({ status: "approved" })
         .eq("id", id);
-
       if (updateError) throw updateError;
 
-      // 获取当前用户的余额
       const { data: userData, error: fetchError } = await supabase
         .from("users")
         .select("balance")
         .eq("id", user_id)
         .single();
+      if (fetchError) throw fetchError;
 
-      if (fetchError) {
-        console.error("获取用户余额失败:", fetchError);
-        alert("获取用户余额失败，请重试。");
-        return;
-      }
-
-      // 计算新的余额
-      const newBalance = userData.balance + amount;
-
-      // 更新用户余额
       const { error: balanceError } = await supabase
         .from("users")
-        .update({ balance: newBalance })
+        .update({ balance: userData.balance + amount })
         .eq("id", user_id);
+      if (balanceError) throw balanceError;
 
-      if (balanceError) {
-        console.error("更新用户余额失败:", balanceError);
-        alert("更新余额失败，请重试。");
-        return;
-      }
-
-      // 刷新充值记录
       fetchRecharges();
-      alert("充值批准成功！");
+      alert("已批准充值");
     } catch (error) {
-      console.error("批准充值失败:", error);
-      alert("批准失败: " + error.message);
+      alert("操作失败: " + error.message);
     }
   };
 
@@ -138,26 +111,22 @@ export default function RechargeManagement() {
         .from("recharges")
         .update({ status: "rejected" })
         .eq("id", id);
-
       if (error) throw error;
 
-      // 刷新充值记录
       fetchRecharges();
-      alert("充值已拒绝！");
+      alert("已拒绝充值");
     } catch (error) {
-      console.error("拒绝充值失败:", error);
-      alert("拒绝失败: " + error.message);
+      alert("操作失败: " + error.message);
     }
   };
 
-  // 计算总页数
-  const totalPages = Math.ceil(recharges.length / 10); // 假设每页10条
+  const totalPages = Math.ceil(recharges.total / pageSize) || 1;
 
   if (loading) {
     return (
-      <div className="p-6 text-center text-gray-500">
+      <div className="p-6 text-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-        <p className="mt-2">加载充值记录中...</p>
+        <p className="mt-2 text-gray-500">加载中...</p>
       </div>
     );
   }
@@ -186,16 +155,15 @@ export default function RechargeManagement() {
               <th className="w-[180px] px-4 py-3 text-center font-semibold uppercase text-gray-600">操作</th>
             </tr>
           </thead>
-
           <tbody className="divide-y divide-gray-100">
-            {recharges.length === 0 ? (
+            {recharges.data.length === 0 ? (
               <tr>
                 <td colSpan="6" className="py-8 text-center text-gray-500">
                   暂无充值记录
                 </td>
               </tr>
             ) : (
-              recharges.map((r) => (
+              recharges.data.map((r) => (
                 <tr key={r.id} className="hover:bg-gray-50 text-center align-middle">
                   <td className="px-4 py-3">{r.user_id}</td>
                   <td className="px-4 py-3 text-blue-600 font-semibold">${r.amount}</td>
@@ -211,15 +179,11 @@ export default function RechargeManagement() {
                           : "bg-red-100 text-red-800"
                       }`}
                     >
-                      {r.status === "pending"
-                        ? "待审批"
-                        : r.status === "approved"
-                        ? "已批准"
-                        : "已拒绝"}
+                      {r.status === "pending" ? "待审批" : r.status === "approved" ? "已批准" : "已拒绝"}
                     </span>
                   </td>
                   <td className="px-4 py-3">
-                    {r.status === "pending" && (
+                    {r.status === "pending" ? (
                       <>
                         <button
                           onClick={() => handleApprove(r.id, r.user_id, r.amount)}
@@ -234,9 +198,8 @@ export default function RechargeManagement() {
                           拒绝
                         </button>
                       </>
-                    )}
-                    {r.status !== "pending" && (
-                      <span className="text-gray-500">操作已完成</span>
+                    ) : (
+                      <span className="text-gray-500">已完成</span>
                     )}
                   </td>
                 </tr>
@@ -246,23 +209,23 @@ export default function RechargeManagement() {
         </table>
       </div>
 
-      {/* 分页控件（如果需要） */}
-      {recharges.length > 10 && (
-        <div className="p-4 border-t border-gray-200 flex justify-center items-center space-x-2">
+      {/* 分页 */}
+      {recharges.total > pageSize && (
+        <div className="p-4 border-t border-gray-200 flex justify-center items-center space-x-4">
           <button
-            onClick={() => {/* 上一页逻辑 */}}
-            disabled={/* 当前页 === 1 */}
-            className="px-3 py-1 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 disabled:opacity-50"
+            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+            disabled={currentPage === 1}
+            className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             上一页
           </button>
           <span className="text-sm text-gray-600">
-            第 {1} 页 / 共 {totalPages} 页 (总 {recharges.length} 条)
+            第 {currentPage} 页 / 共 {totalPages} 页 (总 {recharges.total} 条)
           </span>
           <button
-            onClick={() => {/* 下一页逻辑 */}}
-            disabled={/* 当前页 === totalPages */}
-            className="px-3 py-1 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 disabled:opacity-50"
+            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+            disabled={currentPage === totalPages}
+            className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             下一页
           </button>
