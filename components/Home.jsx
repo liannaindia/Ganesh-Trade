@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { supabase } from "../supabaseClient"; // 引入supabase客户端
+import banner1 from '.../image/1.png';  
+import banner2 from '../image/2.png';
 import { useNavigate } from "react-router-dom";
 import { Search, Wallet, Send, Headphones, Gift } from "lucide-react"; // 引入需要的图标
 
@@ -93,10 +95,7 @@ export default function Home({ setTab, isLoggedIn: propIsLoggedIn }) { // 新增
   const balance = localBalance; // 使用本地余额
   const navigate = useNavigate();
 
-  const banners = [
-  "https://httpbin.org/image/png",  // 这是一个测试用的 PNG 图片
-  "https://httpbin.org/image/jpeg", // 测试 JPEG
-  ];
+  const banners = [banner1, banner2];
 
   // 检查用户是否登录并获取用户的资产信息（优先 prop，fallback localStorage）
   useEffect(() => {
