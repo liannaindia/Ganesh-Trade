@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../supabaseClient";
 
-export default function Trade({ setTab }) {
+export default function Trade({ setTab, balance }) {
   const [query, setQuery] = useState("");
   const [mentors, setMentors] = useState([]);
   const [isFollowing, setIsFollowing] = useState(false);
@@ -93,7 +93,7 @@ export default function Trade({ setTab }) {
             }}
           >
             <span style={{ fontSize: "14px", color: "#374151" }}>
-              Available Balance: <span style={{ fontWeight: "bold", color: "#FFD700" }}>5106.75 USDT</span>
+              Available Balance: <span style={{ fontWeight: "bold", color: "#FFD700" }}>{balance.toFixed(2)} USDT</span>
             </span>
             <button
               onClick={handleRecharge}
