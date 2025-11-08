@@ -90,12 +90,33 @@ export default function CopyTradeAudit() {
   // 拒绝跟单操作
   const handleReject = async (id) => {
     try {
+      // 先获取 copytrades 的 user_id 和 mentor_id
+      const { data: copytradeData, error: fetchError } = await supabase
+        .from("copytrades")
+        .select("user_id, mentor_id")
+        .eq("id", id)
+        .single();
+
+      if (fetchError) throw fetchError;
+      if (!copytradeData) throw new Error("跟单记录不存在");
+
+      const { user_id, mentor_id } = copytradeData;
+
       // 更新 copytrades 表中的 status 为 "rejected"
       const { error: rejectError } = await supabase
         .from("copytrades")
         .update({ status: "rejected" })
         .eq("id", id);
       if (rejectError) throw rejectError;
+
+      // 更新 copytrade_details 表中的 order_status 为 "rejected"（匹配 user_id 和 mentor_id）
+      const { error: detailsError } = await supabase
+        .from("copytrade_details")
+        .update({ order_status: "rejected" })
+        .eq("user_id", user_id)
+        .eq("mentor_id", mentor_id);
+
+      if (detailsError) throw detailsError;
 
       // 刷新当前页
       fetchAudits(currentPage);
