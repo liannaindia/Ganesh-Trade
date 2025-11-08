@@ -29,19 +29,7 @@ export default function Positions({ isLoggedIn, balance, availableBalance, userI
       // 查询copytrade_details，当天数据，联表mentors
       const { data: details, error: detailsError } = await supabase
         .from('copytrade_details')
-        .select(`
-          id,
-          amount,
-          order_profit_amount,
-          order_status,
-          created_at,
-          mentor_id,
-          mentors (
-            name,
-            years,
-            img
-          )
-        `)
+        .select(`id, amount, order_profit_amount, order_status, created_at, mentor_id, mentors (name, years, img)`)
         .eq('user_id', userId)
         .gte('created_at', todayStart)
         .lte('created_at', todayEnd);
@@ -172,7 +160,7 @@ export default function Positions({ isLoggedIn, balance, availableBalance, userI
       </div>
 
       {/* ===== 订单列表 ===== */}
-      <div className="space-y-3">
+      <div className="space-y-3 max-h-[500px] overflow-y-auto">
         {list.map((o) => (
           <div
             key={o.id}
