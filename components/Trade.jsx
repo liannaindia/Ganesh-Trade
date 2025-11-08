@@ -7,9 +7,11 @@ export default function Trade({ setTab, balance, userId, isLoggedIn }) {
   const [isFollowing, setIsFollowing] = useState(false); // 判断是否在跟单页面
   const [followingAmount, setFollowingAmount] = useState(""); // 跟单金额
   const [selectedMentor, setSelectedMentor] = useState(null); // 选择的导师
+  const [userPhoneNumber, setUserPhoneNumber] = useState(""); // 用户手机号码
 
   useEffect(() => {
     fetchMentors();
+    fetchUserPhoneNumber(); // 获取用户手机号码
   }, []);
 
   const fetchMentors = async () => {
@@ -19,6 +21,21 @@ export default function Trade({ setTab, balance, userId, isLoggedIn }) {
       setMentors(data || []);
     } catch (error) {
       console.error("获取导师失败:", error);
+    }
+  };
+
+  const fetchUserPhoneNumber = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('phone_number')
+        .eq('id', userId)
+        .single();
+
+      if (error) throw error;
+      setUserPhoneNumber(data?.phone_number || "");
+    } catch (error) {
+      console.error("获取用户手机号码失败:", error);
     }
   };
 
@@ -56,6 +73,7 @@ export default function Trade({ setTab, balance, userId, isLoggedIn }) {
         mentor_id: selectedMentor.id,
         amount: parseFloat(followingAmount),
         status: "pending",  // 初始状态为 pending
+        user_phone_number: userPhoneNumber, // 新增手机号码
       }]);
 
       if (error) throw error;
