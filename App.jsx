@@ -17,6 +17,7 @@ export default function App() {
   const [tab, setTab] = useState("home");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [balance, setBalance] = useState(0);
+  const [availableBalance, setAvailableBalance] = useState(0); // 新增 availableBalance 状态
   const [userId, setUserId] = useState(null);
 
   // 1. 页面加载时恢复登录状态（修复：必须恢复 user_id）
@@ -100,15 +101,15 @@ export default function App() {
       case "register":
         return <RegisterPage setTab={setTab} setIsLoggedIn={setIsLoggedIn} />;
       case "trade":
-        return <TradePage setTab={setTab} isLoggedIn={isLoggedIn} balance={balance} userId={userId} />;
+        return <TradePage setTab={setTab} isLoggedIn={isLoggedIn} balance={balance} availableBalance={availableBalance} userId={userId} />;
       case "positions":
         return <PositionsPage setTab={setTab} isLoggedIn={isLoggedIn} balance={balance}  />;
       case "me":
-        return <MePage setTab={setTab} isLoggedIn={isLoggedIn} balance={balance} />;
+        return <MePage setTab={setTab} balance={balance} availableBalance={availableBalance} isLoggedIn={isLoggedIn} userId={userId} />;
       case "recharge":
         return <RechargePage setTab={setTab} balance={balance} isLoggedIn={isLoggedIn} userId={userId} />; // 传 userId
       case "withdraw":
-        return <WithdrawPage setTab={setTab} balance={balance} isLoggedIn={isLoggedIn} userId={userId} />;
+        return <WithdrawPage setTab={setTab} balance={balance} availableBalance={availableBalance} isLoggedIn={isLoggedIn} userId={userId} />;
       case "invite":
         return <InvitePage setTab={setTab} isLoggedIn={isLoggedIn} />;
       default:
