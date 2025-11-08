@@ -2,11 +2,11 @@ import { useState, useEffect } from "react";
 import { supabase } from "../supabaseClient";
 
 export default function Trade({ setTab, balance, userId, isLoggedIn }) {
-  const [query, setQuery] = useState("");
-  const [mentors, setMentors] = useState([]);
-  const [isFollowing, setIsFollowing] = useState(false);
-  const [followingAmount, setFollowingAmount] = useState("");
-  const [selectedMentor, setSelectedMentor] = useState(null);  // 新增：保存选择的导师
+  const [query, setQuery] = useState(""); // 搜索框
+  const [mentors, setMentors] = useState([]); // 导师列表
+  const [isFollowing, setIsFollowing] = useState(false); // 判断是否在跟单页面
+  const [followingAmount, setFollowingAmount] = useState(""); // 跟单金额
+  const [selectedMentor, setSelectedMentor] = useState(null); // 选择的导师
 
   useEffect(() => {
     fetchMentors();
@@ -26,6 +26,13 @@ export default function Trade({ setTab, balance, userId, isLoggedIn }) {
     m.name.toLowerCase().includes(query.toLowerCase())
   );
 
+  // 选择导师后跳转到跟单页面
+  const handleSelectMentor = (mentor) => {
+    setSelectedMentor(mentor); // 设置选择的导师
+    setIsFollowing(true); // 设置跟单页面状态
+  };
+
+  // 提交跟单请求
   const handleFollow = async () => {
     if (!followingAmount || parseFloat(followingAmount) <= 0) {
       alert("Please enter a valid amount.");
@@ -44,20 +51,18 @@ export default function Trade({ setTab, balance, userId, isLoggedIn }) {
 
     // 插入数据到 copytrades 表
     try {
-      const { data, error } = await supabase.from("copytrades").insert([
-        {
-          user_id: userId,
-          mentor_id: selectedMentor.id,
-          amount: parseFloat(followingAmount),
-          status: "pending",  // 初始状态为 pending
-        },
-      ]);
+      const { data, error } = await supabase.from("copytrades").insert([{
+        user_id: userId,
+        mentor_id: selectedMentor.id,
+        amount: parseFloat(followingAmount),
+        status: "pending",  // 初始状态为 pending
+      }]);
 
       if (error) throw error;
       
       // 成功后提示用户
       alert("Follow request submitted. Waiting for approval.");
-      setIsFollowing(false);
+      setIsFollowing(false); // 跳回导师选择页面
       setFollowingAmount(""); // 清空金额
       setSelectedMentor(null);  // 清空导师选择
     } catch (error) {
@@ -66,8 +71,10 @@ export default function Trade({ setTab, balance, userId, isLoggedIn }) {
     }
   };
 
+  // 返回到导师选择页面
   const handleBack = () => {
     setIsFollowing(false);
+    setSelectedMentor(null);  // 清空选择的导师
   };
 
   const handleRecharge = () => {
@@ -103,6 +110,7 @@ export default function Trade({ setTab, balance, userId, isLoggedIn }) {
         }}
       />
 
+      {/* 跟单页面 */}
       {isFollowing ? (
         <div style={{ padding: "24px" }}>
           <h2
@@ -312,7 +320,7 @@ export default function Trade({ setTab, balance, userId, isLoggedIn }) {
                   </div>
                 </div>
                 <button
-                  onClick={() => setSelectedMentor(m)} // 选择导师
+                  onClick={() => handleSelectMentor(m)} // 选择导师
                   style={{
                     padding: "8px 16px",
                     background: "linear-gradient(135deg, #FFD700, #FF6B35)",
