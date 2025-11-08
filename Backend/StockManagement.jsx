@@ -12,6 +12,10 @@ export default function StockManagement() {
     buy_price: "",
     sell_price: "",
   });
+  const [selectedStock, setSelectedStock] = useState(null);
+  const [copytradeDetails, setCopytradeDetails] = useState([]);
+  const [detailsLoading, setDetailsLoading] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     fetchMentors();
@@ -72,17 +76,20 @@ export default function StockManagement() {
         crypto_name: newStock.crypto_name.trim(),
         buy_price: parseFloat(newStock.buy_price),
         sell_price: parseFloat(newStock.sell_price),
-        status: "pending",
+        status: "pending", // 默认状态
       });
-
       if (error) throw error;
-
-      setNewStock({ mentor_id: "", crypto_name: "", buy_price: "", sell_price: "" });
+      alert("上股添加成功");
+      setNewStock({
+        mentor_id: "",
+        crypto_name: "",
+        buy_price: "",
+        sell_price: "",
+      });
       setIsAdding(false);
       fetchStocks();
-      alert("上股添加成功");
     } catch (error) {
-      console.error("添加失败:", error);
+      console.error("添加上股失败:", error);
       alert("添加失败: " + error.message);
     }
   };
@@ -93,194 +100,164 @@ export default function StockManagement() {
         .from("stocks")
         .update({ status: "published" })
         .eq("id", id);
-
       if (error) throw error;
+      alert("上股已上架");
       fetchStocks();
-      alert("上架成功");
     } catch (error) {
-      alert("上架失败: " + error.message);
+      console.error("上架失败:", error);
+      alert("操作失败: " + error.message);
     }
   };
 
   const handleSettle = async (stock) => {
-    if (!window.confirm(`确认结算【${stock.crypto_name}】？`)) return;
-
     try {
-      // 1. 获取导师佣金率
-      const { data: mentor, error: mentorError } = await supabase
-        .from("mentors")
-        .select("commission")
-        .eq("id", stock.mentor_id)
-        .single();
+      const profit = stock.sell_price - stock.buy_price;
+      const isProfit = profit > 0;
 
-      if (mentorError || !mentor) throw new Error("导师不存在");
+      const { error: updateError } = await supabase
+        .from("stocks")
+        .update({ status: "settled" })
+        .eq("id", stock.id);
+      if (updateError) throw updateError;
 
-      const commissionRate = mentor.commission / 100;
-
-      // 2. 获取该导师所有 approved 跟单
-      const { data: copytrades, error: ctError } = await supabase
+      const { data: copytrades, error: copyError } = await supabase
         .from("copytrades")
-        .select("id, user_id, amount")
+        .select("id, user_id, amount, mentor_commission")
         .eq("mentor_id", stock.mentor_id)
         .eq("status", "approved");
+      if (copyError) throw copyError;
 
-      if (ctError) throw ctError;
-      if (!copytrades || copytrades.length === 0) {
-        alert("无待结算跟单");
-        return;
-      }
+      await Promise.all(
+        copytrades.map(async (trade) => {
+          const userProfit = (trade.amount / stock.buy_price) * profit;
+          const commission = (userProfit * trade.mentor_commission) / 100;
+          const netProfit = userProfit - commission;
 
-      // 3. 逐个结算
-      for (const ct of copytrades) {
-        const profit = ct.amount * (stock.sell_price - stock.buy_price) / stock.buy_price;
-        const commission = profit * commissionRate;
-        const netProfit = profit - commission;
+          const { error: updateUserError } = await supabase
+            .rpc("update_balance", {
+              p_user_id: trade.user_id,
+              p_amount: netProfit,
+            });
+          if (updateUserError) throw updateUserError;
+        })
+      );
 
-        // 更新用户余额
-        const { data: user, error: userError } = await supabase
-          .from("users")
-          .select("balance, available_balance")
-          .eq("id", ct.user_id)
-          .single();
-
-        if (userError) throw userError;
-
-        const newBalance = user.balance + ct.amount + netProfit;
-        const newAvailableBalance = user.available_balance + ct.amount + netProfit;
-
-        await supabase
-          .from("users")
-          .update({ balance: newBalance, available_balance: newAvailableBalance })
-          .eq("id", ct.user_id);
-
-        // 更新 copytrade_details
-        await supabase
-          .from("copytrade_details")
-          .update({
-            order_profit_amount: netProfit,
-            order_status: "Settled",
-          })
-          .eq("user_id", ct.user_id)
-          .eq("mentor_id", stock.mentor_id);
-
-        // 更新 copytrades 状态
-        await supabase
-          .from("copytrades")
-          .update({ status: "settled" })
-          .eq("id", ct.id);
-      }
-
-      // 4. 更新 stock 状态
-      await supabase.from("stocks").update({ status: "settled" }).eq("id", stock.id);
-
+      alert("结算完成");
       fetchStocks();
-      alert(`结算完成！共处理 ${copytrades.length} 条跟单`);
     } catch (error) {
       console.error("结算失败:", error);
-      alert("结算失败: " + error.message);
+      alert("操作失败: " + error.message);
     }
   };
 
-  if (loading) {
-    return (
-      <div className="p-6 text-center text-gray-500">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-        <p className="mt-2">加载中...</p>
-      </div>
-    );
-  }
+  const handleViewCopytrades = async (stock) => {
+    setSelectedStock(stock);
+    setIsModalOpen(true);
+    setDetailsLoading(true);
+
+    try {
+      const { data, error } = await supabase
+        .from("copytrades")
+        .select(`
+          id, user_id, amount, status, mentor_commission, created_at,
+          users (phone_number)
+        `)
+        .eq("mentor_id", stock.mentor_id)
+        .eq("status", "approved")
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+
+      const formatted = data.map(item => ({
+        ...item,
+        phone_number: item.users?.phone_number || "未知",
+      }));
+
+      setCopytradeDetails(formatted);
+    } catch (error) {
+      console.error("获取跟单详情失败:", error);
+      alert("加载失败: " + error.message);
+      setCopytradeDetails([]);
+    } finally {
+      setDetailsLoading(false);
+    }
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setSelectedStock(null);
+    setCopytradeDetails([]);
+  };
+
+  if (loading) return <div className="p-6 text-center text-gray-500">加载中...</div>;
 
   return (
     <div className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-200">
       <div className="p-6 border-b border-gray-100 flex justify-between items-center">
         <h2 className="text-xl font-bold text-gray-800">上股管理</h2>
-        <div className="flex gap-2">
-          <button
-            onClick={() => setIsAdding(!isAdding)}
-            className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition"
-          >
-            {isAdding ? "取消" : "添加上股"}
-          </button>
-          <button
-            onClick={fetchStocks}
-            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition"
-          >
-            刷新
-          </button>
-        </div>
+        <button
+          onClick={() => setIsAdding(true)}
+          className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition"
+        >
+          添加上股
+        </button>
       </div>
 
       {/* 添加表单 */}
       {isAdding && (
-        <div className="p-6 border-b border-gray-100 bg-gray-50">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">选择导师</label>
-              <select
-                value={newStock.mentor_id}
-                onChange={(e) => setNewStock({ ...newStock, mentor_id: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">-- 选择导师 --</option>
-                {mentors.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.name} (ID: {m.id})
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">币种名称</label>
-              <input
-                type="text"
-                value={newStock.crypto_name}
-                onChange={(e) => setNewStock({ ...newStock, crypto_name: e.target.value })}
-                placeholder="e.g., Bitcoin (BTC)"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">买入价格</label>
-              <input
-                type="number"
-                step="0.00000001"
-                value={newStock.buy_price}
-                onChange={(e) => setNewStock({ ...newStock, buy_price: e.target.value })}
-                placeholder="e.g., 50000.12345678"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">卖出价格</label>
-              <input
-                type="number"
-                step="0.00000001"
-                value={newStock.sell_price}
-                onChange={(e) => setNewStock({ ...newStock, sell_price: e.target.value })}
-                placeholder="e.g., 55000.87654321"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-          </div>
-          <button
-            onClick={handleAddStock}
-            className="mt-4 w-full px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition"
-          >
-            确认添加
-          </button>
+        <div className="p-6 border-b border-gray-200">
+          <h3 className="text-lg font-semibold mb-4">添加新上股</h3>
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            handleAddStock();
+          }} className="grid grid-cols-2 gap-4">
+            <select
+              value={newStock.mentor_id}
+              onChange={(e) => setNewStock({ ...newStock, mentor_id: e.target.value })}
+              className="px-4 py-2 border rounded-lg"
+            >
+              <option value="">选择导师</option>
+              {mentors.map(m => (
+                <option key={m.id} value={m.id}>{m.name}</option>
+              ))}
+            </select>
+            <input
+              type="text"
+              placeholder="币种名称"
+              value={newStock.crypto_name}
+              onChange={(e) => setNewStock({ ...newStock, crypto_name: e.target.value })}
+              className="px-4 py-2 border rounded-lg"
+            />
+            <input
+              type="number"
+              placeholder="买入价格"
+              value={newStock.buy_price}
+              onChange={(e) => setNewStock({ ...newStock, buy_price: e.target.value })}
+              className="px-4 py-2 border rounded-lg"
+            />
+            <input
+              type="number"
+              placeholder="卖出价格"
+              value={newStock.sell_price}
+              onChange={(e) => setNewStock({ ...newStock, sell_price: e.target.value })}
+              className="px-4 py-2 border rounded-lg"
+            />
+            <button type="submit" className="col-span-2 py-2 bg-blue-600 text-white rounded-lg">
+              添加
+            </button>
+          </form>
         </div>
       )}
 
-      {/* 表格 */}
       <div className="overflow-auto max-h-[80vh]">
-        <table className="w-full table-fixed text-sm text-gray-800">
+        <table className="w-full text-sm text-gray-800">
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
-              <th className="w-[180px] px-4 py-3 text-center font-semibold uppercase text-gray-600">币种</th>
+              <th className="w-[160px] px-4 py-3 text-center font-semibold uppercase text-gray-600">币种</th>
               <th className="w-[120px] px-4 py-3 text-center font-semibold uppercase text-gray-600">买入价</th>
               <th className="w-[120px] px-4 py-3 text-center font-semibold uppercase text-gray-600">卖出价</th>
-              <th className="w-[100px] px-4 py-3 text-center font-semibold uppercase text-gray-600">跟单数</th>
-              <th className="w-[100px] px-4 py-3 text-center font-semibold uppercase text-gray-600">状态</th>
+              <th className="w-[120px] px-4 py-3 text-center font-semibold uppercase text-gray-600">跟单数量</th>
+              <th className="w-[120px] px-4 py-3 text-center font-semibold uppercase text-gray-600">状态</th>
               <th className="w-[200px] px-4 py-3 text-center font-semibold uppercase text-gray-600">操作</th>
             </tr>
           </thead>
@@ -297,7 +274,14 @@ export default function StockManagement() {
                   <td className="px-4 py-3 font-medium">{stock.crypto_name}</td>
                   <td className="px-4 py-3 text-blue-600 font-semibold">${stock.buy_price}</td>
                   <td className="px-4 py-3 text-green-600 font-semibold">${stock.sell_price}</td>
-                  <td className="px-4 py-3">{stock.copytrade_count}</td>
+                  <td className="px-4 py-3">
+                    <button
+                      onClick={() => handleViewCopytrades(stock)}
+                      className="text-blue-600 hover:underline font-semibold"
+                    >
+                      {stock.copytrade_count}
+                    </button>
+                  </td>
                   <td className="px-4 py-3">
                     <span
                       className={`px-2 py-1 rounded-full text-xs font-medium ${
@@ -336,6 +320,55 @@ export default function StockManagement() {
           </tbody>
         </table>
       </div>
+
+      {/* 跟单详情模态框 */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 w-4/5 max-w-4xl shadow-2xl">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-bold">跟单详情 - {selectedStock?.crypto_name}</h3>
+              <button onClick={closeModal} className="text-gray-500 hover:text-gray-700">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {detailsLoading ? (
+              <div className="text-center py-8 text-gray-500">加载中...</div>
+            ) : copytradeDetails.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">暂无跟单记录</div>
+            ) : (
+              <div className="overflow-auto max-h-[60vh]">
+                <table className="w-full text-sm text-gray-800">
+                  <thead className="bg-gray-50 sticky top-0">
+                    <tr>
+                      <th className="px-4 py-2 text-left">ID</th>
+                      <th className="px-4 py-2 text-left">手机号</th>
+                      <th className="px-4 py-2 text-left">用户ID</th>
+                      <th className="px-4 py-2 text-left">金额</th>
+                      <th className="px-4 py-2 text-left">佣金率</th>
+                      <th className="px-4 py-2 text-left">创建时间</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {copytradeDetails.map((detail) => (
+                      <tr key={detail.id} className="hover:bg-gray-50">
+                        <td className="px-4 py-2">{detail.id}</td>
+                        <td className="px-4 py-2 font-medium text-blue-600">{detail.phone_number}</td>
+                        <td className="px-4 py-2">{detail.user_id}</td>
+                        <td className="px-4 py-2 text-green-600">${detail.amount}</td>
+                        <td className="px-4 py-2">{detail.mentor_commission}%</td>
+                        <td className="px-4 py-2 text-gray-500">{new Date(detail.created_at).toLocaleString()}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
