@@ -16,6 +16,14 @@ export default function StockManagement() {
   const [copytradeDetails, setCopytradeDetails] = useState([]);
   const [detailsLoading, setDetailsLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editStock, setEditStock] = useState({
+    id: "",
+    mentor_id: "",
+    crypto_name: "",
+    buy_price: "",
+    sell_price: "",
+  });
 
   useEffect(() => {
     fetchMentors();
@@ -78,6 +86,7 @@ export default function StockManagement() {
         sell_price: parseFloat(newStock.sell_price),
         status: "pending", // 默认状态
       });
+
       if (error) throw error;
       alert("上股添加成功");
       setNewStock({
@@ -92,6 +101,16 @@ export default function StockManagement() {
       console.error("添加上股失败:", error);
       alert("添加失败: " + error.message);
     }
+  };
+
+  const handleCancelAdd = () => {
+    setNewStock({
+      mentor_id: "",
+      crypto_name: "",
+      buy_price: "",
+      sell_price: "",
+    });
+    setIsAdding(false);
   };
 
   const handlePublish = async (id) => {
@@ -183,6 +202,80 @@ export default function StockManagement() {
     }
   };
 
+  const handleEditStock = (stock) => {
+    setEditStock({
+      id: stock.id,
+      mentor_id: stock.mentor_id.toString(),
+      crypto_name: stock.crypto_name,
+      buy_price: stock.buy_price.toString(),
+      sell_price: stock.sell_price.toString(),
+    });
+    setIsEditing(true);
+  };
+
+  const handleUpdateStock = async () => {
+    if (!editStock.mentor_id || !editStock.crypto_name || !editStock.buy_price || !editStock.sell_price) {
+      alert("请填写所有字段");
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from("stocks")
+        .update({
+          mentor_id: parseInt(editStock.mentor_id),
+          crypto_name: editStock.crypto_name.trim(),
+          buy_price: parseFloat(editStock.buy_price),
+          sell_price: parseFloat(editStock.sell_price),
+        })
+        .eq("id", editStock.id);
+
+      if (error) throw error;
+      alert("上股更新成功");
+      setEditStock({
+        id: "",
+        mentor_id: "",
+        crypto_name: "",
+        buy_price: "",
+        sell_price: "",
+      });
+      setIsEditing(false);
+      fetchStocks();
+    } catch (error) {
+      console.error("更新上股失败:", error);
+      alert("更新失败: " + error.message);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditStock({
+      id: "",
+      mentor_id: "",
+      crypto_name: "",
+      buy_price: "",
+      sell_price: "",
+    });
+    setIsEditing(false);
+  };
+
+  const handleDeleteStock = async (id) => {
+    if (!window.confirm("确定删除此上股记录吗？这将无法恢复。")) return;
+
+    try {
+      const { error } = await supabase
+        .from("stocks")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+      alert("删除成功");
+      fetchStocks();
+    } catch (error) {
+      console.error("删除失败:", error);
+      alert("操作失败: " + error.message);
+    }
+  };
+
   const closeModal = () => {
     setIsModalOpen(false);
     setSelectedStock(null);
@@ -207,10 +300,7 @@ export default function StockManagement() {
       {isAdding && (
         <div className="p-6 border-b border-gray-200">
           <h3 className="text-lg font-semibold mb-4">添加新上股</h3>
-          <form onSubmit={(e) => {
-            e.preventDefault();
-            handleAddStock();
-          }} className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-4">
             <select
               value={newStock.mentor_id}
               onChange={(e) => setNewStock({ ...newStock, mentor_id: e.target.value })}
@@ -242,10 +332,59 @@ export default function StockManagement() {
               onChange={(e) => setNewStock({ ...newStock, sell_price: e.target.value })}
               className="px-4 py-2 border rounded-lg"
             />
-            <button type="submit" className="col-span-2 py-2 bg-blue-600 text-white rounded-lg">
+            <button onClick={handleAddStock} className="py-2 bg-blue-600 text-white rounded-lg">
               添加
             </button>
-          </form>
+            <button onClick={handleCancelAdd} className="py-2 bg-gray-300 text-gray-800 rounded-lg">
+              取消
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* 编辑表单 */}
+      {isEditing && (
+        <div className="p-6 border-b border-gray-200">
+          <h3 className="text-lg font-semibold mb-4">编辑上股</h3>
+          <div className="grid grid-cols-2 gap-4">
+            <select
+              value={editStock.mentor_id}
+              onChange={(e) => setEditStock({ ...editStock, mentor_id: e.target.value })}
+              className="px-4 py-2 border rounded-lg"
+            >
+              <option value="">选择导师</option>
+              {mentors.map(m => (
+                <option key={m.id} value={m.id}>{m.name}</option>
+              ))}
+            </select>
+            <input
+              type="text"
+              placeholder="币种名称"
+              value={editStock.crypto_name}
+              onChange={(e) => setEditStock({ ...editStock, crypto_name: e.target.value })}
+              className="px-4 py-2 border rounded-lg"
+            />
+            <input
+              type="number"
+              placeholder="买入价格"
+              value={editStock.buy_price}
+              onChange={(e) => setEditStock({ ...editStock, buy_price: e.target.value })}
+              className="px-4 py-2 border rounded-lg"
+            />
+            <input
+              type="number"
+              placeholder="卖出价格"
+              value={editStock.sell_price}
+              onChange={(e) => setEditStock({ ...editStock, sell_price: e.target.value })}
+              className="px-4 py-2 border rounded-lg"
+            />
+            <button onClick={handleUpdateStock} className="py-2 bg-blue-600 text-white rounded-lg">
+              更新
+            </button>
+            <button onClick={handleCancelEdit} className="py-2 bg-gray-300 text-gray-800 rounded-lg">
+              取消
+            </button>
+          </div>
         </div>
       )}
 
@@ -312,7 +451,18 @@ export default function StockManagement() {
                         结算
                       </button>
                     )}
-                    <button className="text-blue-600 hover:text-blue-800 text-sm">编辑</button>
+                    <button 
+                      onClick={() => handleEditStock(stock)}
+                      className="text-blue-600 hover:text-blue-800 text-sm"
+                    >
+                      编辑
+                    </button>
+                    <button 
+                      onClick={() => handleDeleteStock(stock.id)}
+                      className="text-red-600 hover:text-red-800 text-sm"
+                    >
+                      删除
+                    </button>
                   </td>
                 </tr>
               ))
@@ -343,9 +493,7 @@ export default function StockManagement() {
                 <table className="w-full text-sm text-gray-800">
                   <thead className="bg-gray-50 sticky top-0">
                     <tr>
-                      <th className="px-4 py-2 text-left">ID</th>
-                      <th className="px-4 py-2 text-left">手机号</th>
-                      <th className="px-4 py-2 text-left">用户ID</th>
+                      <th className="px-4 py-2 text-left">手机号</th>     
                       <th className="px-4 py-2 text-left">金额</th>
                       <th className="px-4 py-2 text-left">佣金率</th>
                       <th className="px-4 py-2 text-left">创建时间</th>
@@ -354,9 +502,7 @@ export default function StockManagement() {
                   <tbody className="divide-y divide-gray-100">
                     {copytradeDetails.map((detail) => (
                       <tr key={detail.id} className="hover:bg-gray-50">
-                        <td className="px-4 py-2">{detail.id}</td>
                         <td className="px-4 py-2 font-medium text-blue-600">{detail.phone_number}</td>
-                        <td className="px-4 py-2">{detail.user_id}</td>
                         <td className="px-4 py-2 text-green-600">${detail.amount}</td>
                         <td className="px-4 py-2">{detail.mentor_commission}%</td>
                         <td className="px-4 py-2 text-gray-500">{new Date(detail.created_at).toLocaleString()}</td>
