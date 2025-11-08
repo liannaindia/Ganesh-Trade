@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { supabase } from "../supabaseClient";
+import { supabase } from "../supabaseClient"; // 引入supabase客户端
 
 export default function Positions({ isLoggedIn, balance, availableBalance, userId }) {
   const [tab, setTab] = useState("pending");
@@ -16,173 +16,169 @@ export default function Positions({ isLoggedIn, balance, availableBalance, userI
       return;
     }
 
+    // 使用从App传递的balance和availableBalance
     setTotalAssets(balance || 0);
     setAvailable(availableBalance || 0);
 
-    fetchCopytradeDetails();
+    const fetchCopytradeDetails = async () => {
+      // 定义当天日期范围（使用当前日期动态计算）
+      const today = new Date();
+      const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate()).toISOString();
+      const todayEnd = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59).toISOString();
 
-    const subscription = supabase
-      .channel(`positions-user-${userId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "copytrade_details",
-          filter: `user_id=eq.${userId}`,
-        },
-        () => fetchCopytradeDetails()
-      )
-      .subscribe();
+      // 查询copytrade_details，当天数据，联表mentors
+      const { data: details, error: detailsError } = await supabase
+        .from('copytrade_details')
+        .select(`id, amount, order_profit_amount, order_status, created_at, mentor_id, mentors (name, years, img)`)
+        .eq('user_id', userId)
+        .gte('created_at', todayStart)
+        .lte('created_at', todayEnd);
 
-    return () => {
-      supabase.removeChannel(subscription);
-    };
-  }, [isLoggedIn, userId, balance, availableBalance]);
+      if (detailsError) {
+        console.error('Error fetching copytrade details:', detailsError);
+        return;
+      }
 
-  const fetchCopytradeDetails = async () => {
-    const today = new Date();
-    const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate()).toISOString();
-    const todayEnd = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59).toISOString();
+      // 计算汇总
+      let posAssets = 0;
+      let floatPL = 0;
+      let entrust = 0; // 假设entrusted为所有amount总和
+      const pend = [];
+      const comp = [];
 
-    const { data: details, error } = await supabase
-      .from("copytrade_details")
-      .select(`
-        id,
-        amount,
-        order_profit_amount,
-        order_status,
-        created_at,
-        mentor_id,
-        mentors (name, years, img)
-      `)
-      .eq("user_id", userId)
-      .gte("created_at", todayStart)
-      .lte("created_at", todayEnd);
+      details.forEach((detail) => {
+        const amount = parseFloat(detail.amount) || 0;
+        const profit = parseFloat(detail.order_profit_amount) || 0;
+        const mentor = detail.mentors || {};
+        const time = new Date(detail.created_at).toLocaleString(); // 格式化时间
 
-    if (error) {
-      console.error("获取订单失败:", error);
-      return;
-    }
+        entrust += amount; // 累加所有amount作为entrusted
 
-    let posAssets = 0;
-    let floatPL = 0;
-    let entrust = 0;
-    const pend = [];
-    const comp = [];
-
-    details.forEach((detail) => {
-      const amount = parseFloat(detail.amount) || 0;
-      const profit = parseFloat(detail.order_profit_amount) || 0;
-      const mentor = detail.mentors || { name: "未知导师", years: 0, img: "" };
-
-      entrust += amount;
-      posAssets += amount;
-      floatPL += profit;
-
-      const time = new Date(detail.created_at).toLocaleString("zh-CN", {
-        month: "2-digit",
-        day: "2-digit",
-        hour: "2-digit",
-        minute: "2-digit",
+        if (detail.order_status === 'Unsettled') {
+          posAssets += amount;
+          pend.push({
+            id: detail.id,
+            name: mentor.name || 'Unknown',
+            years: mentor.years || 0,
+            type: 'Daily Follow',
+            amount,
+            earnings: '---',
+            time,
+            status: 'Following',
+            img: mentor.img || 'https://randomuser.me/api/portraits/women/65.jpg', // 默认图片
+          });
+        } else if (detail.order_status === 'Settled') {
+          floatPL += profit;
+          const earnings = profit >= 0 ? `+${profit.toFixed(2)}` : profit.toFixed(2);
+          comp.push({
+            id: detail.id,
+            name: mentor.name || 'Unknown',
+            years: mentor.years || 0,
+            type: 'Completed',
+            amount,
+            earnings,
+            time,
+            status: 'Completed',
+            img: mentor.img || 'https://randomuser.me/api/portraits/men/51.jpg', // 默认图片
+          });
+        }
       });
 
-      const earnings = profit > 0
-        ? `+${profit.toFixed(2)}`
-        : profit < 0
-        ? `${profit.toFixed(2)}`
-        : "0.00";
+      setPositionAssets(posAssets);
+      setFloatingPL(floatPL);
+      setEntrusted(entrust);
+      setPendingOrders(pend);
+      setCompletedOrders(comp);
+    };
 
-      const order = {
-        img: mentor.img || "/default-avatar.png",
-        name: mentor.name,
-        years: mentor.years,
-        type: "Copy Trade",
-        amount,
-        earnings,
-        time,
-        status: detail.order_status || "Pending",
-      };
+    fetchCopytradeDetails();
+  }, [isLoggedIn, userId, balance, availableBalance]); // 依赖isLoggedIn, userId, balance, availableBalance
 
-      // 修改点 1：rejected 也归入 Completed
-      if (["pending", "Following"].includes(detail.order_status)) {
-        pend.push(order);
-      } else {
-        comp.push(order); // Settled, rejected, 其他
-      }
-    });
-
-    setPositionAssets(posAssets);
-    setFloatingPL(floatPL);
-    setEntrusted(entrust);
-    setPendingOrders(pend);
-    setCompletedOrders(comp);
-  };
+  const list = tab === "pending" ? pendingOrders : completedOrders;
 
   return (
     <div className="px-4 pb-24 max-w-md mx-auto">
-      <div className="flex justify-between items-center mt-4 mb-3">
-        <h2 className="text-lg font-bold text-slate-800">Positions</h2>
+      {/* ===== 顶部标题 ===== */}
+      <div className="mt-3 mb-3 text-center">
+        <h2 className="text-lg font-bold text-slate-800 border-b-2 border-yellow-400 inline-block pb-1">
+          Positions
+        </h2>
       </div>
-      <div className="rounded-2xl bg-gradient-to-r from-slate-50 to-slate-100 border border-slate-200 shadow-sm p-4 mb-5">
-        <div className="text-sm text-slate-500 mb-1">Total Assets (USDT)</div>
-        <div className="text-3xl font-extrabold text-slate-900">
-          {totalAssets.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+
+      {/* ===== 总资产卡片 ===== */}
+      <div className="rounded-2xl bg-white border border-slate-200 shadow-sm p-4 mb-4">
+        <div className="flex items-center justify-between text-sm text-slate-500 mb-1">
+          <span>Total Assets (USDT)</span>
+          <span className="text-slate-400 cursor-pointer">👁️</span>
         </div>
-        <div className="grid grid-cols-3 gap-2 mt-3 text-[13px] text-slate-600">
+        <div className="text-3xl font-extrabold tracking-tight text-slate-900">
+          {totalAssets.toLocaleString()}
+        </div>
+
+        <div className="grid grid-cols-2 gap-4 text-[13px] text-slate-600 mt-3">
           <div>
             <div>Position Assets</div>
-            <div className="font-bold text-slate-800">{positionAssets.toLocaleString()}</div>
+            <div className="font-bold text-slate-800">{positionAssets.toFixed(2)}</div>
           </div>
-          <div className="text-center">
-            <div>Floating P/L</div>
-            <div className={`font-bold ${floatingPL >= 0 ? "text-emerald-600" : "text-rose-600"}`}>
-              {floatingPL >= 0 ? "+" : ""}{floatingPL.toFixed(2)}
-            </div>
+          <div>
+            <div>Floating Profit / Loss</div>
+            <div className="font-bold text-slate-800">{floatingPL.toFixed(2)}</div>
           </div>
-          <div className="text-right">
-            <div>Available</div>
-            <div className="font-bold text-slate-800">{available.toLocaleString()}</div>
+          <div>
+            <div>Available Balance</div>
+            <div className="font-bold text-slate-800">{available.toFixed(2)}</div>
           </div>
-          <div className="col-span-3 text-center mt-2">
-            <div>Entrusted</div>
-            <div className="font-bold text-slate-800">{entrusted.toLocaleString()}</div>
+          <div>
+            <div>Entrusted Amount</div>
+            <div className="font-bold text-slate-800">{entrusted.toFixed(2)}</div>
           </div>
         </div>
       </div>
-      <div className="flex mb-5 rounded-xl overflow-hidden border border-slate-200 bg-white shadow-sm">
+
+      {/* ===== Tabs: Pending / Completed ===== */}
+      <div className="flex items-center border-b border-slate-200 mb-3">
         <button
           onClick={() => setTab("pending")}
-          className={`flex-1 py-3 text-sm font-medium transition ${
-            tab === "pending" ? "bg-orange-500 text-white" : "text-slate-600"
+          className={`flex-1 text-center py-2 text-sm font-semibold border-b-2 transition ${
+            tab === "pending"
+              ? "text-yellow-500 border-yellow-500"
+              : "text-slate-500 border-transparent"
           }`}
         >
-          Pending
+          Pending Order
         </button>
         <button
           onClick={() => setTab("completed")}
-          className={`flex-1 py-3 text-sm font-medium transition ${
-            tab === "completed" ? "bg-orange-500 text-white" : "text-slate-600"
+          className={`flex-1 text-center py-2 text-sm font-semibold border-b-2 transition ${
+            tab === "completed"
+              ? "text-yellow-500 border-yellow-500"
+              : "text-slate-500 border-transparent"
           }`}
         >
           Completed
         </button>
       </div>
-      <div className="space-y-4">
-        {(tab === "pending" ? pendingOrders : completedOrders).map((o, i) => (
-          <div key={i} className="rounded-xl bg-white border border-slate-200 p-4 shadow-sm">
-            <div className="flex justify-between items-start mb-2">
-              <div className="flex items-center gap-3">
+
+      {/* ===== 订单列表 ===== */}
+      <div className="space-y-3 max-h-[500px] overflow-y-auto">
+        {list.map((o) => (
+          <div
+            key={o.id}
+            className="bg-white border border-slate-200 rounded-2xl p-3 shadow-sm"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
                 <img
                   src={o.img}
                   alt={o.name}
-                  className="w-10 h-10 rounded-full object-cover border border-slate-300"
-                  onError={(e) => (e.target.src = "/default-avatar.png")}
+                  className="w-10 h-10 rounded-full object-cover"
                 />
                 <div>
-                  <div className="font-semibold text-slate-800">{o.name}</div>
+                  <div className="font-semibold text-slate-800 text-sm">
+                    {o.name}
+                  </div>
                   <div className="text-[12px] text-slate-500">
-                    {o.years} years experience
+                    Investment Experience {o.years} years
                   </div>
                 </div>
               </div>
@@ -190,35 +186,43 @@ export default function Positions({ isLoggedIn, balance, availableBalance, userI
                 {o.type}
               </span>
             </div>
+
             <div className="grid grid-cols-2 mt-2 text-[12px] text-slate-500">
               <div>
-                <div>Investment</div>
+                <div>Investment Amount</div>
                 <div className="font-semibold text-slate-800">
                   {o.amount.toLocaleString()} <span className="text-[11px]">USDT</span>
                 </div>
               </div>
               <div className="text-right">
-                <div>Earnings</div>
-                <div className={`font-semibold ${o.earnings.startsWith("+") ? "text-emerald-600" : o.earnings.startsWith("-") ? "text-rose-600" : "text-slate-700"}`}>
+                <div>Order Earnings</div>
+                <div
+                  className={`font-semibold ${
+                    o.earnings.startsWith("+")
+                      ? "text-emerald-600"
+                      : o.earnings.startsWith("-")
+                      ? "text-rose-600"
+                      : "text-slate-700"
+                  }`}
+                >
                   {o.earnings}
                 </div>
               </div>
               <div className="col-span-2 flex justify-between mt-2 text-[12px]">
                 <div>
-                  Time <br />
+                  Application time <br />
                   <span className="text-slate-700">{o.time}</span>
                 </div>
                 <div className="text-right">
-                  Status <br />
-                  {/* 修改点 2：rejected 显示红色 Rejected */}
-                  <span className={`font-semibold ${
-                    o.status === "Following"
-                      ? "text-yellow-500"
-                      : o.status === "rejected"
-                      ? "text-rose-600"
-                      : "text-emerald-600"
-                  }`}>
-                    {o.status === "rejected" ? "Rejected" : o.status}
+                  Order status <br />
+                  <span
+                    className={`font-semibold ${
+                      o.status === "Following"
+                        ? "text-yellow-500"
+                        : "text-emerald-600"
+                    }`}
+                  >
+                    {o.status}
                   </span>
                 </div>
               </div>
