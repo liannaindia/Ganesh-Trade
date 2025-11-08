@@ -9,6 +9,7 @@ export default function CopyTradeAudit() {
     fetchAudits();
   }, []);
 
+  // 从 copytrades 表获取待审核的跟单数据
   const fetchAudits = async () => {
     try {
       const { data, error } = await supabase
@@ -24,14 +25,59 @@ export default function CopyTradeAudit() {
     }
   };
 
-  const handleApprove = async (id) => {
-    await supabase.from("copytrades").update({ status: "approved" }).eq("id", id);
-    fetchAudits();
+  // 批准跟单操作
+  const handleApprove = async (id, userId, amount) => {
+    try {
+      // 更新 copytrades 表中的 status 为 "approved"
+      const { error: updateError } = await supabase
+        .from("copytrades")
+        .update({ status: "approved" })
+        .eq("id", id);
+
+      if (updateError) throw updateError;
+
+      // 获取用户可用余额
+      const { data: userData, error: userError } = await supabase
+        .from("users")
+        .select("available_balance")
+        .eq("id", userId)
+        .single();
+
+      if (userError) throw userError;
+
+      const newBalance = userData.available_balance - amount;
+
+      // 更新用户的 available_balance 和 follow_status
+      const { error: updateUserError } = await supabase
+        .from("users")
+        .update({ available_balance: newBalance, follow_status: "following" })
+        .eq("id", userId);
+
+      if (updateUserError) throw updateUserError;
+
+      // 刷新审核列表
+      fetchAudits();
+    } catch (error) {
+      console.error("批准操作失败:", error);
+    }
   };
 
+  // 拒绝跟单操作
   const handleReject = async (id) => {
-    await supabase.from("copytrades").update({ status: "rejected" }).eq("id", id);
-    fetchAudits();
+    try {
+      // 更新 copytrades 表中的 status 为 "rejected"
+      const { error: rejectError } = await supabase
+        .from("copytrades")
+        .update({ status: "rejected" })
+        .eq("id", id);
+
+      if (rejectError) throw rejectError;
+
+      // 刷新审核列表
+      fetchAudits();
+    } catch (error) {
+      console.error("拒绝操作失败:", error);
+    }
   };
 
   if (loading) return <div className="p-6 text-center text-gray-500">加载中...</div>;
@@ -52,11 +98,11 @@ export default function CopyTradeAudit() {
         <table className="w-full table-fixed text-sm text-gray-800">
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
-              <th className="w-[80px] px-4 py-3 text-center font-semibold uppercase text-gray-600">ID</th>
               <th className="w-[140px] px-4 py-3 text-center font-semibold uppercase text-gray-600">用户</th>
               <th className="w-[140px] px-4 py-3 text-center font-semibold uppercase text-gray-600">导师</th>
               <th className="w-[120px] px-4 py-3 text-center font-semibold uppercase text-gray-600">金额</th>
               <th className="w-[120px] px-4 py-3 text-center font-semibold uppercase text-gray-600">状态</th>
+              <th className="w-[120px] px-4 py-3 text-center font-semibold uppercase text-gray-600">佣金</th>
               <th className="w-[180px] px-4 py-3 text-center font-semibold uppercase text-gray-600">操作</th>
             </tr>
           </thead>
@@ -64,18 +110,22 @@ export default function CopyTradeAudit() {
           <tbody className="divide-y divide-gray-100">
             {audits.map((a) => (
               <tr key={a.id} className="hover:bg-gray-50 text-center align-middle">
-                <td className="px-4 py-3">{a.id}</td>
-                <td className="px-4 py-3">{a.user_id}</td>
+                <td className="px-4 py-3">{a.user_phone_number || "无"}</td>
                 <td className="px-4 py-3">{a.mentor_id}</td>
-                <td className="px-4 py-3 text-blue-600 font-semibold">${a.amount}</td>
+                <td className="px-4 py-3 text-blue-600 font-semibold">{a.amount}</td>
                 <td className="px-4 py-3">
                   <span className="px-2 py-1 rounded-full text-xs bg-yellow-100 text-yellow-800">
-                    待审
+                    {a.status === "pending" ? "待审" : a.status === "approved" ? "已批准" : "已拒绝"}
+                  </span>
+                </td>
+                <td className="px-4 py-3">
+                  <span className="px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">
+                    {a.mentor_commission}%  {/* 显示导师佣金 */}
                   </span>
                 </td>
                 <td className="px-4 py-3">
                   <button
-                    onClick={() => handleApprove(a.id)}
+                    onClick={() => handleApprove(a.id, a.user_id, a.amount)}
                     className="text-green-600 hover:text-green-800 mr-3"
                   >
                     批准
