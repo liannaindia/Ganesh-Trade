@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   RefreshCw,
   Eye,
@@ -10,16 +10,103 @@ import {
   Bell,
   Download,
 } from "lucide-react";
+import { supabase } from "../supabaseClient";
 
-export default function Me() {
+export default function Me({ setTab, userId, isLoggedIn }) {
+  const [balance, setBalance] = useState(0);
+  const [availableBalance, setAvailableBalance] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [showBalance, setShowBalance] = useState(true);
+
+  // 实时获取用户余额
+  useEffect(() => {
+    if (!isLoggedIn || !userId) {
+      setLoading(false);
+      return;
+    }
+
+    const fetchBalance = async () => {
+      try {
+        setLoading(true);
+        const { data, error } = await supabase
+          .from("users")
+          .select("balance, available_balance")
+          .eq("id", userId)
+          .single();
+
+        if (error) throw error;
+
+        setBalance(data.balance || 0);
+        setAvailableBalance(data.available_balance || 0);
+      } catch (err) {
+        console.error("Failed to fetch balance:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBalance();
+
+    // 实时订阅余额变化
+    const subscription = supabase
+      .channel(`user-balance-${userId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "users",
+          filter: `id=eq.${userId}`,
+        },
+        (payload) => {
+          setBalance(payload.new.balance || 0);
+          setAvailableBalance(payload.new.available_balance || 0);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(subscription);
+    };
+  }, [userId, isLoggedIn]);
+
+  const handleRefresh = async () => {
+    if (!userId) return;
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("users")
+        .select("balance, available_balance")
+        .eq("id", userId)
+        .single();
+      if (error) throw error;
+      setBalance(data.balance || 0);
+      setAvailableBalance(data.available_balance || 0);
+    } catch (err) {
+      console.error("Refresh failed:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatNumber = (num) => {
+    return Number(num).toLocaleString("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  };
+
   return (
     <div className="px-4 pb-24 max-w-md mx-auto">
       {/* ===== Header ===== */}
       <div className="flex justify-between items-center mt-4 mb-3">
         <h2 className="text-lg font-bold text-slate-800">Me</h2>
         <div className="flex items-center gap-3 text-slate-500">
-          <RefreshCw className="h-5 w-5 cursor-pointer" />
-          <Settings className="h-5 w-5 cursor-pointer" />
+          <RefreshCw
+            className="h-5 w-5 cursor-pointer hover:text-slate-700 transition"
+            onClick={handleRefresh}
+          />
+          <Settings className="h-5 w-5 cursor-pointer hover:text-slate-700 transition" />
         </div>
       </div>
 
@@ -27,15 +114,30 @@ export default function Me() {
       <div className="rounded-2xl bg-gradient-to-r from-slate-50 to-slate-100 border border-slate-200 shadow-sm p-4 mb-5">
         <div className="flex items-center justify-between text-sm text-slate-500 mb-1">
           <span>Total Assets (USDT)</span>
-          <Eye className="h-4 w-4 text-slate-400 cursor-pointer" />
+          <Eye
+            className={`h-4 w-4 cursor-pointer transition ${
+              showBalance ? "text-slate-600" : "text-slate-400"
+            }`}
+            onClick={() => setShowBalance(!showBalance)}
+          />
         </div>
+
         <div className="text-3xl font-extrabold tracking-tight text-slate-900">
-          10012.06
+          {loading ? (
+            <span className="animate-pulse">...</span>
+          ) : showBalance ? (
+            formatNumber(balance)
+          ) : (
+            "••••••"
+          )}
         </div>
+
         <div className="flex justify-between mt-3 text-[13px] text-slate-600">
           <div>
             <div>Available Balance</div>
-            <div className="font-bold text-slate-800">8912.06</div>
+            <div className="font-bold text-slate-800">
+              {loading ? "..." : showBalance ? formatNumber(availableBalance) : "••••••"}
+            </div>
           </div>
           <div className="text-right">
             <div>PnL Today</div>
@@ -46,11 +148,18 @@ export default function Me() {
 
       {/* ===== Recharge / Withdraw Buttons ===== */}
       <div className="grid grid-cols-2 gap-3 mb-5">
-        <button className="flex flex-col items-center justify-center rounded-2xl bg-white border border-slate-200 py-4 shadow-sm hover:bg-slate-50">
+        <button
+          onClick={() => setTab("recharge")}
+          className="flex flex-col items-center justify-center rounded-2xl bg-white border border-slate-200 py-4 shadow-sm hover:bg-slate-50 transition"
+        >
           <Wallet className="h-6 w-6 text-blue-500 mb-1" />
           <span className="text-sm font-semibold text-slate-800">Recharge</span>
         </button>
-        <button className="flex flex-col items-center justify-center rounded-2xl bg-white border border-slate-200 py-4 shadow-sm hover:bg-slate-50">
+
+        <button
+          onClick={() => setTab("withdraw")}
+          className="flex flex-col items-center justify-center rounded-2xl bg-white border border-slate-200 py-4 shadow-sm hover:bg-slate-50 transition"
+        >
           <ArrowDownCircle className="h-6 w-6 text-orange-500 mb-1" />
           <span className="text-sm font-semibold text-slate-800">Withdraw</span>
         </button>
@@ -62,33 +171,39 @@ export default function Me() {
           {
             icon: <FileText className="h-5 w-5 text-slate-600" />,
             label: "Follow Order",
+            tab: "positions",
           },
           {
             icon: <FileText className="h-5 w-5 text-slate-600" />,
             label: "Transactions",
+            tab: null,
           },
           {
             icon: <UserCheck className="h-5 w-5 text-yellow-600" />,
             label: "Agent Center",
+            tab: "invite",
           },
           {
             icon: <Bell className="h-5 w-5 text-slate-600" />,
             label: "Notification",
+            tab: null,
           },
           {
             icon: <Download className="h-5 w-5 text-slate-600" />,
             label: "Download APP",
+            tab: null,
           },
         ].map((item, i) => (
           <div
             key={i}
-            className="flex items-center justify-between bg-white border border-slate-200 rounded-xl px-4 py-3 shadow-sm hover:bg-slate-50 cursor-pointer"
+            onClick={() => item.tab && setTab(item.tab)}
+            className={`flex items-center justify-between bg-white border border-slate-200 rounded-xl px-4 py-3 shadow-sm hover:bg-slate-50 cursor-pointer transition ${
+              item.tab ? "" : "opacity-70"
+            }`}
           >
             <div className="flex items-center gap-3">
               {item.icon}
-              <span className="text-sm font-medium text-slate-800">
-                {item.label}
-              </span>
+              <span className="text-sm font-medium text-slate-800">{item.label}</span>
             </div>
             <span className="text-slate-400">{">"}</span>
           </div>
