@@ -1,54 +1,109 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { supabase } from "../supabaseClient"; // 引入supabase客户端
 
-export default function Positions() {
+export default function Positions({ setTab, isLoggedIn, balance, availableBalance, userId }) {
   const [tab, setTab] = useState("pending");
+  const [totalAssets, setTotalAssets] = useState(0);
+  const [positionAssets, setPositionAssets] = useState(0);
+  const [floatingPL, setFloatingPL] = useState(0);
+  const [available, setAvailable] = useState(0);
+  const [entrusted, setEntrusted] = useState(0);
+  const [pendingOrders, setPendingOrders] = useState([]);
+  const [completedOrders, setCompletedOrders] = useState([]);
 
-  // ===== 模拟资产总览数据 =====
-  const totalAssets = 10012.06;
-  const positionAssets = 0.0;
-  const floatingPL = 0.0;
-  const available = 8912.06;
-  const entrusted = 1100.0;
+  useEffect(() => {
+    if (!isLoggedIn || !userId) {
+      return;
+    }
 
-  // ===== 模拟订单数据 =====
-  const pendingOrders = [
-    {
-      id: 1,
-      name: "alessia",
-      years: 15,
-      type: "Daily Follow",
-      amount: 100.0,
-      earnings: "---",
-      time: "2025-11-02 00:38:13",
-      status: "Following",
-      img: "https://randomuser.me/api/portraits/women/65.jpg",
-    },
-    {
-      id: 2,
-      name: "alessia",
-      years: 15,
-      type: "Daily Follow",
-      amount: 1000.0,
-      earnings: "---",
-      time: "2025-11-01 16:00:12",
-      status: "Following",
-      img: "https://randomuser.me/api/portraits/women/65.jpg",
-    },
-  ];
+    // 使用从App传递的balance和availableBalance
+    setTotalAssets(balance || 0);
+    setAvailable(availableBalance || 0);
 
-  const completedOrders = [
-    {
-      id: 3,
-      name: "特朗朗",
-      years: 11,
-      type: "Completed",
-      amount: 500.0,
-      earnings: "+25.00",
-      time: "2025-10-30 18:42:33",
-      status: "Completed",
-      img: "https://randomuser.me/api/portraits/men/51.jpg",
-    },
-  ];
+    const fetchCopytradeDetails = async () => {
+      // 定义当天日期范围（2025-11-08 UTC）
+      const todayStart = '2025-11-08T00:00:00Z';
+      const todayEnd = '2025-11-08T23:59:59Z';
+
+      // 查询copytrade_details，当天数据，联表mentors
+      const { data: details, error: detailsError } = await supabase
+        .from('copytrade_details')
+        .select(`
+          id,
+          amount,
+          order_profit_amount,
+          order_status,
+          created_at,
+          mentor_id,
+          mentors (
+            name,
+            years,
+            img
+          )
+        `)
+        .eq('user_id', userId)
+        .gte('created_at', todayStart)
+        .lte('created_at', todayEnd);
+
+      if (detailsError) {
+        console.error('Error fetching copytrade details:', detailsError);
+        return;
+      }
+
+      // 计算汇总
+      let posAssets = 0;
+      let floatPL = 0;
+      let entrust = 0; // 假设entrusted为所有amount总和
+      const pend = [];
+      const comp = [];
+
+      details.forEach((detail) => {
+        const amount = parseFloat(detail.amount) || 0;
+        const profit = parseFloat(detail.order_profit_amount) || 0;
+        const mentor = detail.mentors || {};
+        const time = new Date(detail.created_at).toLocaleString(); // 格式化时间
+
+        entrust += amount; // 累加所有amount作为entrusted
+
+        if (detail.order_status === 'Unsettled') {
+          posAssets += amount;
+          pend.push({
+            id: detail.id,
+            name: mentor.name || 'Unknown',
+            years: mentor.years || 0,
+            type: 'Daily Follow',
+            amount,
+            earnings: '---',
+            time,
+            status: 'Following',
+            img: mentor.img || 'https://randomuser.me/api/portraits/women/65.jpg', // 默认图片
+          });
+        } else if (detail.order_status === 'Settled') {
+          floatPL += profit;
+          const earnings = profit >= 0 ? `+${profit.toFixed(2)}` : profit.toFixed(2);
+          comp.push({
+            id: detail.id,
+            name: mentor.name || 'Unknown',
+            years: mentor.years || 0,
+            type: 'Completed',
+            amount,
+            earnings,
+            time,
+            status: 'Completed',
+            img: mentor.img || 'https://randomuser.me/api/portraits/men/51.jpg', // 默认图片
+          });
+        }
+      });
+
+      setPositionAssets(posAssets);
+      setFloatingPL(floatPL);
+      setEntrusted(entrust);
+      setPendingOrders(pend);
+      setCompletedOrders(comp);
+    };
+
+    fetchCopytradeDetails();
+  }, [isLoggedIn, userId, balance, availableBalance]); // 依赖isLoggedIn, userId, balance, availableBalance
 
   const list = tab === "pending" ? pendingOrders : completedOrders;
 
