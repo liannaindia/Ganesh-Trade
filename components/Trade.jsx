@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../supabaseClient";
 
-export default function Trade({ setTab, balance }) {
+export default function Trade({ setTab, balance, userId, isLoggedIn }) {
   const [query, setQuery] = useState("");
   const [mentors, setMentors] = useState([]);
   const [isFollowing, setIsFollowing] = useState(false);
