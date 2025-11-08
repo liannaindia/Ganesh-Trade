@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { supabase } from "../supabaseClient"; // 引入supabase客户端
-import banner1 from '.../image/1.png';  
+import banner1 from '../image/1.png';  
 import banner2 from '../image/2.png';
 import { useNavigate } from "react-router-dom";
 import { Search, Wallet, Send, Headphones, Gift } from "lucide-react"; // 引入需要的图标
