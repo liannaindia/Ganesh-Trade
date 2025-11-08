@@ -268,6 +268,9 @@ export default function Trade({ setTab, balance, userId, isLoggedIn }) {
                   <div style={{ fontSize: "14px", fontWeight: "bold", color: "#FF6B35" }}>
                     {m.assets.toLocaleString()} <span style={{ fontSize: "11px" }}>USDT</span>
                   </div>
+                  <div style={{ fontSize: "14px", color: "#6B7280", marginTop: "8px" }}>
+                    Commission Rate: <span style={{ fontWeight: "bold", color: "#FF6B35" }}>{m.commission}%</span>
+                  </div>
                 </div>
                 <button
                   onClick={() => handleFollow(m)}
