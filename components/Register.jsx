@@ -48,6 +48,7 @@ export default function Register({ setTab, setIsLoggedIn }) {
             phone_number: phoneNumber,
             password_hash: password,  // TODO: 生产环境用哈希 (e.g., bcrypt)
             balance: 0.00,
+            available_balance: 0.00,  // 可用余额
           }
         ])
         .select(); // 返回插入数据，便于调试
