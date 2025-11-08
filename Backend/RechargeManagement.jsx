@@ -15,41 +15,28 @@ export default function RechargeManagement() {
     try {
       setLoading(true);
 
-      // 1. 查询当前页的充值记录
       const from = (currentPage - 1) * pageSize;
       const to = from + pageSize - 1;
 
-      const { data: rechargesData, error: rechargeError, count } = await supabase
+      // 1. 分页 + JOIN users 和 channels
+      const { data: rechargeData, error: rechargeError, count } = await supabase
         .from("recharges")
-        .select("id, user_id, amount, channel_id, status, created_at", { count: "exact" })
+        .select(`
+          id, user_id, amount, channel_id, status, created_at,
+          users (phone_number),
+          channels (currency_name)
+        `, { count: "exact" })
         .range(from, to)
         .order("created_at", { ascending: false });
 
       if (rechargeError) throw rechargeError;
 
-      // 2. 提取 channel_id 去重
-      const channelIds = [...new Set(rechargesData.map(r => r.channel_id).filter(Boolean))];
-
-      // 3. 批量查询 channels
-      let channelMap = {};
-      if (channelIds.length > 0) {
-        const { data: channelsData, error: channelError } = await supabase
-          .from("channels")
-          .select("id, currency_name")
-          .in("id", channelIds);
-
-        if (channelError) throw channelError;
-
-        channelMap = Object.fromEntries(
-          channelsData.map(c => [c.id, c.currency_name])
-        );
-      }
-
-      // 4. 合并 + 格式化时间
-      const formattedData = rechargesData.map((r) => ({
+      // 2. 格式化数据
+      const formattedData = rechargeData.map(r => ({
         ...r,
-        currency_name: channelMap[r.channel_id] || "未知通道",
-        created_at: convertToChinaTime(r.created_at),
+        phone_number: r.users?.phone_number || "未知",
+        currency_name: r.channels?.currency_name || "未知通道",
+        created_at: formatChinaTime(r.created_at),
       }));
 
       setRecharges({ data: formattedData, total: count || 0 });
@@ -63,7 +50,7 @@ export default function RechargeManagement() {
   };
 
   // 中国时间格式化
-  const convertToChinaTime = (utcTime) => {
+  const formatChinaTime = (utcTime) => {
     const date = new Date(utcTime);
     return new Intl.DateTimeFormat("zh-CN", {
       year: "numeric",
@@ -79,28 +66,25 @@ export default function RechargeManagement() {
 
   const handleApprove = async (id, user_id, amount) => {
     try {
-      const { error: updateError } = await supabase
+      const parsedAmount = parseFloat(amount);
+      if (isNaN(parsedAmount) || parsedAmount <= 0) throw new Error("金额无效");
+
+      // 更新充值状态
+      const { error: statusError } = await supabase
         .from("recharges")
         .update({ status: "approved" })
         .eq("id", id);
-      if (updateError) throw updateError;
+      if (statusError) throw statusError;
 
-      const { data: userData, error: fetchError } = await supabase
-        .from("users")
-        .select("balance")
-        .eq("id", user_id)
-        .single();
-      if (fetchError) throw fetchError;
-
+      // 更新用户余额
       const { error: balanceError } = await supabase
-        .from("users")
-        .update({ balance: userData.balance + amount })
-        .eq("id", user_id);
+        .rpc("increment_balance", { user_id, amount: parsedAmount });
       if (balanceError) throw balanceError;
 
+      alert("充值已批准！");
       fetchRecharges();
-      alert("已批准充值");
     } catch (error) {
+      console.error("批准失败:", error);
       alert("操作失败: " + error.message);
     }
   };
@@ -113,23 +97,17 @@ export default function RechargeManagement() {
         .eq("id", id);
       if (error) throw error;
 
+      alert("充值已拒绝！");
       fetchRecharges();
-      alert("已拒绝充值");
     } catch (error) {
+      console.error("拒绝失败:", error);
       alert("操作失败: " + error.message);
     }
   };
 
-  const totalPages = Math.ceil(recharges.total / pageSize) || 1;
+  const totalPages = Math.ceil(recharges.total / pageSize);
 
-  if (loading) {
-    return (
-      <div className="p-6 text-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-        <p className="mt-2 text-gray-500">加载中...</p>
-      </div>
-    );
-  }
+  if (loading) return <div className="p-6 text-center text-gray-500">加载中...</div>;
 
   return (
     <div className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-200">
@@ -144,34 +122,38 @@ export default function RechargeManagement() {
       </div>
 
       <div className="overflow-auto max-h-[80vh]">
-        <table className="w-full table-fixed text-sm text-gray-800">
+        <table className="w-full text-sm text-gray-800">
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
-              <th className="w-[140px] px-4 py-3 text-center font-semibold uppercase text-gray-600">用户ID</th>
-              <th className="w-[120px] px-4 py-3 text-center font-semibold uppercase text-gray-600">金额</th>
-              <th className="w-[200px] px-4 py-3 text-center font-semibold uppercase text-gray-600">通道</th>
-              <th className="w-[200px] px-4 py-3 text-center font-semibold uppercase text-gray-600">时间</th>
-              <th className="w-[120px] px-4 py-3 text-center font-semibold uppercase text-gray-600">状态</th>
+              <th className="w-[80px] px-4 py-3 text-center font-semibold uppercase text-gray-600">ID</th>
+              <th className="w-[140px] px-4 py-3 text-center font-semibold uppercase text-gray-600">手机号</th>
+              <th className="w-[100px] px-4 py-3 text-center font-semibold uppercase text-gray-600">用户ID</th>
+              <th className="w-[100px] px-4 py-3 text-center font-semibold uppercase text-gray-600">金额</th>
+              <th className="w-[100px] px-4 py-3 text-center font-semibold uppercase text-gray-600">通道</th>
+              <th className="w-[160px] px-4 py-3 text-center font-semibold uppercase text-gray-600">时间</th>
+              <th className="w-[100px] px-4 py-3 text-center font-semibold uppercase text-gray-600">状态</th>
               <th className="w-[180px] px-4 py-3 text-center font-semibold uppercase text-gray-600">操作</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
             {recharges.data.length === 0 ? (
               <tr>
-                <td colSpan="6" className="py-8 text-center text-gray-500">
+                <td colSpan="8" className="py-8 text-center text-gray-500">
                   暂无充值记录
                 </td>
               </tr>
             ) : (
               recharges.data.map((r) => (
                 <tr key={r.id} className="hover:bg-gray-50 text-center align-middle">
+                  <td className="px-4 py-3">{r.id}</td>
+                  <td className="px-4 py-3 font-medium text-blue-600">{r.phone_number}</td>
                   <td className="px-4 py-3">{r.user_id}</td>
-                  <td className="px-4 py-3 text-blue-600 font-semibold">${r.amount}</td>
+                  <td className="px-4 py-3 text-green-600 font-semibold">${r.amount}</td>
                   <td className="px-4 py-3">{r.currency_name}</td>
                   <td className="px-4 py-3 text-gray-500">{r.created_at}</td>
                   <td className="px-4 py-3">
                     <span
-                      className={`px-2 py-1 rounded-full text-xs ${
+                      className={`px-2 py-1 rounded-full text-xs font-medium ${
                         r.status === "pending"
                           ? "bg-yellow-100 text-yellow-800"
                           : r.status === "approved"
@@ -215,7 +197,7 @@ export default function RechargeManagement() {
           <button
             onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
             disabled={currentPage === 1}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 disabled:opacity-50"
           >
             上一页
           </button>
@@ -225,7 +207,7 @@ export default function RechargeManagement() {
           <button
             onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
             disabled={currentPage === totalPages}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 disabled:opacity-50"
           >
             下一页
           </button>
