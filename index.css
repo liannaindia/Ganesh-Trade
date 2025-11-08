@@ -7,7 +7,7 @@ body {
   font-family: 'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   background-color: #f5f7fb;
   color: #0f172a;
-  overflow: hidden; /* 固定视口，防止页面整体滚动 */
+ /* overflow: hidden;  固定视口，防止页面整体滚动 */
 }
 
 ::-webkit-scrollbar {
