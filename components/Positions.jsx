@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { supabase } from "../supabaseClient"; // 引入supabase客户端
 
-export default function Positions({ isLoggedIn, balance, availableBalance, userId }) {
-  const [tab, setTab] = useState("pending");
+export default function Positions({ setTab, isLoggedIn, balance, availableBalance, userId }) {
+  const [localTab, setLocalTab] = useState("pending");
   const [totalAssets, setTotalAssets] = useState(0);
   const [positionAssets, setPositionAssets] = useState(0);
   const [floatingPL, setFloatingPL] = useState(0);
@@ -21,15 +21,26 @@ export default function Positions({ isLoggedIn, balance, availableBalance, userI
     setAvailable(availableBalance || 0);
 
     const fetchCopytradeDetails = async () => {
-      // 定义当天日期范围（使用当前日期动态计算）
-      const today = new Date();
-      const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate()).toISOString();
-      const todayEnd = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59).toISOString();
+      // 定义当天日期范围（2025-11-08 UTC）
+      const todayStart = '2025-11-08T00:00:00Z';
+      const todayEnd = '2025-11-08T23:59:59Z';
 
       // 查询copytrade_details，当天数据，联表mentors
       const { data: details, error: detailsError } = await supabase
         .from('copytrade_details')
-        .select(`id, amount, order_profit_amount, order_status, created_at, mentor_id, mentors (name, years, img)`)
+        .select(`
+          id,
+          amount,
+          order_profit_amount,
+          order_status,
+          created_at,
+          mentor_id,
+          mentors (
+            name,
+            years,
+            img
+          )
+        `)
         .eq('user_id', userId)
         .gte('created_at', todayStart)
         .lte('created_at', todayEnd);
@@ -94,7 +105,7 @@ export default function Positions({ isLoggedIn, balance, availableBalance, userI
     fetchCopytradeDetails();
   }, [isLoggedIn, userId, balance, availableBalance]); // 依赖isLoggedIn, userId, balance, availableBalance
 
-  const list = tab === "pending" ? pendingOrders : completedOrders;
+  const list = localTab === "pending" ? pendingOrders : completedOrders;
 
   return (
     <div className="px-4 pb-24 max-w-md mx-auto">
@@ -138,9 +149,9 @@ export default function Positions({ isLoggedIn, balance, availableBalance, userI
       {/* ===== Tabs: Pending / Completed ===== */}
       <div className="flex items-center border-b border-slate-200 mb-3">
         <button
-          onClick={() => setTab("pending")}
+          onClick={() => setLocalTab("pending")}
           className={`flex-1 text-center py-2 text-sm font-semibold border-b-2 transition ${
-            tab === "pending"
+            localTab === "pending"
               ? "text-yellow-500 border-yellow-500"
               : "text-slate-500 border-transparent"
           }`}
@@ -148,9 +159,9 @@ export default function Positions({ isLoggedIn, balance, availableBalance, userI
           Pending Order
         </button>
         <button
-          onClick={() => setTab("completed")}
+          onClick={() => setLocalTab("completed")}
           className={`flex-1 text-center py-2 text-sm font-semibold border-b-2 transition ${
-            tab === "completed"
+            localTab === "completed"
               ? "text-yellow-500 border-yellow-500"
               : "text-slate-500 border-transparent"
           }`}
@@ -160,7 +171,7 @@ export default function Positions({ isLoggedIn, balance, availableBalance, userI
       </div>
 
       {/* ===== 订单列表 ===== */}
-      <div className="space-y-3 max-h-[500px] overflow-y-auto">
+      <div className="space-y-3">
         {list.map((o) => (
           <div
             key={o.id}
