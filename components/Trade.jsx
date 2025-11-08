@@ -74,6 +74,7 @@ export default function Trade({ setTab, balance, userId, isLoggedIn }) {
         amount: parseFloat(followingAmount),
         status: "pending",  // 初始状态为 pending
         user_phone_number: userPhoneNumber, // 新增手机号码
+        mentor_commission: selectedMentor.commission, // 新增导师佣金率
       }]);
 
       if (error) throw error;
