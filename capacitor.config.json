@@ -1,7 +1,0 @@
-// capacitor.config.json
-{
-  "appId": "com.ganesh.app",   // 改成你的包名
-  "appName": "Ganesh",           // 改成你的应用名
-  "webDir": "dist",                     // npm run build 的输出目录
-  "bundledWebRuntime": false
-}
