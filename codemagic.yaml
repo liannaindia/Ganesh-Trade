@@ -23,13 +23,19 @@ workflows:
           export JAVA_HOME=$(brew --prefix openjdk@17)/libexec/openjdk.jdk/Contents/Home
           export PATH=$JAVA_HOME/bin:$PATH
           echo "JAVA_HOME is set to: $JAVA_HOME"  # Check if JAVA_HOME is correctly set
+      - name: Generate settings.gradle if not found
+        script: |
+          if [ ! -f settings.gradle ]; then
+            echo "Generating settings.gradle..."
+            echo "rootProject.name = 'your-project-name'" > settings.gradle
+          fi
       - name: Generate Gradle Wrapper if not found
         script: |
           if [ ! -f gradle/wrapper/gradle-wrapper.properties ]; then
             echo "Gradle Wrapper not found, generating it..."
             curl -s https://get.sdkman.io | bash
             source "$HOME/.sdkman/bin/sdkman-init.sh"
-            sdk install gradle 7.2  # You can change to any specific Gradle version you want
+            sdk install gradle 7.2
             gradle wrapper
           fi
       - name: Build APK
