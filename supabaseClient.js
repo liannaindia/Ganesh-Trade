@@ -1,7 +1,39 @@
+// supabaseClient.js
 import { createClient } from '@supabase/supabase-js';
 
-// 在 Supabase Dashboard 获取的 URL 和 API 密钥
-const SUPABASE_URL = 'https://gigzrgapctbdrbmbkcia.supabase.co';  // 替换为你的 Supabase URL
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdpZ3pyZ2FwY3RiZHJibWJrY2lhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIxNTI2NDIsImV4cCI6MjA3NzcyODY0Mn0.F6dnpa2--Q-xy1mlndbvsmKvvHN1hSKgh-kykCztNwQ';  // 替换为你的 Supabase anon 密钥
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+  console.error('请检查 .env 文件是否配置 VITE_SUPABASE_URL 和 VITE_SUPABASE_ANON_KEY');
+}
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// 统一错误处理
+export const call = async (fn) => {
+  const { data, error } = await fn;
+  if (error) throw new Error(error.message || '操作失败');
+  return data;
+};
+
+// 登录（使用 Supabase Auth + 伪邮箱）
+export const login = (phone, password) =>
+  call(supabase.auth.signInWithPassword({
+    email: `${phone}@ganesh.trade`,
+    password,
+  }));
+
+// 注册
+export const register = (phone, password) =>
+  call(supabase.auth.signUp({
+    email: `${phone}@ganesh.trade`,
+    password,
+  }));
+
+// 登出
+export const logout = () => supabase.auth.signOut();
+
+// 监听登录状态
+export const onAuthChange = (callback) =>
+  supabase.auth.onAuthStateChange(callback);
