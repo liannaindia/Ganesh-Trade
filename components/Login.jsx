@@ -1,3 +1,4 @@
+// components/Login.jsx
 import React, { useState } from "react";
 import { supabase } from "../supabaseClient";
 import { ArrowLeft } from "lucide-react";
@@ -32,21 +33,19 @@ export default function Login({ setTab, setIsLoggedIn }) {
         return;
       }
 
-      // 校验密码
       if (password !== data.password_hash) {
         setError("Incorrect password");
         setIsLoading(false);
         return;
       }
 
-      // 登录成功后保存用户信息
+      // 关键：保存 user_id 和 phone_number
       localStorage.setItem('phone_number', phoneNumber);
-      localStorage.setItem('user_id', data.id); // 保存用户 ID
+      localStorage.setItem('user_id', data.id);
       console.log("登录成功，user_id 已保存:", data.id);
 
-      // 更新应用的登录状态
       setIsLoggedIn(true);
-      setTab("home"); // 跳转到首页
+      setTab("home");
     } catch (error) {
       setError("An error occurred during login");
       console.error(error);
@@ -58,10 +57,7 @@ export default function Login({ setTab, setIsLoggedIn }) {
   return (
     <div className="max-w-md mx-auto bg-[#f5f7fb] pb-24 min-h-screen text-slate-900">
       <div className="flex items-center gap-3 py-3">
-        <ArrowLeft
-          className="h-5 w-5 text-slate-700 cursor-pointer"
-          onClick={() => setTab("home")}
-        />
+        <ArrowLeft className="h-5 w-5 text-slate-700 cursor-pointer" onClick={() => setTab("home")} />
         <h2 className="font-semibold text-slate-800 text-lg">Login</h2>
       </div>
 
@@ -88,7 +84,7 @@ export default function Login({ setTab, setIsLoggedIn }) {
             className="w-full py-2 px-3 text-sm text-slate-700 rounded-lg border focus:ring-2 focus:ring-yellow-400"
             placeholder="Enter your password"
           />
-        </div>
+       </div>
 
         {error && <div className="text-red-500 text-sm mt-2 p-2 bg-red-50 rounded">{error}</div>}
 
