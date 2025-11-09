@@ -1,6 +1,6 @@
 workflows:
   default:
-    name: Build React Native + Capacitor Android APK
+    name: Build React + Capacitor Android APK
     max_build_duration: 60
     instance_type: mac_mini_m1
     environment:
@@ -9,6 +9,8 @@ workflows:
         ANDROID_KEYSTORE_PASSWORD: "$CM_KEYSTORE_PASSWORD"
         ANDROID_KEY_ALIAS: "$CM_KEY_ALIAS"
         ANDROID_KEY_PASSWORD: "$CM_KEY_PASSWORD"
+        APP_ID: "com.yourcompany.yourapp"   # 替换为你的 App ID
+        APP_NAME: "Your App Name"           # 替换为你的应用名
       node: latest
     triggering:
       events:
@@ -26,7 +28,12 @@ workflows:
           npm run build
       - name: Install Capacitor
         script: |
-          npm install @capacitor/core @capacitor/cli
+          npm install @capacitor/core @capacitor/cli @capacitor/android
+      - name: Initialize Capacitor (if config missing)
+        script: |
+          if [ ! -f capacitor.config.json ] && [ ! -f capacitor.config.ts ]; then
+            npx cap init "$APP_NAME" "$APP_ID"
+          fi
       - name: Add Android platform
         script: |
           npx cap add android
