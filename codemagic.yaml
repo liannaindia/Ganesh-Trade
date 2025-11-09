@@ -2,7 +2,6 @@ workflows:
   android:
     name: Build Android APK
     instance_type: mac_mini  # 使用有效的实例类型
-    platform: android
     scripts:
       - name: Install dependencies
         script: |
