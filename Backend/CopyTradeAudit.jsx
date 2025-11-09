@@ -120,7 +120,7 @@ const handleReject = async (id) => {
     const { error: updateDetailsError } = await supabase
       .from("copytrade_details")
       .update({ order_status: "rejected" }) // 更新 copytrade_details 中的 order_status
-      .eq("copytrade_id", id);  // 假设 copytrade_id 是连接 copytrades 和 copytrade_details 的外键
+      .eq("user_id", id);  // 通过 user_id 来关联 copytrades 和 copytrade_details 表
     if (updateDetailsError) throw updateDetailsError;
 
     alert("跟单已拒绝！");
@@ -130,6 +130,7 @@ const handleReject = async (id) => {
     alert("操作失败: " + error.message);
   }
 };
+
 
 
   const totalPages = Math.ceil(totalCount / pageSize);
