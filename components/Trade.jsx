@@ -1,7 +1,7 @@
 // components/Trade.jsx
 import { useState, useEffect } from "react";
 import { supabase, call } from "../supabaseClient";
-import { Search, TrendingUp, TrendingDown, Star } from "lucide-react";
+import { Search, TrendingUp, TrendingDown, Star, ArrowLeft } from "lucide-react";
 
 export default function Trade({ setTab, balance, userId, isLoggedIn }) {
   const [query, setQuery] = useState("");
@@ -41,11 +41,12 @@ export default function Trade({ setTab, balance, userId, isLoggedIn }) {
       setError("Please login first");
       return;
     }
-    if (!followingAmount || parseFloat(followingAmount) <= 0) {
+    const amount = parseFloat(followingAmount);
+    if (isNaN(amount) || amount <= 0) {
       setError("Enter a valid amount");
       return;
     }
-    if (parseFloat(followingAmount) > balance) {
+    if (amount > balance) {
       setError("Insufficient balance");
       return;
     }
@@ -58,7 +59,7 @@ export default function Trade({ setTab, balance, userId, isLoggedIn }) {
         supabase.from("copytrades").insert({
           user_id: userId,
           mentor_id: selectedMentor.id,
-          amount: parseFloat(followingAmount),
+          amount: amount.toFixed(2),
           status: "pending",
           mentor_commission: selectedMentor.commission,
         })
@@ -74,12 +75,20 @@ export default function Trade({ setTab, balance, userId, isLoggedIn }) {
     }
   };
 
+  // 返回按钮
+  const handleBack = () => {
+    setIsFollowing(false);
+    setSelectedMentor(null);
+    setFollowingAmount("");
+    setError("");
+  };
+
   if (isFollowing && selectedMentor) {
     return (
       <div className="max-w-md mx-auto bg-gradient-to-br from-orange-50 to-yellow-50 pb-24 min-h-screen">
         {/* 顶部导航 */}
         <div className="flex items-center gap-3 py-3 px-4 bg-gradient-to-r from-orange-500 to-yellow-500 text-white">
-          <button onClick={() => setIsFollowing(false)} className="text-white">
+          <button onClick={handleBack} className="text-white">
             <ArrowLeft className="h-5 w-5" />
           </button>
           <h2 className="font-bold text-lg">Follow {selectedMentor.name}</h2>
@@ -114,6 +123,7 @@ export default function Trade({ setTab, balance, userId, isLoggedIn }) {
             <label className="text-sm font-medium text-orange-700">Amount (USDT)</label>
             <input
               type="number"
+              step="0.01"
               value={followingAmount}
               onChange={(e) => setFollowingAmount(e.target.value)}
               className="w-full py-3 px-4 mt-1 rounded-xl border-2 border-orange-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-200"
