@@ -1,81 +1,29 @@
 workflows:
-  android:
-    name: Build Android APK
-    instance_type: mac_mini_m1  # 使用 Codemagic 支持的实例类型
-    scripts:
-      - name: Clean Gradle cache and remove old files
-        script: |
-          rm -rf ~/.gradle/caches/
-          rm -rf ~/.gradle/wrapper/
-      - name: Install Homebrew and Node.js
-        script: |
-          /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-          brew install node
-      - name: Install TypeScript
-        script: |
-          npm install -D typescript
-      - name: Install Capacitor and Android platform
-        script: |
-          npm install @capacitor/cli @capacitor/android
-      - name: Install OpenJDK 17 (Required for Gradle)
-        script: |
-          brew install openjdk@17
-          export JAVA_HOME=$(brew --prefix openjdk@17)/libexec/openjdk.jdk/Contents/Home
-          export PATH=$JAVA_HOME/bin:$PATH
-          echo "JAVA_HOME is set to: $JAVA_HOME"
-      - name: Generate settings.gradle if not found
-        script: |
-          if [ ! -f settings.gradle ]; then
-            echo "Generating settings.gradle..."
-            echo "rootProject.name = 'your-project-name'" > settings.gradle
-            echo "include ':app'" >> settings.gradle
-          fi
-      - name: Generate app/build.gradle if not found
-        script: |
-          if [ ! -f app/build.gradle ]; then
-            echo "Generating app/build.gradle..."
-            mkdir -p app
-            echo "plugins {
-                id 'com.android.application' version '7.0.4' apply false
-                id 'kotlin-android' apply false
-            }
+  default:
+    name: Build APK
+    max_build_duration: 60
+    environment:
+      vars:
+        ANDROID_KEYSTORE_PATH: "$CM_KEYSTORE_PATH"
+        ANDROID_KEYSTORE_PASSWORD: "$CM_KEYSTORE_PASSWORD"
+        ANDROID_KEY_ALIAS: "$CM_KEY_ALIAS"
+        ANDROID_KEY_PASSWORD: "$CM_KEY_PASSWORD"
+    steps:
+      - checkout
+      - install:
+          name: Install dependencies
+          run: |
+            curl -sL https://deb.nodesource.com/setup_16.x | sudo -E bash -
+            sudo apt-get install -y nodejs
+            npm install
+            cd android && ./gradlew clean
 
-            repositories {
-                google()
-                mavenCentral()
-            }
+      - script:
+          name: Build APK
+          run: |
+            cd android && ./gradlew assembleRelease
 
-            android {
-                compileSdkVersion 30
-                defaultConfig {
-                    applicationId \"com.yourapp\"
-                    minSdkVersion 16
-                    targetSdkVersion 30
-                    versionCode 1
-                    versionName \"1.0\"
-                }
-                buildTypes {
-                    debug { }
-                    release { }
-                }
-            }
-
-            dependencies {
-                implementation 'com.android.support:appcompat-v7:28.0.0'
-            }" > app/build.gradle
-          fi
-      - name: Generate Gradle Wrapper if not found
-        script: |
-          if [ ! -f gradle/wrapper/gradle-wrapper.properties ]; then
-            echo "Gradle Wrapper not found, generating it..."
-            curl -s https://get.sdkman.io | bash
-            source "$HOME/.sdkman/bin/sdkman-init.sh"
-            sdk install gradle 7.2
-            gradle wrapper
-          fi
-      - name: List Gradle tasks
-        script: |
-          ./gradlew tasks
-      - name: Build APK
-        script: |
-          ./gradlew assembleDebug  # 或者根据输出的任务列表，使用其他正确的任务名
+      - deploy:
+          name: Deploy APK
+          options:
+            file: "android/app/build/outputs/apk/release/app-release.apk"
