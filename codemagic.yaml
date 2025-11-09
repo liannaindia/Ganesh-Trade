@@ -7,9 +7,16 @@ workflows:
         script: |
           /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
           brew install node
+      - name: Install Capacitor CLI
+        script: |
+          npm install @capacitor/cli
       - name: Install dependencies
         script: |
           npm install
+      - name: Check npm and npx version
+        script: |
+          npm --version
+          npx --version
       - name: Build project
         script: |
           npm run build
