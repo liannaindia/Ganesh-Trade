@@ -1,11 +1,12 @@
 // supabaseClient.js
 import { createClient } from '@supabase/supabase-js';
+import { ArrowLeft } from "lucide-react";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-  console.error('请检查 .env 文件是否配置 VITE_SUPABASE_URL 和 VITE_SUPABASE_ANON_KEY');
+  console.error('Please check .env file for VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY');
 }
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -13,7 +14,7 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // 统一错误处理
 export const call = async (fn) => {
   const { data, error } = await fn;
-  if (error) throw new Error(error.message || '操作失败');
+  if (error) throw new Error(error.message || 'Operation failed');
   return data;
 };
 
