@@ -47,7 +47,17 @@ export default function AdminDashboard() {
         path: "/admin/" + arr.slice(0, idx + 1).join("/"),
       };
     });
-
+// 渲染面包屑时加上 key
+<div className="flex items-center gap-2 text-sm text-orange-700">
+  <Link to="/admin" className="hover:underline">Home</Link>
+  {breadcrumbs.map((b, i) => (
+    <span key={i} className="flex items-center">
+      <span className="mx-2">/</span>
+      <Link to={b.path} className="hover:underline font-medium">{b.label}</Link>
+    </span>
+  ))}
+</div>
+  
   return (
     <div className="flex h-screen w-full bg-gradient-to-br from-orange-50 to-yellow-50 overflow-hidden">
       {/* Sidebar */}
