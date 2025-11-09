@@ -16,17 +16,17 @@ export default function Positions({ isLoggedIn, balance, availableBalance, userI
       return;
     }
 
-    // Using the balance and availableBalance passed from App
+    // 使用从App传递的balance和availableBalance
     setTotalAssets(balance || 0);
     setAvailable(availableBalance || 0);
 
     const fetchCopytradeDetails = async () => {
-      // Define today's date range
+      // 定义当天日期范围（使用当前日期动态计算）
       const today = new Date();
       const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate()).toISOString();
       const todayEnd = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59).toISOString();
 
-      // Fetch copytrade_details for today, joining mentors table
+      // 查询copytrade_details，当天数据，联表mentors
       const { data: details, error: detailsError } = await supabase
         .from('copytrade_details')
         .select(`id, amount, order_profit_amount, order_status, created_at, mentor_id, mentors (name, years, img)`)
@@ -39,10 +39,10 @@ export default function Positions({ isLoggedIn, balance, availableBalance, userI
         return;
       }
 
-      // Calculate totals
+      // 计算汇总
       let posAssets = 0;
       let floatPL = 0;
-      let entrust = 0; // Assuming entrusted is the sum of all amounts
+      let entrust = 0; // 假设entrusted为所有amount总和
       const pend = [];
       const comp = [];
 
@@ -50,9 +50,9 @@ export default function Positions({ isLoggedIn, balance, availableBalance, userI
         const amount = parseFloat(detail.amount) || 0;
         const profit = parseFloat(detail.order_profit_amount) || 0;
         const mentor = detail.mentors || {};
-        const time = new Date(detail.created_at).toLocaleString(); // Format time
+        const time = new Date(detail.created_at).toLocaleString(); // 格式化时间
 
-        entrust += amount; // Accumulate amount as entrusted
+        entrust += amount; // 累加所有amount作为entrusted
 
         if (detail.order_status === 'Unsettled') {
           posAssets += amount;
@@ -60,7 +60,7 @@ export default function Positions({ isLoggedIn, balance, availableBalance, userI
             id: detail.id,
             name: mentor.name || 'Unknown',
             years: mentor.years || 0,
-            type: 'Pending orders',
+            type: 'Daily Follow',
             amount,
             earnings: '---',
             time,
@@ -104,7 +104,27 @@ export default function Positions({ isLoggedIn, balance, availableBalance, userI
     };
 
     fetchCopytradeDetails();
-  }, [isLoggedIn, userId, balance, availableBalance]); // Dependencies: isLoggedIn, userId, balance, availableBalance
+
+    // 设置实时订阅，监听copytrade_details表的变化
+    const subscription = supabase
+      .from('copytrade_details')
+      .on('INSERT', (payload) => {
+        fetchCopytradeDetails();  // 数据插入时重新获取数据
+      })
+      .on('UPDATE', (payload) => {
+        fetchCopytradeDetails();  // 数据更新时重新获取数据
+      })
+      .on('DELETE', (payload) => {
+        fetchCopytradeDetails();  // 数据删除时重新获取数据
+      })
+      .subscribe();
+
+    // 清理订阅
+    return () => {
+      supabase.removeSubscription(subscription);
+    };
+
+  }, [isLoggedIn, userId, balance, availableBalance]); // 依赖isLoggedIn, userId, balance, availableBalance
 
   const list = tab === "pending" ? pendingOrders : completedOrders;
 
