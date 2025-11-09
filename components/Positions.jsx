@@ -34,6 +34,7 @@ export default function Positions({ isLoggedIn, balance, availableBalance, userI
             amount,
             order_profit_amount,
             order_status,
+            status,
             created_at,
             mentor_id,
             mentors (name, years, img)
@@ -62,6 +63,7 @@ export default function Positions({ isLoggedIn, balance, availableBalance, userI
 
           entrust += amount; // 累计委托金额
 
+          // 判断订单状态
           if (detail.order_status === 'Unsettled') {
             posAssets += amount;
             pend.push({
@@ -75,7 +77,8 @@ export default function Positions({ isLoggedIn, balance, availableBalance, userI
               status: 'Following',
               img: mentor.img || 'https://randomuser.me/api/portraits/women/65.jpg',
             });
-          } else if (detail.order_status === 'Settled') {
+          } else if (detail.order_status === 'Settled' || detail.status === 'Reject') {
+            // 处理 Settled 或 status 为 Reject 的订单
             floatPL += profit;
             const earnings = profit >= 0 ? `+${profit.toFixed(2)}` : profit.toFixed(2);
             comp.push({
@@ -86,10 +89,11 @@ export default function Positions({ isLoggedIn, balance, availableBalance, userI
               amount,
               earnings,
               time,
-              status: 'Completed',
+              status: 'Rejected', // 标记为已拒绝
               img: mentor.img || 'https://randomuser.me/api/portraits/men/51.jpg',
             });
-          } else if (detail.order_status === 'Reject') {
+          } else if (detail.order_status === 'Reject' || detail.status === 'Reject') {
+            // 如果 status 为 Reject，也视为“已拒绝”状态
             comp.push({
               id: detail.id,
               name: mentor.name || 'Unknown',
