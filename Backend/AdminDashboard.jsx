@@ -1,15 +1,7 @@
-// components/AdminDashboard.jsx
+// Backend/AdminDashboard.jsx
 import { useEffect, useState } from "react";
 import { Link, useLocation, Outlet, useNavigate } from "react-router-dom";
-- import {
--   Users, DollarSign, CreditCard, Settings, UserCheck,
--   Copy, TrendingUp, Menu, X, LogOut, Search, Bell, ChevronDown,
-- } from "lucide-react";
-+ import {
-+   Users, DollarSign, CreditCard, Settings, UserCheck,
-+   Copy, TrendingUp, Menu, X, LogOut, Search, Bell, ChevronDown,
-+   ArrowLeft,
-+ } from "lucide-react";
+import { Users, DollarSign, CreditCard, Settings, UserCheck, Copy, TrendingUp, Menu, X, LogOut, Search, Bell, ChevronDown } from "lucide-react";
 
 const menuItems = [
   { label: "Users", path: "/admin/users", icon: <Users className="w-5 h-5" /> },
@@ -47,23 +39,11 @@ export default function AdminDashboard() {
         path: "/admin/" + arr.slice(0, idx + 1).join("/"),
       };
     });
-// 渲染面包屑时加上 key
-<div className="flex items-center gap-2 text-sm text-orange-700">
-  <Link to="/admin" className="hover:underline">Home</Link>
-  {breadcrumbs.map((b, i) => (
-    <span key={i} className="flex items-center">
-      <span className="mx-2">/</span>
-      <Link to={b.path} className="hover:underline font-medium">{b.label}</Link>
-    </span>
-  ))}
-</div>
-  
+
   return (
     <div className="flex h-screen w-full bg-gradient-to-br from-orange-50 to-yellow-50 overflow-hidden">
       {/* Sidebar */}
-      <aside className={`${
-        sidebarOpen ? "w-64" : "w-20"
-      } bg-gradient-to-b from-orange-600 to-yellow-600 text-white transition-all duration-300`}>
+      <aside className={`${sidebarOpen ? "w-64" : "w-20"} bg-gradient-to-b from-orange-600 to-yellow-600 text-white transition-all duration-300`}>
         <div className="p-4 flex items-center justify-between">
           <h1 className={`font-bold text-xl ${sidebarOpen ? "block" : "hidden"}`}>Ganesh Admin</h1>
           <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-white">
@@ -95,7 +75,7 @@ export default function AdminDashboard() {
           <div className="flex items-center gap-2 text-sm text-orange-700">
             <Link to="/admin" className="hover:underline">Home</Link>
             {breadcrumbs.map((b, i) => (
-              <span key={i}>
+              <span key={i} className="flex items-center">
                 <span className="mx-2">/</span>
                 <Link to={b.path} className="hover:underline font-medium">{b.label}</Link>
               </span>
