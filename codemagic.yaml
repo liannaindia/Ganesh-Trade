@@ -11,19 +11,15 @@ workflows:
     steps:
       - checkout
 
-      - name: Install Node.js and dependencies
-        run: |
+      - run: |
           nvm install 16
           nvm use 16
           npm install
 
-      - name: Build APK with Capacitor
-        run: |
+      - run: |
           npx cap sync android
           npx cap open android
           cd android
           ./gradlew assembleRelease
 
-      - name: Deploy APK
-        deploy:
-          file: android/app/build/outputs/apk/release/app-release.apk
+      - deploy: android/app/build/outputs/apk/release/app-release.apk
