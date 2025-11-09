@@ -9,17 +9,14 @@ workflows:
         ANDROID_KEY_ALIAS: "$CM_KEY_ALIAS"
         ANDROID_KEY_PASSWORD: "$CM_KEY_PASSWORD"
     steps:
-      # 1. Checkout the code
       - checkout
 
-      # 2. Install Node.js and dependencies
       - name: Install Node.js and dependencies
         run: |
           nvm install 16
           nvm use 16
           npm install
 
-      # 3. Install Capacitor and build APK
       - name: Build APK with Capacitor
         run: |
           npx cap sync android
@@ -27,7 +24,6 @@ workflows:
           cd android
           ./gradlew assembleRelease
 
-      # 4. Deploy APK
       - name: Deploy APK
         deploy:
           file: android/app/build/outputs/apk/release/app-release.apk
