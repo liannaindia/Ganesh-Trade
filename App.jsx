@@ -37,6 +37,7 @@ useEffect(() => {
   if (!isLoggedIn || !userId) {
     if (window.balanceChannel) {
       supabase.removeChannel(window.balanceChannel);
+      window.balanceChannel = null;
     }
     return;
   }
@@ -57,8 +58,10 @@ useEffect(() => {
   window.balanceChannel = channel;
 
   return () => {
-    supabase.removeChannel(channel);
-    window.balanceChannel = null;
+    if (window.balanceChannel) {
+      supabase.removeChannel(window.balanceChannel);
+      window.balanceChannel = null;
+    }
   };
 }, [isLoggedIn, userId]);
 
