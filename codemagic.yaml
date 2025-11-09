@@ -1,6 +1,6 @@
 workflows:
   default:
-    name: Build APK
+    name: Build APK for React App
     max_build_duration: 60
     environment:
       vars:
@@ -9,17 +9,37 @@ workflows:
         ANDROID_KEY_ALIAS: "$CM_KEY_ALIAS"
         ANDROID_KEY_PASSWORD: "$CM_KEY_PASSWORD"
     steps:
+      # 1. Checkout 代码
       - checkout
 
-      - run: |
-          nvm install 16
-          nvm use 16
-          npm install
+      # 2. 安装 Flutter
+      - run:
+          name: Install Flutter
+          command: |
+            git clone https://github.com/flutter/flutter.git /opt/flutter
+            export PATH="$PATH:/opt/flutter/bin"
+            flutter doctor
+            flutter pub get
 
-      - run: |
-          npx cap sync android
-          npx cap open android
-          cd android
-          ./gradlew assembleRelease
+      # 3. 创建 Flutter WebView 应用
+      - run:
+          name: Create Flutter WebView App
+          command: |
+            flutter create my_app
+            cd my_app
+            flutter pub add webview_flutter
+            # 4. 复制 React 构建文件到 Flutter 项目中
+            cp -r /mnt/data/build/* ./web/  # 将 React 构建文件复制到 WebView 文件夹
 
-      - deploy: android/app/build/outputs/apk/release/app-release.apk
+      # 5. 构建 APK
+      - run:
+          name: Build APK
+          command: |
+            flutter build apk --release
+
+      # 6. 部署 APK
+      - deploy:
+          name: Deploy APK
+          options:
+            project_dir: build/app/outputs/flutter-apk/
+            artifact: app-release.apk
