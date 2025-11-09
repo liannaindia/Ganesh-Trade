@@ -8,9 +8,9 @@ export default {
   theme: {
     extend: {
       colors: {
-        saffron: "#FF9933",    // 印度国旗橙色
-        lotus: "#E64A19",      // 深橙
-        indigo: "#3F51B5",     // 印度蓝
+        saffron: "#FF9933",
+        lotus: "#E64A19",
+        adminBlue: "#3F51B5",
         saffronLight: "#FFF3E0",
         saffronDark: "#FF6D00",
       },
