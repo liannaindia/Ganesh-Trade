@@ -1,10 +1,15 @@
 // components/AdminDashboard.jsx
 import { useEffect, useState } from "react";
 import { Link, useLocation, Outlet, useNavigate } from "react-router-dom";
-import {
-  Users, DollarSign, CreditCard, Settings, UserCheck,
-  Copy, TrendingUp, Menu, X, LogOut, Search, Bell, ChevronDown,
-} from "lucide-react";
+- import {
+-   Users, DollarSign, CreditCard, Settings, UserCheck,
+-   Copy, TrendingUp, Menu, X, LogOut, Search, Bell, ChevronDown,
+- } from "lucide-react";
++ import {
++   Users, DollarSign, CreditCard, Settings, UserCheck,
++   Copy, TrendingUp, Menu, X, LogOut, Search, Bell, ChevronDown,
++   ArrowLeft,
++ } from "lucide-react";
 
 const menuItems = [
   { label: "Users", path: "/admin/users", icon: <Users className="w-5 h-5" /> },
