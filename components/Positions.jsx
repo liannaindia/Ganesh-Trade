@@ -92,7 +92,7 @@ export default function Positions({ isLoggedIn, balance, availableBalance, userI
               status: 'Rejected', // 标记为已拒绝
               img: mentor.img || 'https://randomuser.me/api/portraits/men/51.jpg',
             });
-          } else if (detail.order_status === 'Reject' || detail.status === 'Reject') {
+          } else if (detail.order_status === 'Reject' || detail.status === 'rejected') {
             // 如果 status 为 Reject，也视为“已拒绝”状态
             comp.push({
               id: detail.id,
