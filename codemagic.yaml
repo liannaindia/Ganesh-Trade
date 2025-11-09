@@ -7,6 +7,9 @@ workflows:
         script: |
           /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
           brew install node
+      - name: Install TypeScript
+        script: |
+          npm install -D typescript
       - name: Install Capacitor CLI
         script: |
           npm install @capacitor/cli
