@@ -16,9 +16,13 @@ export default function StockManagement() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editStock, setEditStock] = useState({
-    id: "", mentor_id: "", crypto_name: "", buy_price: "", sell_price: ""
-  });
-
+  id: "",
+  mentor_id: "",
+  crypto_name: "",
+  buy_price: "",
+  sell_price: ""
+});
+  
   useEffect(() => {
     fetchMentors();
     fetchStocks();
@@ -73,7 +77,13 @@ export default function StockManagement() {
       await call(supabase.from("stocks").update(editStock).eq("id", editStock.id));
       fetchStocks();
       setIsEditing(false);
-      setEditStock({ id: "", mentor_id: "", crypto_name: "", buy_price: "", sell_price: "" });
+     setEditStock({
+      id: s.id,
+      mentor_id: s.mentor_id || "",
+      crypto_name: s.crypto_name,
+      buy_price: s.buy_price,
+      sell_price: s.sell_price
+    });
     } catch (error) {
       alert("Update failed: " + error.message);
     }
