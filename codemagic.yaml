@@ -13,6 +13,11 @@ workflows:
       - name: Install Capacitor and Android platform
         script: |
           npm install @capacitor/cli @capacitor/android
+      - name: Install OpenJDK 17 (Required for Gradle)
+        script: |
+          brew install openjdk@17
+          export JAVA_HOME=$(brew --prefix openjdk@17)/libexec/openjdk.jdk/Contents/Home
+          export PATH=$JAVA_HOME/bin:$PATH
       - name: Install dependencies
         script: |
           npm install
