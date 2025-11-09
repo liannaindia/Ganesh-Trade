@@ -9,20 +9,25 @@ workflows:
         ANDROID_KEY_ALIAS: "$CM_KEY_ALIAS"
         ANDROID_KEY_PASSWORD: "$CM_KEY_PASSWORD"
     steps:
+      # 1. Checkout the code
       - checkout
-      - install:
+
+      # 2. Install dependencies
+      - run:
           name: Install dependencies
-          run: |
+          command: |
             curl -sL https://deb.nodesource.com/setup_16.x | sudo -E bash -
             sudo apt-get install -y nodejs
             npm install
             cd android && ./gradlew clean
 
-      - script:
+      # 3. Build APK
+      - run:
           name: Build APK
-          run: |
+          command: |
             cd android && ./gradlew assembleRelease
 
+      # 4. Deploy APK
       - deploy:
           name: Deploy APK
           options:
