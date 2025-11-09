@@ -30,6 +30,27 @@ workflows:
             echo "rootProject.name = 'your-project-name'" > settings.gradle
             echo "include ':app'" >> settings.gradle
           fi
+      - name: Generate app/build.gradle if not found
+        script: |
+          if [ ! -f app/build.gradle ]; then
+            echo "Generating app/build.gradle..."
+            mkdir -p app
+            echo "apply plugin: 'com.android.application'" > app/build.gradle
+            echo "android {
+                compileSdkVersion 30
+                defaultConfig {
+                    applicationId \"com.yourapp\"
+                    minSdkVersion 16
+                    targetSdkVersion 30
+                    versionCode 1
+                    versionName \"1.0\"
+                }
+                buildTypes {
+                    debug { }
+                    release { }
+                }
+            }" >> app/build.gradle
+          fi
       - name: Generate Gradle Wrapper if not found
         script: |
           if [ ! -f gradle/wrapper/gradle-wrapper.properties ]; then
