@@ -27,10 +27,13 @@ workflows:
       - name: Install Capacitor
         script: |
           npm install @capacitor/core @capacitor/cli
-      - name: Copy to Android
+      - name: Add Android platform
+        script: |
+          npx cap add android
+      - name: Copy web assets to Android
         script: |
           npx cap copy android
-      - name: Build APK
+      - name: Build APK (Release)
         script: |
           cd android
           ./gradlew assembleRelease --no-daemon
