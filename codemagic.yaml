@@ -1,7 +1,7 @@
 workflows:
   android:
     name: Build Android APK
-    instance_type: mac_mini_m1
+    instance_type: mac_mini_m1  # 使用 Codemagic 支持的实例类型
     scripts:
       - name: Clean Gradle cache and remove old files
         script: |
