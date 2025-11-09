@@ -23,28 +23,15 @@ workflows:
           export JAVA_HOME=$(brew --prefix openjdk@17)/libexec/openjdk.jdk/Contents/Home
           export PATH=$JAVA_HOME/bin:$PATH
           echo "JAVA_HOME is set to: $JAVA_HOME"  # Check if JAVA_HOME is correctly set
-      - name: Install dependencies
+      - name: Generate Gradle Wrapper if not found
         script: |
-          npm install
-      - name: Check npm and npx version
-        script: |
-          npm --version
-          npx --version
-      - name: Check Gradle Version and JAVA_HOME
-        script: |
-          gradle -v  # Check Gradle version to confirm it uses JAVA_HOME set above
-          echo "JAVA_HOME is set to: $JAVA_HOME"  # Check if JAVA_HOME is correctly set
-      - name: Build project
-        script: |
-          npm run build
-      - name: Sync Capacitor with Android
-        script: |
-          npx cap add android
-          npx cap copy android
-          npx cap sync android
+          if [ ! -f gradle/wrapper/gradle-wrapper.properties ]; then
+            echo "Gradle Wrapper not found, generating it..."
+            curl -s https://get.sdkman.io | bash
+            source "$HOME/.sdkman/bin/sdkman-init.sh"
+            sdk install gradle 7.2  # You can change to any specific Gradle version you want
+            gradle wrapper
+          fi
       - name: Build APK
         script: |
-          cd android
-          ./gradlew clean assembleDebug  # Clean before building to avoid cache issues
-    artifacts:
-      - android/app/build/outputs/apk/debug/app-debug.apk
+          ./gradlew assembleDebug
