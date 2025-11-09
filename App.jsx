@@ -19,104 +19,48 @@ export default function App() {
   const [availableBalance, setAvailableBalance] = useState(0); // 新增 availableBalance 状态
   const [userId, setUserId] = useState(null);
 
-  // 1. 页面加载时恢复登录状态（修复：必须恢复 user_id）
-  useEffect(() => {
-    const savedPhone = localStorage.getItem('phone_number');
-    const savedUserId = localStorage.getItem('user_id'); // 必须有
+  // App.jsx（只替换下面两个 useEffect）
 
-    console.log("App 启动 - localStorage:", { savedPhone, savedUserId });
+// 1. 恢复登录状态
+useEffect(() => {
+  const savedPhone = localStorage.getItem('phone_number');
+  const savedUserId = localStorage.getItem('user_id');
 
-    if (savedPhone && savedUserId) {
-      setIsLoggedIn(true);
-      setUserId(savedUserId);
+  if (savedPhone && savedUserId) {
+    setIsLoggedIn(true);
+    setUserId(savedUserId);
+  }
+}, []);
+
+// 2. 实时余额订阅
+useEffect(() => {
+  if (!isLoggedIn || !userId) {
+    if (window.balanceChannel) {
+      supabase.removeChannel(window.balanceChannel);
     }
-  }, []);
+    return;
+  }
 
-  // 2. 全局实时余额订阅（修复：只有登录后才订阅，避免 CLOSED 循环）
-  useEffect(() => {
-    let realtimeSubscriptionBalance = null;
-    let realtimeSubscriptionAvailableBalance = null;
+  const channel = supabase
+    .channel('user-balance')
+    .on('postgres_changes', {
+      event: 'UPDATE',
+      schema: 'public',
+      table: 'users',
+      filter: `id=eq.${userId}`
+    }, (payload) => {
+      setBalance(payload.new.balance ?? 0);
+      setAvailableBalance(payload.new.available_balance ?? 0);
+    })
+    .subscribe();
 
-    const setupBalance = async () => {
-      // 只有用户登录并且有 userId 时才进行订阅
-      if (!isLoggedIn || !userId) {
-        if (realtimeSubscriptionBalance) {
-          supabase.removeChannel(realtimeSubscriptionBalance);
-          realtimeSubscriptionBalance = null;
-        }
-        if (realtimeSubscriptionAvailableBalance) {
-          supabase.removeChannel(realtimeSubscriptionAvailableBalance);
-          realtimeSubscriptionAvailableBalance = null;
-        }
-        return;
-      }
+  window.balanceChannel = channel;
 
-      // 初始查询余额
-      const { data, error } = await supabase
-        .from('users')
-        .select('balance, available_balance')
-        .eq('id', userId)  // 使用 state 的 userId
-        .single();
-
-      if (error) {
-        console.error('Error fetching initial balance:', error);
-      } else if (data) {
-        setBalance(data.balance || 0);
-        setAvailableBalance(data.available_balance || 0); // 设置可用余额
-      }
-
-      // 实时订阅 balance
-      realtimeSubscriptionBalance = supabase
-        .channel('global-balance-updates')
-        .on(
-          'postgres_changes',
-          {
-            event: 'UPDATE',
-            schema: 'public',
-            table: 'users',
-            filter: `id=eq.${userId}`,  // 使用 state 的 userId
-          },
-          (payload) => {
-            console.log('Global balance updated via Realtime:', payload.new);
-            setBalance(payload.new.balance || 0);  // 更新总余额
-          }
-        )
-        .subscribe((status) => {
-          console.log('Global Realtime subscription status for balance:', status);
-        });
-
-      // 实时订阅 available_balance
-      realtimeSubscriptionAvailableBalance = supabase
-        .channel('global-available-balance-updates')
-        .on(
-          'postgres_changes',
-          {
-            event: 'UPDATE',
-            schema: 'public',
-            table: 'users',
-            filter: `id=eq.${userId}`,  // 使用 state 的 userId
-          },
-          (payload) => {
-            console.log('Global available_balance updated via Realtime:', payload.new);
-            setAvailableBalance(payload.new.available_balance || 0);  // 更新有效余额
-          }
-        )
-        .subscribe((status) => {
-          console.log('Global Realtime subscription status for available_balance:', status);
-        });
-    };
-
-    setupBalance();
-
-    return () => {
-      if (realtimeSubscriptionBalance) {
-        supabase.removeChannel(realtimeSubscriptionBalance);
-      }
-      if (realtimeSubscriptionAvailableBalance) {
-        supabase.removeChannel(realtimeSubscriptionAvailableBalance);
-      }
-    };
-  }, [isLoggedIn, userId]); // 修复点：加上 userId 依赖
+  return () => {
+    supabase.removeChannel(channel);
+    window.balanceChannel = null;
+  };
+}, [isLoggedIn, userId]);
 
   const renderPage = () => {
     switch (tab) {
