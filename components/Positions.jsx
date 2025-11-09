@@ -16,17 +16,17 @@ export default function Positions({ isLoggedIn, balance, availableBalance, userI
       return;
     }
 
-    // 使用从App传递的balance和availableBalance
+    // Using the balance and availableBalance passed from App
     setTotalAssets(balance || 0);
     setAvailable(availableBalance || 0);
 
     const fetchCopytradeDetails = async () => {
-      // 定义当天日期范围（使用当前日期动态计算）
+      // Define today's date range
       const today = new Date();
       const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate()).toISOString();
       const todayEnd = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59).toISOString();
 
-      // 查询copytrade_details，当天数据，联表mentors
+      // Fetch copytrade_details for today, joining mentors table
       const { data: details, error: detailsError } = await supabase
         .from('copytrade_details')
         .select(`id, amount, order_profit_amount, order_status, created_at, mentor_id, mentors (name, years, img)`)
@@ -35,14 +35,14 @@ export default function Positions({ isLoggedIn, balance, availableBalance, userI
         .lte('created_at', todayEnd);
 
       if (detailsError) {
-        console.error('获取copytrade详情时出错:', detailsError);
+        console.error('Error fetching copytrade details:', detailsError);
         return;
       }
 
-      // 计算汇总
+      // Calculate totals
       let posAssets = 0;
       let floatPL = 0;
-      let entrust = 0; // 假设entrusted为所有amount总和
+      let entrust = 0; // Assuming entrusted is the sum of all amounts
       const pend = [];
       const comp = [];
 
@@ -50,48 +50,48 @@ export default function Positions({ isLoggedIn, balance, availableBalance, userI
         const amount = parseFloat(detail.amount) || 0;
         const profit = parseFloat(detail.order_profit_amount) || 0;
         const mentor = detail.mentors || {};
-        const time = new Date(detail.created_at).toLocaleString(); // 格式化时间
+        const time = new Date(detail.created_at).toLocaleString(); // Format time
 
-        entrust += amount; // 累加所有amount作为entrusted
+        entrust += amount; // Accumulate amount as entrusted
 
         if (detail.order_status === 'Unsettled') {
           posAssets += amount;
           pend.push({
             id: detail.id,
-            name: mentor.name || '未知',
+            name: mentor.name || 'Unknown',
             years: mentor.years || 0,
-            type: '每日跟单',
+            type: 'Daily Follow',
             amount,
             earnings: '---',
             time,
-            status: '跟单中',
-            img: mentor.img || 'https://randomuser.me/api/portraits/women/65.jpg', // 默认图片
+            status: 'Following',
+            img: mentor.img || 'https://randomuser.me/api/portraits/women/65.jpg', // Default image
           });
         } else if (detail.order_status === 'Settled') {
           floatPL += profit;
           const earnings = profit >= 0 ? `+${profit.toFixed(2)}` : profit.toFixed(2);
           comp.push({
             id: detail.id,
-            name: mentor.name || '未知',
+            name: mentor.name || 'Unknown',
             years: mentor.years || 0,
-            type: '已完成',
+            type: 'Completed',
             amount,
             earnings,
             time,
-            status: '已完成',
-            img: mentor.img || 'https://randomuser.me/api/portraits/men/51.jpg', // 默认图片
+            status: 'Completed',
+            img: mentor.img || 'https://randomuser.me/api/portraits/men/51.jpg', // Default image
           });
         } else if (detail.order_status === 'Reject') {
           comp.push({
             id: detail.id,
-            name: mentor.name || '未知',
+            name: mentor.name || 'Unknown',
             years: mentor.years || 0,
-            type: '已完成',
+            type: 'Completed',
             amount,
-            earnings: '---', // 拒绝订单没有收益
+            earnings: '---', // No earnings for rejected orders
             time,
-            status: '拒绝',
-            img: mentor.img || 'https://randomuser.me/api/portraits/men/51.jpg', // 默认图片
+            status: 'Rejected',
+            img: mentor.img || 'https://randomuser.me/api/portraits/men/51.jpg', // Default image
           });
         }
       });
@@ -104,20 +104,20 @@ export default function Positions({ isLoggedIn, balance, availableBalance, userI
     };
 
     fetchCopytradeDetails();
-  }, [isLoggedIn, userId, balance, availableBalance]); // 依赖isLoggedIn, userId, balance, availableBalance
+  }, [isLoggedIn, userId, balance, availableBalance]); // Dependencies: isLoggedIn, userId, balance, availableBalance
 
   const list = tab === "pending" ? pendingOrders : completedOrders;
 
   return (
     <div className="px-4 pb-24 max-w-md mx-auto">
-      {/* ===== 顶部标题 ===== */}
+      {/* ===== Title ===== */}
       <div className="mt-3 mb-3 text-center">
         <h2 className="text-lg font-bold text-slate-800 border-b-2 border-yellow-400 inline-block pb-1">
           Positions
         </h2>
       </div>
 
-      {/* ===== 总资产卡片 ===== */}
+      {/* ===== Total Assets Card ===== */}
       <div className="rounded-2xl bg-white border border-slate-200 shadow-sm p-4 mb-4">
         <div className="flex items-center justify-between text-sm text-slate-500 mb-1">
           <span>Total Assets (USDT)</span>
@@ -157,7 +157,7 @@ export default function Positions({ isLoggedIn, balance, availableBalance, userI
               : "text-slate-500 border-transparent"
           }`}
         >
-          Pending Order
+          Pending Orders
         </button>
         <button
           onClick={() => setTab("completed")}
@@ -171,7 +171,7 @@ export default function Positions({ isLoggedIn, balance, availableBalance, userI
         </button>
       </div>
 
-      {/* ===== 订单列表 ===== */}
+      {/* ===== Orders List ===== */}
       <div className="space-y-3 max-h-[500px] overflow-y-auto">
         {list.map((o) => (
           <div
@@ -222,16 +222,16 @@ export default function Positions({ isLoggedIn, balance, availableBalance, userI
               </div>
               <div className="col-span-2 flex justify-between mt-2 text-[12px]">
                 <div>
-                  Application time <br />
+                  Application Time <br />
                   <span className="text-slate-700">{o.time}</span>
                 </div>
                 <div className="text-right">
-                  Order status <br />
+                  Order Status <br />
                   <span
                     className={`font-semibold ${
                       o.status === "Following"
                         ? "text-yellow-500"
-                        : o.status === "Reject"
+                        : o.status === "Rejected"
                         ? "text-rose-600"
                         : "text-emerald-600"
                     }`}
