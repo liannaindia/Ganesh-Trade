@@ -35,8 +35,12 @@ workflows:
           if [ ! -f app/build.gradle ]; then
             echo "Generating app/build.gradle..."
             mkdir -p app
-            echo "apply plugin: 'com.android.application'" > app/build.gradle
-            echo "android {
+            echo "plugins {
+                id 'com.android.application' version '7.0.4' apply false
+                id 'kotlin-android' apply false
+            }
+
+            android {
                 compileSdkVersion 30
                 defaultConfig {
                     applicationId \"com.yourapp\"
@@ -49,7 +53,11 @@ workflows:
                     debug { }
                     release { }
                 }
-            }" >> app/build.gradle
+            }
+
+            dependencies {
+                implementation 'com.android.support:appcompat-v7:28.0.0'
+            }" > app/build.gradle
           fi
       - name: Generate Gradle Wrapper if not found
         script: |
