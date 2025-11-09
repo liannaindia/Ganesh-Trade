@@ -3,6 +3,10 @@ workflows:
     name: Build Android APK
     instance_type: mac_mini_m1  # 使用 Codemagic 支持的实例类型
     scripts:
+      - name: Install Node.js and npm
+        script: |
+          curl -sL https://deb.nodesource.com/setup_16.x | bash -
+          apt-get install -y nodejs
       - name: Install dependencies
         script: |
           npm install
