@@ -12,23 +12,25 @@ workflows:
       # 1. Checkout the code
       - checkout
 
-      # 2. Install Flutter
+      # 2. Install Node.js and dependencies
       - run:
-          name: Install Flutter
+          name: Install Node.js and dependencies
           command: |
-            git clone https://github.com/flutter/flutter.git /opt/flutter
-            export PATH="$PATH:/opt/flutter/bin"
-            flutter doctor
-            flutter pub get
+            nvm install 16
+            nvm use 16
+            npm install
 
-      # 3. Build APK
+      # 3. Install Capacitor and build APK
       - run:
-          name: Build APK
+          name: Build APK with Capacitor
           command: |
-            flutter build apk --release
+            npx cap sync android
+            npx cap open android
+            cd android
+            ./gradlew assembleRelease
 
       # 4. Deploy APK
       - deploy:
           name: Deploy APK
           options:
-            file: build/app/outputs/flutter-apk/app-release.apk
+            file: android/app/build/outputs/apk/release/app-release.apk
