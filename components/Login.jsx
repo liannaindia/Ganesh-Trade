@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { supabase } from "../supabaseClient";
 import { ArrowLeft } from "lucide-react";
 
-export default function Login({ setTab, setIsLoggedIn }) {
+export default function Login({ setTab, setIsLoggedIn, setUserId }) { // 新增 setUserId
   const [phoneNumber, setPhoneNumber] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -39,12 +39,14 @@ export default function Login({ setTab, setIsLoggedIn }) {
         return;
       }
 
-      // 关键：保存 user_id 和 phone_number
+      // 关键：保存到 localStorage + 同步设置状态
       localStorage.setItem('phone_number', phoneNumber);
       localStorage.setItem('user_id', data.id);
+
       console.log("登录成功，user_id 已保存:", data.id);
 
       setIsLoggedIn(true);
+      setUserId(data.id); // 关键：同步设置 userId
       setTab("home");
     } catch (error) {
       setError("An error occurred during login");
@@ -84,7 +86,7 @@ export default function Login({ setTab, setIsLoggedIn }) {
             className="w-full py-2 px-3 text-sm text-slate-700 rounded-lg border focus:ring-2 focus:ring-yellow-400"
             placeholder="Enter your password"
           />
-       </div>
+        </div>
 
         {error && <div className="text-red-500 text-sm mt-2 p-2 bg-red-50 rounded">{error}</div>}
 
