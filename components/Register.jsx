@@ -61,13 +61,9 @@ export default function Register({ setTab, setIsLoggedIn }) {
       }
 
       console.log("Registration successful:", data); // 调试日志
-      // 注册成功后保存 phone_number 和 user_id 到 localStorage
       localStorage.setItem('phone_number', phoneNumber);
-      localStorage.setItem('user_id', data[0].id); // 保存用户 ID
-
-      // 更新应用的登录状态
       setIsLoggedIn(true);
-      setTab("home"); // 跳转到首页
+      setTab("home");
     } catch (error) {
       console.error("Unexpected error during registration:", error);
       setError("An error occurred during registration: " + error.message);
@@ -136,14 +132,16 @@ export default function Register({ setTab, setIsLoggedIn }) {
         </button>
 
         <div className="mt-6 text-center text-sm text-slate-500">
-          Already have an account?{" "}
-          <button
-            onClick={() => setTab("login")}
-            className="text-yellow-500 font-semibold"
-            disabled={isLoading}
-          >
-            Login
-          </button>
+          <span>
+            Already have an account?{" "}
+            <button
+              onClick={() => setTab("login")}
+              className="text-yellow-500 font-semibold"
+              disabled={isLoading}
+            >
+              Login
+            </button>
+          </span>
         </div>
       </div>
     </div>
