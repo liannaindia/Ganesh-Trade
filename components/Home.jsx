@@ -1,90 +1,143 @@
 import React, { useState, useEffect } from "react";
-import { supabase } from "../supabaseClient"; // 引入 supabase 客户端
-import { Search, Wallet, Send, Headphones, Gift } from "lucide-react"; // 引入需要的图标
+import { supabase } from "../supabaseClient"; // 引入supabase客户端
+import banner1 from '../image/1.png';  
+import banner2 from '../image/2.png';
 import { useNavigate } from "react-router-dom";
+import { Search, Wallet, Send, Headphones, Gift } from "lucide-react"; // 引入需要的图标
 
-const Home = ({ setTab, isLoggedIn: propIsLoggedIn }) => {
-  const [coins, setCoins] = useState([]); // 存储币种数据
-  const [loading, setLoading] = useState(false); // 加载状态
-  const [page, setPage] = useState(1); // 当前页数
+const Banner = ({ banners, bannerIndex }) => (
+  <div className="px-4 mt-3 relative">
+    <div className="rounded-xl overflow-hidden shadow-sm">
+      <img
+        src={banners[bannerIndex]}
+        alt="banner"
+        className="w-full h-24 object-cover transition-all duration-700"
+      />
+    </div>
+    <div className="flex justify-center mt-1 gap-1">
+      {banners.map((_, i) => (
+        <span
+          key={i}
+          className={`w-2 h-2 rounded-full ${i === bannerIndex ? "bg-yellow-500" : "bg-slate-300"}`}
+        ></span>
+      ))}
+    </div>
+  </div>
+);
+
+const MarketDataSection = ({ setTab }) => (
+  <div className="bg-white rounded-2xl shadow-sm mx-4 mt-3 p-4 border border-slate-100">
+    <div className="grid grid-cols-4 mt-4 text-center text-xs text-slate-700">
+      <div onClick={() => setTab("recharge")} className="cursor-pointer flex flex-col items-center gap-1">
+        <Wallet className="w-5 h-5 text-yellow-500" />
+        <span>Recharge</span>
+      </div>
+      <div onClick={() => setTab("withdraw")} className="cursor-pointer flex flex-col items-center gap-1">
+        <Send className="w-5 h-5 text-orange-500 rotate-180" />
+        <span>Withdraw</span>
+      </div>
+      <div onClick={() => setTab("invite")} className="cursor-pointer flex flex-col items-center gap-1">
+        <Gift className="w-5 h-5 text-indigo-500" />
+        <span>Invite</span>
+      </div>
+      <div onClick={() => window.open("https://t.me/ganeshsupport", "_blank")} className="cursor-pointer flex flex-col items-center gap-1">
+        <Headphones className="w-5 h-5 text-green-500" />
+        <span>Support</span>
+      </div>
+    </div>
+  </div>
+);
+
+// 余额部分单独封装（新增 setTab prop）
+const BalanceSection = ({ isLoggedIn, balance, handleLoginRedirect, setTab }) => (
+  <div className="text-center mt-1">
+    {!isLoggedIn ? (
+      <>
+        <div className="mb-4">
+          <p className="text-base text-slate-500">Welcome To Explore The World of Digital Ganesh.</p>
+        </div>
+        <button
+          className="bg-yellow-400 hover:bg-yellow-500 text-sm font-medium text-slate-900 rounded-full px-4 py-1.5 transition"
+          onClick={handleLoginRedirect}
+        >
+          Login / Register
+        </button>
+      </>
+    ) : (
+      <>
+        <div className="bg-white rounded-2xl shadow-sm mx-4 mt-3 p-4 border border-slate-100">
+          <div className="flex justify-between items-center">
+            <div>
+              <div className="text-xs text-slate-500">Total Assets (USDT)</div>
+              <div className="text-2xl font-bold mt-1">{balance.toFixed(2)}</div>
+              <div className="text-xs text-slate-500 mt-1">Pnl Today 0.00 / 0%</div>
+            </div>
+            <button
+              className="bg-yellow-400 hover:bg-yellow-500 text-sm font-medium text-slate-900 rounded-full px-4 py-1.5 transition"
+              onClick={() => setTab("trade")}
+            >
+              Go Trade
+            </button>
+          </div>
+        </div>
+      </>
+    )}
+  </div>
+);
+
+export default function Home({ setTab, isLoggedIn: propIsLoggedIn }) { // 新增：接收 prop
+  const [coins, setCoins] = useState([]);
+  const [activeTab, setActiveTab] = useState("favorites");
+  const [bannerIndex, setBannerIndex] = useState(0);
   const [localBalance, setLocalBalance] = useState(0); // 本地余额
   const [localIsLoggedIn, setLocalIsLoggedIn] = useState(false); // 本地 fallback
   const isLoggedIn = propIsLoggedIn !== undefined ? propIsLoggedIn : localIsLoggedIn; // 优先 prop
   const balance = localBalance; // 使用本地余额
   const navigate = useNavigate();
 
-  // 获取市场数据的函数
-  const fetchTopCoins = async () => {
-    try {
-      setLoading(true);
-      const res = await fetch(`https://api.binance.com/api/v3/ticker/24hr?limit=10&page=${page}`);
-      const data = await res.json();
-      const newCoins = data
-        .filter((i) => i.symbol.endsWith("USDT"))
-        .map((i) => ({
-          symbol: i.symbol.replace("USDT", ""),
-          price: parseFloat(i.lastPrice).toFixed(2),
-          change: parseFloat(i.priceChangePercent).toFixed(2),
-        }));
+  const banners = [banner1, banner2];
 
-      setCoins((prevCoins) => [...prevCoins, ...newCoins]); // 将新获取的数据添加到已有的数据中
-      setPage((prevPage) => prevPage + 1); // 增加页数，准备加载下一页数据
-      setLoading(false);
-    } catch (e) {
-      console.error("Binance API Error:", e);
-      setLoading(false);
-    }
-  };
-
-  // 监听滚动事件，判断是否已滚动到页面底部
-  const handleScroll = () => {
-    const bottom = window.innerHeight + document.documentElement.scrollTop === document.documentElement.offsetHeight;
-    if (bottom && !loading) {
-      fetchTopCoins(); // 如果滚动到底部且没有加载，加载更多数据
-    }
-  };
-
-  // 获取用户余额和登录状态
+  // 检查用户是否登录并获取用户的资产信息（优先 prop，fallback localStorage）
   useEffect(() => {
     let realtimeSubscription = null; // 新增：实时订阅引用
 
     const fetchSession = async () => {
-      const phoneNumber = localStorage.getItem("phone_number"); // 从 localStorage 获取手机号码
+      const phoneNumber = localStorage.getItem('phone_number'); // 从 localStorage 获取手机号码
 
       if (phoneNumber) {
         setLocalIsLoggedIn(true); // 只设本地（全局由 App 处理）
 
         // 从 `users` 表中获取余额
         const { data, error } = await supabase
-          .from("users")
-          .select("balance")
-          .eq("phone_number", phoneNumber)
+          .from('users')
+          .select('balance')
+          .eq('phone_number', phoneNumber)
           .single();
 
         if (error) {
-          console.error("Error fetching user balance:", error);
+          console.error('Error fetching user balance:', error);
         } else {
           setLocalBalance(data?.balance || 0);
         }
 
         // 新增：实时订阅余额变化（基于 phone_number）
         realtimeSubscription = supabase
-          .channel("user-balance-updates") // channel 名（任意，但唯一）
+          .channel('user-balance-updates') // channel 名（任意，但唯一）
           .on(
-            "postgres_changes",
+            'postgres_changes',
             {
-              event: "UPDATE", // 只监听更新事件
-              schema: "public",
-              table: "users",
+              event: 'UPDATE', // 只监听更新事件
+              schema: 'public',
+              table: 'users',
               filter: `phone_number=eq.${phoneNumber}`, // 过滤当前用户
             },
             (payload) => {
-              console.log("Balance updated via Realtime:", payload.new.balance); // 调试日志
+              console.log('Balance updated via Realtime:', payload.new.balance); // 调试日志
               setLocalBalance(payload.new.balance || 0); // 自动更新余额
             }
           )
           .subscribe((status) => {
-            console.log("Realtime subscription status:", status); // 调试：确认订阅成功
+            console.log('Realtime subscription status:', status); // 调试：确认订阅成功
           });
       }
     };
@@ -100,8 +153,6 @@ const Home = ({ setTab, isLoggedIn: propIsLoggedIn }) => {
   }, []); // 空数组依赖，确保只运行一次
 
   // Banner自动切换
-  const banners = ["/image/1.png", "/image/2.png"];
-  const [bannerIndex, setBannerIndex] = useState(0);
   useEffect(() => {
     const timer = setInterval(
       () => setBannerIndex((prev) => (prev + 1) % banners.length),
@@ -110,7 +161,31 @@ const Home = ({ setTab, isLoggedIn: propIsLoggedIn }) => {
     return () => clearInterval(timer);
   }, [banners.length]);
 
-  // 获取筛选后的币种数据
+  // 获取币种行情
+  useEffect(() => {
+    const fetchTopCoins = async () => {
+      try {
+        const res = await fetch("https://api.binance.com/api/v3/ticker/24hr");
+        const data = await res.json();
+        const all = data
+          .filter((i) => i.symbol.endsWith("USDT"))
+          .sort((a, b) => parseFloat(b.quoteVolume) - parseFloat(a.quoteVolume))
+          .slice(0, 50)
+          .map((i) => ({
+            symbol: i.symbol.replace("USDT", ""),
+            price: parseFloat(i.lastPrice).toFixed(2),
+            change: parseFloat(i.priceChangePercent).toFixed(2),
+          }));
+        setCoins(all);
+      } catch (e) {
+        console.error("Binance API Error:", e);
+      }
+    };
+    fetchTopCoins();
+    const timer = setInterval(fetchTopCoins, 15000);
+    return () => clearInterval(timer);
+  }, []);
+
   const getFilteredCoins = () => {
     switch (activeTab) {
       case "favorites":
@@ -126,7 +201,9 @@ const Home = ({ setTab, isLoggedIn: propIsLoggedIn }) => {
     }
   };
 
-  // 登录跳转
+  const displayed = getFilteredCoins();
+
+  // 点击登录跳转到登录页面
   const handleLoginRedirect = () => {
     setTab("login");  // 设置当前tab为login
   };
@@ -150,60 +227,20 @@ const Home = ({ setTab, isLoggedIn: propIsLoggedIn }) => {
       </div>
 
       {/* 轮播图 */}
-      <div className="px-4 mt-3 relative">
-        <div className="rounded-xl overflow-hidden shadow-sm">
-          <img
-            src={banners[bannerIndex]}
-            alt="banner"
-            className="w-full h-24 object-cover transition-all duration-700"
-          />
-        </div>
-        <div className="flex justify-center mt-1 gap-1">
-          {banners.map((_, i) => (
-            <span
-              key={i}
-              className={`w-2 h-2 rounded-full ${i === bannerIndex ? "bg-yellow-500" : "bg-slate-300"}`}
-            ></span>
-          ))}
-        </div>
-      </div>
+      <Banner banners={banners} bannerIndex={bannerIndex} />
 
       {/* 显示登录按钮或资产信息模块 */}
-      <div className="text-center mt-1">
-        {!isLoggedIn ? (
-          <>
-            <div className="mb-4">
-              <p className="text-base text-slate-500">Welcome To Explore The World of Digital Ganesh.</p>
-            </div>
-            <button
-              className="bg-yellow-400 hover:bg-yellow-500 text-sm font-medium text-slate-900 rounded-full px-4 py-1.5 transition"
-              onClick={handleLoginRedirect}
-            >
-              Login / Register
-            </button>
-          </>
-        ) : (
-          <>
-            <div className="bg-white rounded-2xl shadow-sm mx-4 mt-3 p-4 border border-slate-100">
-              <div className="flex justify-between items-center">
-                <div>
-                  <div className="text-xs text-slate-500">Total Assets (USDT)</div>
-                  <div className="text-2xl font-bold mt-1">{balance.toFixed(2)}</div>
-                  <div className="text-xs text-slate-500 mt-1">Pnl Today 0.00 / 0%</div>
-                </div>
-                <button
-                  className="bg-yellow-400 hover:bg-yellow-500 text-sm font-medium text-slate-900 rounded-full px-4 py-1.5 transition"
-                  onClick={() => setTab("trade")}
-                >
-                  Go Trade
-                </button>
-              </div>
-            </div>
-          </>
-        )}
-      </div>
+      <BalanceSection
+        isLoggedIn={isLoggedIn}
+        balance={balance}
+        handleLoginRedirect={handleLoginRedirect}
+        setTab={setTab}  // 新增：传递 setTab
+      />
 
       {/* Market Data Section */}
+      <MarketDataSection setTab={setTab} />
+
+      {/* Market Data Filter Section */}
       <div className="bg-white rounded-2xl mx-4 mt-4 border border-slate-100 shadow-sm">
         <div className="flex text-sm border-b border-slate-100">
           {[{ id: "favorites", label: "Favorites" }, { id: "hot", label: "Hot" }, { id: "gainers", label: "Gainers" }, { id: "losers", label: "Losers" }].map((tabItem) => (
@@ -223,10 +260,10 @@ const Home = ({ setTab, isLoggedIn: propIsLoggedIn }) => {
             <span>24chg%</span>
           </div>
           <div className="divide-y divide-slate-100">
-            {coins.length === 0 ? (
+            {displayed.length === 0 ? (
               <div className="text-center py-4 text-slate-400 text-sm">Loading market data...</div>
             ) : (
-              coins.map((c, i) => (
+              displayed.map((c, i) => (
                 <div key={i} className="flex justify-between items-center py-2 text-sm">
                   <span className="font-medium text-slate-800">{c.symbol}</span>
                   <span className="text-slate-700">{c.price}</span>
@@ -241,6 +278,4 @@ const Home = ({ setTab, isLoggedIn: propIsLoggedIn }) => {
       </div>
     </div>
   );
-};
-
-export default Home;
+}
