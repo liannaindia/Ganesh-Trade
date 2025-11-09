@@ -109,12 +109,19 @@ export default function CopyTradeAudit() {
 // 拒绝跟单
 const handleReject = async (id) => {
   try {
-    // 更新 copytrades 状态为拒绝，并更新 order_status 为拒绝
+    // 更新 copytrades 状态为拒绝
     const { error } = await supabase
       .from("copytrades")
-      .update({ status: "rejected", order_status: "rejected" }) // 更新 order_status
+      .update({ status: "rejected" }) // 更新 copytrades 中的状态
       .eq("id", id);
     if (error) throw error;
+
+    // 同时更新 copytrade_details 中的 order_status 为拒绝
+    const { error: updateDetailsError } = await supabase
+      .from("copytrade_details")
+      .update({ order_status: "rejected" }) // 更新 copytrade_details 中的 order_status
+      .eq("copytrade_id", id);  // 假设 copytrade_id 是连接 copytrades 和 copytrade_details 的外键
+    if (updateDetailsError) throw updateDetailsError;
 
     alert("跟单已拒绝！");
     fetchAudits(currentPage); // 刷新当前页
@@ -123,6 +130,7 @@ const handleReject = async (id) => {
     alert("操作失败: " + error.message);
   }
 };
+
 
   const totalPages = Math.ceil(totalCount / pageSize);
 
