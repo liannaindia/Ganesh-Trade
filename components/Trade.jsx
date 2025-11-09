@@ -1,41 +1,28 @@
+// components/Trade.jsx
 import { useState, useEffect } from "react";
-import { supabase } from "../supabaseClient";
+import { supabase, call } from "../supabaseClient";
+import { Search, TrendingUp, TrendingDown, Star } from "lucide-react";
 
 export default function Trade({ setTab, balance, userId, isLoggedIn }) {
-  const [query, setQuery] = useState(""); // 搜索框
-  const [mentors, setMentors] = useState([]); // 导师列表
-  const [isFollowing, setIsFollowing] = useState(false); // 判断是否在跟单页面
-  const [followingAmount, setFollowingAmount] = useState(""); // 跟单金额
-  const [selectedMentor, setSelectedMentor] = useState(null); // 选择的导师
-  const [userPhoneNumber, setUserPhoneNumber] = useState(""); // 用户手机号码
+  const [query, setQuery] = useState("");
+  const [mentors, setMentors] = useState([]);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followingAmount, setFollowingAmount] = useState("");
+  const [selectedMentor, setSelectedMentor] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
+  // 初始化加载导师
   useEffect(() => {
     fetchMentors();
-    fetchUserPhoneNumber(); // 获取用户手机号码
   }, []);
 
   const fetchMentors = async () => {
     try {
-      const { data, error } = await supabase.from("mentors").select("*");
-      if (error) throw error;
+      const data = await call(supabase.from("mentors").select("*"));
       setMentors(data || []);
-    } catch (error) {
-      console.error("获取导师失败:", error);
-    }
-  };
-
-  const fetchUserPhoneNumber = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('users')
-        .select('phone_number')
-        .eq('id', userId)
-        .single();
-
-      if (error) throw error;
-      setUserPhoneNumber(data?.phone_number || "");
-    } catch (error) {
-      console.error("获取用户手机号码失败:", error);
+    } catch (err) {
+      setError("Failed to load mentors");
     }
   };
 
@@ -43,323 +30,183 @@ export default function Trade({ setTab, balance, userId, isLoggedIn }) {
     m.name.toLowerCase().includes(query.toLowerCase())
   );
 
-  // 选择导师后跳转到跟单页面
   const handleSelectMentor = (mentor) => {
-    setSelectedMentor(mentor); // 设置选择的导师
-    setIsFollowing(true); // 设置跟单页面状态
+    setSelectedMentor(mentor);
+    setIsFollowing(true);
+    setError("");
   };
 
-  // 提交跟单请求
   const handleFollow = async () => {
+    if (!isLoggedIn || !userId) {
+      setError("Please login first");
+      return;
+    }
     if (!followingAmount || parseFloat(followingAmount) <= 0) {
-      alert("Please enter a valid amount.");
+      setError("Enter a valid amount");
       return;
     }
-
     if (parseFloat(followingAmount) > balance) {
-      alert("You do not have enough balance.");
+      setError("Insufficient balance");
       return;
     }
 
-    if (!selectedMentor) {
-      alert("Please select a mentor to follow.");
-      return;
-    }
+    setLoading(true);
+    setError("");
 
-    // 插入数据到 copytrades 表
     try {
-      const { data, error } = await supabase.from("copytrades").insert([{
-        user_id: userId,
-        mentor_id: selectedMentor.id,
-        amount: parseFloat(followingAmount),
-        status: "pending",  // 初始状态为 pending
-        mentor_commission: selectedMentor.commission, // 新增导师佣金率
-      }]);
-
-      if (error) throw error;
-      
-      // 成功后提示用户
-      alert("Follow request submitted. Waiting for approval.");
-      setIsFollowing(false); // 跳回导师选择页面
-      setFollowingAmount(""); // 清空金额
-      setSelectedMentor(null);  // 清空导师选择
-    } catch (error) {
-      console.error("Follow request failed:", error);
-      alert("Something went wrong. Please try again.");
+      await call(
+        supabase.from("copytrades").insert({
+          user_id: userId,
+          mentor_id: selectedMentor.id,
+          amount: parseFloat(followingAmount),
+          status: "pending",
+          mentor_commission: selectedMentor.commission,
+        })
+      );
+      setFollowingAmount("");
+      setIsFollowing(false);
+      setSelectedMentor(null);
+      alert("Follow request submitted!");
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
-  // 返回到导师选择页面
-  const handleBack = () => {
-    setIsFollowing(false);
-    setSelectedMentor(null);  // 清空选择的导师
-  };
+  if (isFollowing && selectedMentor) {
+    return (
+      <div className="max-w-md mx-auto bg-gradient-to-br from-orange-50 to-yellow-50 pb-24 min-h-screen">
+        {/* 顶部导航 */}
+        <div className="flex items-center gap-3 py-3 px-4 bg-gradient-to-r from-orange-500 to-yellow-500 text-white">
+          <button onClick={() => setIsFollowing(false)} className="text-white">
+            <ArrowLeft className="h-5 w-5" />
+          </button>
+          <h2 className="font-bold text-lg">Follow {selectedMentor.name}</h2>
+        </div>
 
-  const handleRecharge = () => {
-    setTab("recharge");
-  };
-
-  return (
-    <div
-      style={{
-        padding: "0 16px 96px 16px",
-        maxWidth: "448px",
-        margin: "0 auto",
-        background: "linear-gradient(to bottom, #fff8f0, #fff0e6)",
-        minHeight: "100vh",
-        position: "relative",
-        overflow: "hidden",
-      }}
-    >
-      {/* 印度风背景纹饰（内联 SVG，半透明曼荼罗） */}
-      <div
-        style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundImage: `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><circle cx="50" cy="50" r="35" fill="none" stroke="%23FFD700" stroke-width="2"/><path d="M50 15 Q65 30, 65 50 Q65 70, 50 85 Q35 70, 35 50 Q35 30, 50 15" fill="none" stroke="%23FF6B35" stroke-width="1.5"/><circle cx="50" cy="50" r="10" fill="%23FFD700" opacity="0.3"/></svg>')`,
-          backgroundSize: "120px",
-          backgroundRepeat: "repeat",
-          opacity: 0.1,
-          pointerEvents: "none",
-          zIndex: -1,
-        }}
-      />
-
-      {/* 跟单页面 */}
-      {isFollowing ? (
-        <div style={{ padding: "24px" }}>
-          <h2
-            style={{
-              fontSize: "24px",
-              fontWeight: "bold",
-              color: "#FF6B35",
-              marginBottom: "16px",
-              textAlign: "center",
-            }}
-          >
-            Daily Follow
-          </h2>
-
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              background: "#FFFFFF",
-              padding: "16px",
-              borderRadius: "16px",
-              boxShadow: "0 8px 20px rgba(255, 107, 53, 0.15)",
-              marginBottom: "16px",
-            }}
-          >
-            <span style={{ fontSize: "14px", color: "#374151" }}>
-              Available Balance: <span style={{ fontWeight: "bold", color: "#FFD700" }}>{balance.toFixed(2)} USDT</span>
-            </span>
-            <button
-              onClick={handleRecharge}
-              style={{
-                padding: "8px 16px",
-                background: "linear-gradient(135deg, #FFD700, #FF6B35)",
-                color: "#1A1A1A",
-                fontWeight: "bold",
-                borderRadius: "12px",
-                border: "none",
-                cursor: "pointer",
-                transition: "transform 0.2s",
-              }}
-              onMouseEnter={(e) => (e.target.style.transform = "scale(1.05)")}
-              onMouseLeave={(e) => (e.target.style.transform = "scale(1)")}
-            >
-              Go Recharge
-            </button>
+        <div className="p-4 space-y-4">
+          {/* 导师卡片 */}
+          <div className="bg-white rounded-2xl p-4 shadow-lg border-2 border-orange-200">
+            <div className="flex items-center gap-3">
+              <div className="w-16 h-16 bg-gradient-to-br from-orange-400 to-yellow-400 rounded-full flex items-center justify-center text-white font-bold text-xl">
+                {selectedMentor.name[0]}
+              </div>
+              <div>
+                <h3 className="font-bold text-lg">{selectedMentor.name}</h3>
+                <p className="text-sm text-orange-700">{selectedMentor.years} years experience</p>
+              </div>
+            </div>
+            <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
+              <div>
+                <p className="text-gray-600">Assets</p>
+                <p className="font-bold text-orange-600">{selectedMentor.assets.toLocaleString()} USDT</p>
+              </div>
+              <div>
+                <p className="text-gray-600">Commission</p>
+                <p className="font-bold text-orange-600">{selectedMentor.commission}%</p>
+              </div>
+            </div>
           </div>
 
-          <div style={{ marginBottom: "16px" }}>
-            <label style={{ fontSize: "14px", color: "#374151", display: "block", marginBottom: "8px" }}>
-              Following Limit (100 USDT - 9999 USDT)
-            </label>
+          {/* 金额输入 */}
+          <div>
+            <label className="text-sm font-medium text-orange-700">Amount (USDT)</label>
             <input
               type="number"
-              style={{
-                width: "100%",
-                padding: "12px",
-                border: "2px solid #FF6B35",
-                borderRadius: "12px",
-                fontSize: "16px",
-                outline: "none",
-                transition: "border-color 0.3s, box-shadow 0.3s",
-              }}
-              placeholder="Enter Following Amount"
               value={followingAmount}
               onChange={(e) => setFollowingAmount(e.target.value)}
-              onFocus={(e) => {
-                e.target.style.borderColor = "#FFD700";
-                e.target.style.boxShadow = "0 0 0 3px rgba(255, 215, 0, 0.3)";
-              }}
-              onBlur={(e) => {
-                e.target.style.borderColor = "#FF6B35";
-                e.target.style.boxShadow = "none";
-              }}
+              className="w-full py-3 px-4 mt-1 rounded-xl border-2 border-orange-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-200"
+              placeholder="Enter amount"
             />
+            <p className="text-xs text-gray-600 mt-1">Available: {balance.toFixed(2)} USDT</p>
           </div>
 
-          <label
-            style={{
-              display: "flex",
-              alignItems: "center",
-              fontSize: "14px",
-              color: "#6B7280",
-              marginBottom: "24px",
-            }}
-          >
-            <input type="checkbox" style={{ marginRight: "8px", width: "20px", height: "20px", accentColor: "#FFD700" }} />
-            I have read and agree to{" "}
-            <a href="#" style={{ color: "#FF6B35", textDecoration: "underline", marginLeft: "4px" }}>
-              Service Agreement
-            </a>
-          </label>
+          {error && (
+            <div className="text-red-600 text-sm p-3 bg-red-50 rounded-xl border border-red-200">
+              {error}
+            </div>
+          )}
 
+          {/* 提交按钮 */}
           <button
-            onClick={handleBack}
-            style={{
-              width: "100%",
-              padding: "12px",
-              background: "#6B7280",
-              color: "#FFFFFF",
-              fontWeight: "bold",
-              borderRadius: "12px",
-              border: "none",
-              marginBottom: "12px",
-              cursor: "pointer",
-              transition: "background 0.3s",
-            }}
-            onMouseEnter={(e) => (e.target.style.background = "#4B5563")}
-            onMouseLeave={(e) => (e.target.style.background = "#6B7280")}
+            onClick={handleFollow}
+            disabled={loading}
+            className={`w-full py-4 rounded-xl font-bold text-lg transition-all shadow-lg ${
+              loading
+                ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
+                : 'bg-gradient-to-r from-orange-500 to-yellow-500 text-white hover:from-orange-600 hover:to-yellow-600 hover:scale-105'
+            }`}
           >
-            Back
-          </button>
-
-          <button
-            onClick={handleFollow} // 触发跟单操作
-            style={{
-              width: "100%",
-              padding: "12px",
-              background: "linear-gradient(135deg, #FF6B35, #FFD700)",
-              color: "#1A1A1A",
-              fontWeight: "bold",
-              fontSize: "18px",
-              borderRadius: "12px",
-              border: "none",
-              cursor: "pointer",
-              transition: "transform 0.2s",
-            }}
-            onMouseEnter={(e) => (e.target.style.transform = "scale(1.02)")}
-            onMouseLeave={(e) => (e.target.style.transform = "scale(1)")}
-          >
-            Follow
+            {loading ? 'Submitting...' : 'Confirm Follow'}
           </button>
         </div>
-      ) : (
-        <>
-          {/* 搜索框 */}
-          <div style={{ position: "relative", margin: "20px 0" }}>
-            <input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search for Traders"
-              style={{
-                width: "100%",
-                padding: "12px 48px 12px 48px",
-                background: "#FFFFFF",
-                border: "2px solid #FFD700",
-                borderRadius: "9999px",
-                fontSize: "14px",
-                outline: "none",
-                boxShadow: "0 4px 10px rgba(255, 215, 0, 0.2)",
-                transition: "border-color 0.3s, box-shadow 0.3s",
-                backgroundImage: `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="%23FF6B35" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>')`,
-                backgroundPosition: "16px center",
-                backgroundRepeat: "no-repeat",
-                backgroundSize: "20px",
-              }}
-              onFocus={(e) => {
-                e.target.style.borderColor = "#FF6B35";
-                e.target.style.boxShadow = "0 0 0 3px rgba(255, 107, 53, 0.3)";
-              }}
-              onBlur={(e) => {
-                e.target.style.borderColor = "#FFD700";
-                e.target.style.boxShadow = "0 4px 10px rgba(255, 215, 0, 0.2)";
-              }}
-            />
-          </div>
+      </div>
+    );
+  }
 
-          {/* 导师列表 */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-            {filtered.map((m) => (
-              <div
-                key={m.id}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  background: "#FFFFFF",
-                  border: "1px solid #FF9933",
-                  borderRadius: "16px",
-                  padding: "12px",
-                  boxShadow: "0 8px 15px rgba(255, 153, 51, 0.15)",
-                  transition: "transform 0.3s",
-                }}
-                onMouseEnter={(e) => (e.target.style.transform = "translateY(-4px)")}
-                onMouseLeave={(e) => (e.target.style.transform = "translateY(0)")}
-              >
-                <img
-                  src={m.img}
-                  alt={m.name}
-                  style={{
-                    width: "48px",
-                    height: "48px",
-                    borderRadius: "9999px",
-                    objectFit: "cover",
-                    marginRight: "12px",
-                    boxShadow: "0 0 0 4px rgba(255, 215, 0, 0.3)",
-                  }}
-                />
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: "16px", fontWeight: "bold", color: "#1F2937" }}>{m.name}</div>
-                  <div style={{ fontSize: "12px", color: "#6B7280" }}>Investment Experience {m.years} years</div>
-                  <div style={{ fontSize: "12px", color: "#9CA3AF", marginTop: "4px" }}>Cumulative Assets</div>
-                  <div style={{ fontSize: "14px", fontWeight: "bold", color: "#FF6B35" }}>
-                    {m.assets.toLocaleString()} <span style={{ fontSize: "11px" }}>USDT</span>
+  return (
+    <div className="max-w-md mx-auto bg-gradient-to-br from-orange-50 to-yellow-50 pb-24 min-h-screen">
+      {/* 顶部导航 */}
+      <div className="flex items-center gap-3 py-3 px-4 bg-gradient-to-r from-orange-500 to-yellow-500 text-white sticky top-0 z-10">
+        <h2 className="font-bold text-lg flex-1 text-center">Select Mentor</h2>
+      </div>
+
+      {/* 搜索框 */}
+      <div className="p-4">
+        <div className="relative">
+          <Search className="absolute left-3 top-3 h-5 w-5 text-orange-600" />
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            className="w-full pl-10 pr-4 py-3 rounded-xl border-2 border-orange-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-200"
+            placeholder="Search mentors..."
+          />
+        </div>
+      </div>
+
+      {/* 导师列表 */}
+      <div className="px-4 space-y-3 pb-8">
+        {filtered.length === 0 ? (
+          <div className="text-center py-8 text-gray-600">No mentors found</div>
+        ) : (
+          filtered.map((m) => (
+            <div
+              key={m.id}
+              className="bg-white rounded-2xl p-4 shadow-lg border-2 border-orange-100 hover:border-orange-300 transition-all"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-14 h-14 bg-gradient-to-br from-orange-400 to-yellow-400 rounded-full flex items-center justify-center text-white font-bold">
+                    {m.name[0]}
                   </div>
-                  <div style={{ fontSize: "14px", color: "#6B7280", marginTop: "8px" }}>
-                    Commission Rate: <span style={{ fontWeight: "bold", color: "#FF6B35" }}>{m.commission}%</span>
+                  <div>
+                    <h3 className="font-bold text-lg">{m.name}</h3>
+                    <p className="text-sm text-orange-700">{m.years} years experience</p>
                   </div>
                 </div>
+                <div className="text-right">
+                  <p className="text-xs text-gray-600">Assets</p>
+                  <p className="font-bold text-orange-600">{m.assets.toLocaleString()} USDT</p>
+                </div>
+              </div>
+              <div className="mt-3 flex items-center justify-between">
+                <div className="flex items-center gap-1">
+                  <Star className="h-4 w-4 text-yellow-500 fill-current" />
+                  <span className="text-sm font-medium text-orange-600">{m.commission}% Commission</span>
+                </div>
                 <button
-                  onClick={() => handleSelectMentor(m)} // 选择导师
-                  style={{
-                    padding: "8px 16px",
-                    background: "linear-gradient(135deg, #FFD700, #FF6B35)",
-                    color: "#1A1A1A",
-                    fontWeight: "bold",
-                    fontSize: "14px",
-                    borderRadius: "12px",
-                    border: "none",
-                    cursor: "pointer",
-                    transition: "transform 0.2s",
-                  }}
-                  onMouseEnter={(e) => (e.target.style.transform = "scale(1.05)")}
-                  onMouseLeave={(e) => (e.target.style.transform = "scale(1)")}
+                  onClick={() => handleSelectMentor(m)}
+                  className="px-6 py-2 bg-gradient-to-r from-orange-500 to-yellow-500 text-white rounded-full font-bold text-sm hover:scale-105 transition-all shadow-md"
                 >
-                  Select Mentor
+                  Select
                 </button>
               </div>
-            ))}
-          </div>
-        </>
-      )}
+            </div>
+          ))
+        )}
+      </div>
     </div>
   );
 }
