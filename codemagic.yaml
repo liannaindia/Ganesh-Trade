@@ -12,23 +12,23 @@ workflows:
       # 1. Checkout the code
       - checkout
 
-      # 2. Install dependencies
+      # 2. Install Flutter
       - run:
-          name: Install dependencies
+          name: Install Flutter
           command: |
-            curl -sL https://deb.nodesource.com/setup_16.x | sudo -E bash -
-            sudo apt-get install -y nodejs
-            npm install
-            cd android && ./gradlew clean
+            git clone https://github.com/flutter/flutter.git /opt/flutter
+            export PATH="$PATH:/opt/flutter/bin"
+            flutter doctor
+            flutter pub get
 
       # 3. Build APK
       - run:
           name: Build APK
           command: |
-            cd android && ./gradlew assembleRelease
+            flutter build apk --release
 
       # 4. Deploy APK
       - deploy:
           name: Deploy APK
           options:
-            file: "android/app/build/outputs/apk/release/app-release.apk"
+            file: build/app/outputs/flutter-apk/app-release.apk
