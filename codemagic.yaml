@@ -40,6 +40,11 @@ workflows:
                 id 'kotlin-android' apply false
             }
 
+            repositories {
+                google()
+                mavenCentral()
+            }
+
             android {
                 compileSdkVersion 30
                 defaultConfig {
