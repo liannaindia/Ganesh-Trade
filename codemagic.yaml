@@ -18,7 +18,6 @@ workflows:
           brew install openjdk@17
           export JAVA_HOME=$(brew --prefix openjdk@17)/libexec/openjdk.jdk/Contents/Home
           export PATH=$JAVA_HOME/bin:$PATH
-          echo "JAVA_HOME is set to: $JAVA_HOME"  # Add this line to verify JAVA_HOME
       - name: Install dependencies
         script: |
           npm install
