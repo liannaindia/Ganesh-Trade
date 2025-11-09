@@ -13,24 +13,21 @@ workflows:
       - checkout
 
       # 2. Install Node.js and dependencies
-      - run:
-          name: Install Node.js and dependencies
-          command: |
-            nvm install 16
-            nvm use 16
-            npm install
+      - name: Install Node.js and dependencies
+        run: |
+          nvm install 16
+          nvm use 16
+          npm install
 
       # 3. Install Capacitor and build APK
-      - run:
-          name: Build APK with Capacitor
-          command: |
-            npx cap sync android
-            npx cap open android
-            cd android
-            ./gradlew assembleRelease
+      - name: Build APK with Capacitor
+        run: |
+          npx cap sync android
+          npx cap open android
+          cd android
+          ./gradlew assembleRelease
 
       # 4. Deploy APK
-      - deploy:
-          name: Deploy APK
-          options:
-            file: android/app/build/outputs/apk/release/app-release.apk
+      - name: Deploy APK
+        deploy:
+          file: android/app/build/outputs/apk/release/app-release.apk
