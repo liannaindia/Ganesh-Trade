@@ -1,6 +1,6 @@
 // components/Login.jsx
 import React, { useState } from "react";
-import { supabase } from "../supabaseClient";
+import { login } from "../supabaseClient";
 import { ArrowLeft } from "lucide-react";
 
 export default function Login({ setTab, setIsLoggedIn }) {
@@ -21,87 +21,78 @@ export default function Login({ setTab, setIsLoggedIn }) {
     }
 
     try {
-      const { data, error: queryError } = await supabase
-        .from('users')
-        .select('id, password_hash')
-        .eq('phone_number', phoneNumber)
-        .single();
-
-      if (queryError || !data) {
-        setError("User not found");
-        setIsLoading(false);
-        return;
-      }
-
-      if (password !== data.password_hash) {
-        setError("Incorrect password");
-        setIsLoading(false);
-        return;
-      }
-
-      // 关键：保存 user_id 和 phone_number
+      const { data } = await login(phoneNumber, password);
+      localStorage.setItem('user_id', data.user.id);
       localStorage.setItem('phone_number', phoneNumber);
-      localStorage.setItem('user_id', data.id);
-      console.log("登录成功，user_id 已保存:", data.id);
-
       setIsLoggedIn(true);
       setTab("home");
-    } catch (error) {
-      setError("An error occurred during login");
-      console.error(error);
+    } catch (err) {
+      setError(err.message.includes('Invalid') ? "Invalid phone or password" : err.message);
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="max-w-md mx-auto bg-[#f5f7fb] pb-24 min-h-screen text-slate-900">
-      <div className="flex items-center gap-3 py-3">
-        <ArrowLeft className="h-5 w-5 text-slate-700 cursor-pointer" onClick={() => setTab("home")} />
-        <h2 className="font-semibold text-slate-800 text-lg">Login</h2>
+    <div className="max-w-md mx-auto bg-gradient-to-br from-orange-50 to-yellow-50 pb-24 min-h-screen text-slate-900">
+      {/* 顶部导航栏 - 印度风格橙色渐变 */}
+      <div className="flex items-center gap-3 py-3 px-4 bg-gradient-to-r from-orange-500 to-yellow-500 text-white">
+        <ArrowLeft className="h-5 w-5 cursor-pointer" onClick={() => setTab("home")} />
+        <h2 className="font-bold text-lg">Login</h2>
       </div>
 
       <div className="px-4 mt-8 space-y-4">
+        {/* 手机号输入框 */}
         <div>
-          <label className="text-sm text-slate-500">Phone Number</label>
+          <label className="text-sm font-medium text-orange-700">Phone Number</label>
           <input
             type="text"
             value={phoneNumber}
             onChange={(e) => setPhoneNumber(e.target.value)}
             disabled={isLoading}
-            className="w-full py-2 px-3 text-sm text-slate-700 rounded-lg border focus:ring-2 focus:ring-yellow-400"
+            className="w-full py-3 px-4 text-sm rounded-xl border-2 border-orange-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition-all"
             placeholder="Enter your phone number"
           />
         </div>
 
+        {/* 密码输入框 */}
         <div>
-          <label className="text-sm text-slate-500">Password</label>
+          <label className="text-sm font-medium text-orange-700">Password</label>
           <input
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             disabled={isLoading}
-            className="w-full py-2 px-3 text-sm text-slate-700 rounded-lg border focus:ring-2 focus:ring-yellow-400"
+            className="w-full py-3 px-4 text-sm rounded-xl border-2 border-orange-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition-all"
             placeholder="Enter your password"
           />
-       </div>
+        </div>
 
-        {error && <div className="text-red-500 text-sm mt-2 p-2 bg-red-50 rounded">{error}</div>}
+        {/* 错误提示 */}
+        {error && (
+          <div className="text-red-600 text-sm p-3 bg-red-50 rounded-xl border border-red-200">
+            {error}
+          </div>
+        )}
 
+        {/* 登录按钮 - 印度风格渐变 */}
         <button
           onClick={handleLogin}
           disabled={isLoading}
-          className={`w-full text-slate-900 font-semibold py-3 rounded-xl mt-4 transition ${
-            isLoading ? 'bg-yellow-300 cursor-not-allowed' : 'bg-yellow-400 hover:bg-yellow-500'
+          className={`w-full py-4 rounded-xl font-bold text-lg transition-all shadow-lg ${
+            isLoading
+              ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
+              : 'bg-gradient-to-r from-orange-500 to-yellow-500 text-white hover:from-orange-600 hover:to-yellow-600 hover:scale-105'
           }`}
         >
           {isLoading ? 'Logging in...' : 'Login'}
         </button>
 
-        <div className="mt-6 text-center text-sm text-slate-500">
+        {/* 注册链接 */}
+        <div className="mt-6 text-center text-sm text-orange-700">
           Don't have an account?{" "}
-          <button onClick={() => setTab("register")} className="text-yellow-500 font-semibold" disabled={isLoading}>
-            Create an account
+          <button onClick={() => setTab("register")} className="font-bold text-orange-600 hover:underline" disabled={isLoading}>
+            Register Now
           </button>
         </div>
       </div>
