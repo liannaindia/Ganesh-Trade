@@ -55,7 +55,13 @@ export default function Register({ setTab, setIsLoggedIn }) {
 
       if (insertError) {
         console.error("Supabase insert error:", insertError);
-        setError(insertError.message || "Registration failed");
+
+        // 检查错误信息并提供不同的提示
+        if (insertError.message.includes('phone_number')) {
+          setError("This phone number is already registered. Please use a different number.");
+        } else {
+          setError(insertError.message || "Registration failed");
+        }
         setIsLoading(false);
         return;
       }
