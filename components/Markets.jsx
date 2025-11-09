@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 
-// 使用币安 API 实时获取市场数据
+// 获取币安市场数据，支持分页
 const Markets = () => {
   const [marketData, setMarketData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -11,7 +11,9 @@ const Markets = () => {
   // 获取币安市场数据，支持分页
   const fetchBinanceData = async (page) => {
     try {
-      const response = await fetch(`https://api.binance.com/api/v3/ticker/24hr`);
+      const limit = 20; // 每页显示 20 条数据
+      const offset = (page - 1) * limit; // 计算偏移量
+      const response = await fetch(`https://api.binance.com/api/v3/ticker/24hr?limit=${limit}&offset=${offset}`);
       const data = await response.json();
 
       // 过滤出以 USDT 结尾的币种，并按照市值从大到小排序
@@ -65,8 +67,19 @@ const Markets = () => {
     coin.symbol.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // 获取 LogoKit 图标链接
+  const getLogoUrl = (symbol) => {
+    const baseCurrency = getBaseCurrency(symbol);  // 提取币种名称
+    return `https://img.logokit.com/crypto/${baseCurrency}?token=pk_fr18743751bed15b82d28e`;
+  };
+
+  // 处理币种名称：去除交易对后缀（如 USDT，BUSD，但保留 BTC 和 ETH）
+  const getBaseCurrency = (symbol) => {
+    return symbol.replace(/(USDT|BUSD)$/g, '');
+  };
+
   if (loading && page === 1) {
-    return <div>Loading market data...</div>;
+    return <div className="text-center">Loading market data...</div>;
   }
 
   return (
@@ -95,7 +108,7 @@ const Markets = () => {
 
         <div className="divide-y divide-slate-100">
           {filteredData.length > 0 ? (
-            filteredData.map((coin, index) => (
+            filteredData.map((coin) => (
               <div key={coin.symbol} className="flex justify-between items-center py-2 text-sm">
                 <div className="flex items-center gap-2">
                   {/* 获取图标 */}
@@ -130,7 +143,9 @@ const Markets = () => {
 
       {/* 加载更多提示 */}
       {loading && page > 1 && (
-        <div className="text-center text-slate-500 py-4">Loading more...</div>
+        <div className="text-center text-slate-500 py-4">
+          <div className="spinner">Loading more...</div> {/* 可替换为一个加载动画 */}
+        </div>
       )}
 
       {/* 监视最后一个币种 */}
