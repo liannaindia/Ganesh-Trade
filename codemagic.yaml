@@ -9,43 +9,49 @@ workflows:
         ANDROID_KEYSTORE_PASSWORD: "$CM_KEYSTORE_PASSWORD"
         ANDROID_KEY_ALIAS: "$CM_KEY_ALIAS"
         ANDROID_KEY_PASSWORD: "$CM_KEY_PASSWORD"
-        APP_ID: "com.yourcompany.yourapp"   # 替换为你的 App ID
-        APP_NAME: "Your App Name"           # 替换为你的应用名
       node: latest
     triggering:
       events:
         - push
         - tag
     scripts:
-      - name: Checkout
+      - name: 检出代码
         script: |
           git checkout .
-      - name: Install dependencies
+
+      - name: 安装依赖
         script: |
           npm ci
-      - name: Build web app
+
+      - name: 构建 Web 应用
         script: |
           npm run build
-      - name: Install Capacitor
+
+      - name: 安装 Capacitor
         script: |
           npm install @capacitor/core @capacitor/cli @capacitor/android
-      - name: Initialize Capacitor (if config missing)
+
+      - name: 检查并添加 Android 平台
         script: |
-          if [ ! -f capacitor.config.json ] && [ ! -f capacitor.config.ts ]; then
-            npx cap init "$APP_NAME" "$APP_ID"
+          if [ ! -d "android" ]; then
+            echo "Adding Android platform..."
+            npx cap add android
+          else
+            echo "Android platform already exists."
           fi
-      - name: Add Android platform
-        script: |
-          npx cap add android
-      - name: Copy web assets to Android
+
+      - name: 同步资源
         script: |
           npx cap copy android
-      - name: Build APK (Release)
+
+      - name: 构建 APK
         script: |
           cd android
           ./gradlew assembleRelease --no-daemon
+
     artifacts:
       - android/app/build/outputs/apk/release/app-release.apk
+
     publishing:
       email:
         recipients:
