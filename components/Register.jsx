@@ -1,32 +1,19 @@
+// components/Register.jsx
 import React, { useState } from "react";
-import { supabase } from "../supabaseClient"; // 引入supabase客户端
-import { ArrowLeft } from "lucide-react"; // 引入返回箭头组件
+import { supabase } from "../supabaseClient";
+import { ArrowLeft } from "lucide-react";
 
-export default function Register({ setTab, setIsLoggedIn }) {
+export default function Register({ setTab, setIsLoggedIn, setUserId }) { // 新增 setUserId
   const [phoneNumber, setPhoneNumber] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false); // 加载状态
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleRegister = async () => {
     if (isLoading) return;
     setIsLoading(true);
-    setError(""); // 清空旧错误
-
-    // Prop 检查（调试用）
-    if (typeof setIsLoggedIn !== 'function') {
-      console.error('setIsLoggedIn is not a function!', setIsLoggedIn);
-      setError('Internal error: Invalid login state handler');
-      setIsLoading(false);
-      return;
-    }
-    if (typeof setTab !== 'function') {
-      console.error('setTab is not a function!', setTab);
-      setError('Internal error: Invalid tab handler');
-      setIsLoading(false);
-      return;
-    }
+    setError("");
 
     if (password !== confirmPassword) {
       setError("Passwords do not match");
@@ -34,7 +21,7 @@ export default function Register({ setTab, setIsLoggedIn }) {
       return;
     }
 
-    if (phoneNumber.length < 10) { // 简单验证手机号
+    if (phoneNumber.length < 10) {
       setError("Phone number must be at least 10 digits");
       setIsLoading(false);
       return;
@@ -46,12 +33,12 @@ export default function Register({ setTab, setIsLoggedIn }) {
         .insert([
           {
             phone_number: phoneNumber,
-            password_hash: password,  // TODO: 生产环境用哈希 (e.g., bcrypt)
+            password_hash: password,
             balance: 0.00,
-            available_balance: 0.00,  // 可用余额
+            available_balance: 0.00,
           }
         ])
-        .select(); // 返回插入数据，便于调试
+        .select(); // 必须加 .select() 才能返回 id
 
       if (insertError) {
         console.error("Supabase insert error:", insertError);
@@ -60,9 +47,22 @@ export default function Register({ setTab, setIsLoggedIn }) {
         return;
       }
 
-      console.log("Registration successful:", data); // 调试日志
+      if (!data || data.length === 0) {
+        setError("Registration failed: no user returned");
+        setIsLoading(false);
+        return;
+      }
+
+      const newUserId = data[0].id;
+
+      // 关键：保存到 localStorage + 同步设置状态
       localStorage.setItem('phone_number', phoneNumber);
+      localStorage.setItem('user_id', newUserId);
+
+      console.log("注册成功，user_id 已保存:", newUserId);
+
       setIsLoggedIn(true);
+      setUserId(newUserId); // 关键：同步设置 userId
       setTab("home");
     } catch (error) {
       console.error("Unexpected error during registration:", error);
