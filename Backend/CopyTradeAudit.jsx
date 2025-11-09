@@ -106,22 +106,23 @@ export default function CopyTradeAudit() {
     }
   };
 
-  // 拒绝跟单
-  const handleReject = async (id) => {
-    try {
-      const { error } = await supabase
-        .from("copytrades")
-        .update({ status: "rejected" })
-        .eq("id", id);
-      if (error) throw error;
+// 拒绝跟单
+const handleReject = async (id) => {
+  try {
+    // 更新 copytrades 状态为拒绝，并更新 order_status 为拒绝
+    const { error } = await supabase
+      .from("copytrades")
+      .update({ status: "rejected", order_status: "rejected" }) // 更新 order_status
+      .eq("id", id);
+    if (error) throw error;
 
-      alert("跟单已拒绝！");
-      fetchAudits(currentPage); // 刷新当前页
-    } catch (error) {
-      console.error("拒绝失败:", error);
-      alert("操作失败: " + error.message);
-    }
-  };
+    alert("跟单已拒绝！");
+    fetchAudits(currentPage); // 刷新当前页
+  } catch (error) {
+    console.error("拒绝失败:", error);
+    alert("操作失败: " + error.message);
+  }
+};
 
   const totalPages = Math.ceil(totalCount / pageSize);
 
