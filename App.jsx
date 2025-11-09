@@ -19,7 +19,7 @@ export default function App() {
   const [availableBalance, setAvailableBalance] = useState(0); // 新增 availableBalance 状态
   const [userId, setUserId] = useState(null);
 
-  // 1. 页面加载时恢复登录状态（修复：必须恢复 user_id）
+  // 1. 页面加载时恢复登录状态
   useEffect(() => {
     const savedPhone = localStorage.getItem('phone_number');
     const savedUserId = localStorage.getItem('user_id'); // 必须有
@@ -32,7 +32,7 @@ export default function App() {
     }
   }, []);
 
-  // 2. 全局实时余额订阅（修复：只有登录后才订阅，避免 CLOSED 循环）
+  // 2. 全局实时余额订阅
   useEffect(() => {
     let realtimeSubscriptionBalance = null;
     let realtimeSubscriptionAvailableBalance = null;
@@ -116,7 +116,7 @@ export default function App() {
         supabase.removeChannel(realtimeSubscriptionAvailableBalance);
       }
     };
-  }, [isLoggedIn, userId]); // 修复点：加上 userId 依赖
+  }, [isLoggedIn, userId]); // 加上 userId 依赖
 
   const renderPage = () => {
     switch (tab) {
@@ -129,7 +129,7 @@ export default function App() {
       case "trade":
         return <TradePage setTab={setTab} isLoggedIn={isLoggedIn} balance={balance} availableBalance={availableBalance} userId={userId} />;
       case "positions":
-        return <PositionsPage setTab={setTab} isLoggedIn={isLoggedIn} balance={balance}  availableBalance={availableBalance} userId={userId}  />;
+        return <PositionsPage setTab={setTab} isLoggedIn={isLoggedIn} balance={balance} availableBalance={availableBalance} userId={userId} />;
       case "me":
         return <MePage setTab={setTab} balance={balance} availableBalance={availableBalance} isLoggedIn={isLoggedIn} userId={userId} />;
       case "recharge":
