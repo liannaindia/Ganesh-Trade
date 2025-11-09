@@ -28,17 +28,17 @@ workflows:
             flutter create my_app
             cd my_app
             flutter pub add webview_flutter
-            # 4. 复制 React 构建文件到 Flutter 项目中
-            cp -r /mnt/data/build/* ./web/  # 将 React 构建文件复制到 WebView 文件夹
+            # 将 React 构建文件复制到 Flutter 项目中
+            cp -r /mnt/data/build/* ./web/  # 将 React 构建输出放入 Flutter WebView 文件夹
 
-      # 5. 构建 APK
+      # 4. 构建 APK
       - run:
           name: Build APK
           command: |
             flutter build apk --release
 
-      # 6. 部署 APK
-      - deploy:
+      # 5. 部署 APK
+      - publish:
           name: Deploy APK
           options:
             project_dir: build/app/outputs/flutter-apk/
