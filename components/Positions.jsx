@@ -60,7 +60,7 @@ export default function Positions({ isLoggedIn, balance, availableBalance, userI
             id: detail.id,
             name: mentor.name || 'Unknown',
             years: mentor.years || 0,
-            type: 'Daily Follow',
+            type: 'Pending orders',
             amount,
             earnings: '---',
             time,
