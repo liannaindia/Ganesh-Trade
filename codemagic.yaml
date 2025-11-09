@@ -1,7 +1,7 @@
 workflows:
   android:
     name: Build Android APK
-    instance_type: mac_mini_m1  # 使用 Codemagic 支持的实例类型
+    instance_type: mac_mini_m1
     scripts:
       - name: Clean Gradle cache and remove old files
         script: |
@@ -22,12 +22,13 @@ workflows:
           brew install openjdk@17
           export JAVA_HOME=$(brew --prefix openjdk@17)/libexec/openjdk.jdk/Contents/Home
           export PATH=$JAVA_HOME/bin:$PATH
-          echo "JAVA_HOME is set to: $JAVA_HOME"  # Check if JAVA_HOME is correctly set
+          echo "JAVA_HOME is set to: $JAVA_HOME"
       - name: Generate settings.gradle if not found
         script: |
           if [ ! -f settings.gradle ]; then
             echo "Generating settings.gradle..."
             echo "rootProject.name = 'your-project-name'" > settings.gradle
+            echo "include ':app'" >> settings.gradle
           fi
       - name: Generate Gradle Wrapper if not found
         script: |
@@ -38,6 +39,9 @@ workflows:
             sdk install gradle 7.2
             gradle wrapper
           fi
+      - name: List Gradle tasks
+        script: |
+          ./gradlew tasks
       - name: Build APK
         script: |
-          ./gradlew assembleDebug
+          ./gradlew assembleDebug  # 或者根据输出的任务列表，使用其他正确的任务名
