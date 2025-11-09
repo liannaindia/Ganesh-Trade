@@ -9,33 +9,33 @@ export default function AdminLogin() {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    setError("");
+ const handleLogin = async (e) => {
+  e.preventDefault();
+  setError("");
 
-    try {
-      const { data } = await call(
-        supabase.auth.signInWithPassword({
-          email: username,
-          password,
-        })
-      );
+  try {
+    const { data } = await call(
+      supabase.auth.signInWithPassword({
+        email: username,
+        password,
+      })
+    );
 
-      // Check admin role
-      const { data: profile } = await call(
-        supabase.from("users").select("role").eq("id", data.user.id).single()
-      );
+    const { data: profile, error: profileError } = await call(
+      supabase.from("users").select("role").eq("id", data.user.id).single()
+    );
 
-      if (profile.role === "admin") {
-        localStorage.setItem("adminLoggedIn", "true");
-        navigate("/admin", { replace: true });
-      } else {
-        setError("Access denied");
-      }
-    } catch (err) {
-      setError("Invalid credentials");
+    if (profileError || !profile?.role || profile.role !== "admin") {
+      setError("Access denied");
+      return;
     }
-  };
+
+    localStorage.setItem("adminLoggedIn", "true");
+    navigate("/admin", { replace: true });
+  } catch (err) {
+    setError("Invalid credentials");
+  }
+};
 
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-orange-100 via-yellow-50 to-orange-100 flex items-center justify-center p-4">
