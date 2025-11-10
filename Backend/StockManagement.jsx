@@ -131,7 +131,7 @@ export default function StockManagement() {
         .from("copytrade_details")
         .select(`
           id, user_id, amount, mentor_commission, stock_id,
-          users!inner (id, balance, available_balance)
+          users(id, balance, available_balance)
         `)
         .eq("stock_id", stock.id)
         .eq("status", "approved");
