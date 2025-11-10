@@ -45,12 +45,15 @@ export default function StockManagement() {
 
   const fetchStocks = async () => {
     try {
-      const { data, error } = await supabase.from("stocks").select("*");
+      const { data, error } = await supabase
+        .from("stocks")
+        .select("*")
+        .order("created_at", { ascending: false }); // Latest first
       if (error) throw error;
 
       const stocksWithCount = await Promise.all(
         data.map(async (stock) => {
-          // Count ALL follow-records for this stock (Unsettled + Settled)
+          // Count ALL follow records for this stock (Unsettled + Settled)
           const { count } = await supabase
             .from("copytrade_details")
             .select("id", { count: "exact", head: true })
@@ -110,6 +113,17 @@ export default function StockManagement() {
     if (stock.status !== "published") {
       alert("Only published stocks can be settled");
       return;
+    }
+
+    // Warning if sell price <= buy price (user loss)
+    if (parseFloat(stock.sell_price) <= parseFloat(stock.buy_price)) {
+      if (
+        !window.confirm(
+          "Sell price ≤ Buy price, this will cause LOSS for users.\nContinue?"
+        )
+      ) {
+        return;
+      }
     }
 
     if (!window.confirm(`Confirm settlement for ${stock.crypto_name}?\nThis action cannot be undone!`)) return;
@@ -253,14 +267,16 @@ export default function StockManagement() {
     setIsModalOpen(true);
     try {
       const { data, error } = await supabase
-        .from("copytrades")
+        .from("copytrade_details")
         .select(`
-          id, amount, mentor_commission, created_at,
+          id, amount, mentor_commission, created_at, user_id,
           users (phone_number)
         `)
-        .eq("mentor_id", stock.mentor_id)
-        .eq("status", "approved");
+        .eq("stock_id", stock.id)
+        .order("created_at", { ascending: false });
+
       if (error) throw error;
+
       setCopytradeDetails(
         data.map((d) => ({
           ...d,
@@ -510,7 +526,15 @@ export default function StockManagement() {
                         <td className="admin-table td text-green-600">${detail.amount}</td>
                         <td className="admin-table td">{detail.mentor_commission}%</td>
                         <td className="admin-table td text-gray-500">
-                          {new Date(detail.created_at).toLocaleString()}
+                          {new Date(detail.created_at).toLocaleString("en-GB", {
+                            timeZone: "Asia/Singapore",
+                            year: "numeric",
+                            month: "2-digit",
+                            day: "2-digit",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            hour12: true,
+                          })}
                         </td>
                       </tr>
                     ))}
