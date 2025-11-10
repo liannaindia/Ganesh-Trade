@@ -1,36 +1,35 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>TradyFi</title>
-    <meta name="theme-color" content="#ff9933" />
-    <meta name="description" content="TradyFi - Professional copy trading platform" />
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-    <!-- PWA 图标 -->
-    <link rel="icon" type="image/png" href="/public/3.png" />
-    <link rel="apple-touch-icon" href="/public/3.png" />
-    <link rel="manifest" href="/public/manifest.json" />
+/* ===== Ganesh Trade Admin Styles (Desktop) ===== */
+body {
+  font-family: 'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background-color: #f5f7fb;
+  color: #0f172a;
+ /* overflow: hidden;  固定视口，防止页面整体滚动 */
+}
 
-    <!-- iOS 支持 -->
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <meta name="apple-mobile-web-app-title" content="TradyFi" />
-  </head>
-  <body class="bg-slate-100">
-    <div id="root"></div>
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background-color: rgba(100, 116, 139, 0.4);
+  border-radius: 4px;
+}
 
-    <script type="module" src="./main.jsx"></script>
+nav {
+  background: rgba(255, 255, 255, 0.95);
+}
 
-    <!-- 注册 Service Worker -->
-    <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/service-worker.js')
-            .then(reg => console.log('SW registered:', reg))
-            .catch(err => console.log('SW failed:', err));
-        });
-      }
-    </script>
-  </body>
-</html>
+table {
+  border-collapse: collapse;
+}
+th, td {
+  white-space: nowrap;
+}
+
+input, button {
+  outline: none;
+}
