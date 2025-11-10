@@ -2,104 +2,92 @@ import { useState, useEffect } from "react";
 import { supabase } from "../supabaseClient";
 
 export default function Trade({ setTab, balance, userId, isLoggedIn }) {
-  const [query, setQuery] = useState(""); // 搜索框
-  const [mentors, setMentors] = useState([]); // 导师列表
-  const [isFollowing, setIsFollowing] = useState(false); // 判断是否在跟单页面
-  const [followingAmount, setFollowingAmount] = useState(""); // 跟单金额
-  const [selectedMentor, setSelectedMentor] = useState(null); // 选择的导师
-  const [userPhoneNumber, setUserPhoneNumber] = useState(""); // 用户手机号码
+  const [query, setQuery] = useState("");
+  const [mentors, setMentors] = useState([]);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followingAmount, setFollowingAmount] = useState("");
+  const [selectedMentor, setSelectedMentor] = useState(null);
+  const [userPhoneNumber, setUserPhoneNumber] = useState("");
 
-  // 确保 `useEffect` 只在 `isLoggedIn` 和 `userId` 更新时重新执行
   useEffect(() => {
-    if (!isLoggedIn || !userId) return; // 如果用户没有登录或没有userId则跳过
+    if (!isLoggedIn || !userId) return;
     fetchMentors();
-    fetchUserPhoneNumber(); // 获取用户手机号码
-  }, [isLoggedIn, userId]); // 依赖 `isLoggedIn` 和 `userId`
+    fetchUserPhoneNumber();
+  }, [isLoggedIn, userId]);
 
-  // 获取导师列表
   const fetchMentors = async () => {
     try {
       const { data, error } = await supabase.from("mentors").select("*");
       if (error) throw error;
       setMentors(data || []);
     } catch (error) {
-      console.error("获取导师失败:", error);
+      console.error("Failed to load mentors:", error);
     }
   };
 
-  // 获取用户手机号码
   const fetchUserPhoneNumber = async () => {
     try {
       const { data, error } = await supabase
-        .from('users')
-        .select('phone_number')
-        .eq('id', userId)
+        .from("users")
+        .select("phone_number")
+        .eq("id", userId)
         .single();
-
       if (error) throw error;
       setUserPhoneNumber(data?.phone_number || "");
     } catch (error) {
-      console.error("获取用户手机号码失败:", error);
+      console.error("Failed to load phone number:", error);
     }
   };
 
-  // 搜索过滤导师
   const filtered = mentors.filter((m) =>
     m.name.toLowerCase().includes(query.toLowerCase())
   );
 
-  // 选择导师后跳转到跟单页面
   const handleSelectMentor = (mentor) => {
-    setSelectedMentor(mentor); // 设置选择的导师
-    setIsFollowing(true); // 设置跟单页面状态
+    setSelectedMentor(mentor);
+    setIsFollowing(true);
   };
 
-  // 提交跟单请求
   const handleFollow = async () => {
     if (!followingAmount || parseFloat(followingAmount) <= 0) {
-      alert("请输入有效金额");
+      alert("Please enter a valid amount");
       return;
     }
-
     if (parseFloat(followingAmount) > balance) {
-      alert("余额不足");
+      alert("Insufficient balance");
       return;
     }
-
     if (!selectedMentor) {
-      alert("请选择导师");
+      alert("Please select a mentor");
       return;
     }
 
-    // 插入数据到 `copytrades` 表
     try {
-      const { data, error } = await supabase.from("copytrades").insert([{
+      const { error } = await supabase.from("copytrades").insert([{
         user_id: userId,
         mentor_id: selectedMentor.id,
         amount: parseFloat(followingAmount),
-        status: "pending",  // 初始状态为 pending
-        mentor_commission: selectedMentor.commission, // 新增导师佣金率
+        status: "pending",
+        mentor_commission: selectedMentor.commission,
       }]);
 
       if (error) throw error;
 
-      alert("跟单请求已提交，等待审批");
-      setIsFollowing(false); // 跳回导师选择页面
-      setFollowingAmount(""); // 清空金额
-      setSelectedMentor(null);  // 清空导师选择
+      alert("Follow request submitted, awaiting approval");
+      setIsFollowing(false);
+      setFollowingAmount("");
+      setSelectedMentor(null);
     } catch (error) {
-      console.error("跟单请求失败:", error);
-      alert("请求失败，请重试");
+      console.error("Follow request failed:", error);
+      alert("Request failed, please try again");
     }
   };
 
-  // 返回到导师选择页面
   const handleBack = () => {
     setIsFollowing(false);
-    setSelectedMentor(null);  // 清空选择的导师
+    setSelectedMentor(null);
   };
 
-  // 跳转到充值页面
   const handleRecharge = () => {
     setTab("recharge");
   };
@@ -116,7 +104,6 @@ export default function Trade({ setTab, balance, userId, isLoggedIn }) {
         overflow: "hidden",
       }}
     >
-      {/* 印度风背景纹饰（内联 SVG，半透明曼荼罗） */}
       <div
         style={{
           position: "absolute",
@@ -133,7 +120,6 @@ export default function Trade({ setTab, balance, userId, isLoggedIn }) {
         }}
       />
 
-      {/* 跟单页面 */}
       {isFollowing ? (
         <div style={{ padding: "24px" }}>
           <h2
@@ -265,7 +251,7 @@ export default function Trade({ setTab, balance, userId, isLoggedIn }) {
           </button>
 
           <button
-            onClick={handleFollow} // 触发跟单操作
+            onClick={handleFollow}
             style={{
               width: "100%",
               padding: "12px",
@@ -286,7 +272,6 @@ export default function Trade({ setTab, balance, userId, isLoggedIn }) {
         </div>
       ) : (
         <>
-          {/* 搜索框 */}
           <div style={{ position: "relative", margin: "20px 0" }}>
             <input
               value={query}
@@ -318,7 +303,6 @@ export default function Trade({ setTab, balance, userId, isLoggedIn }) {
             />
           </div>
 
-          {/* 导师列表 */}
           <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
             {filtered.map((m) => (
               <div
@@ -360,7 +344,7 @@ export default function Trade({ setTab, balance, userId, isLoggedIn }) {
                   </div>
                 </div>
                 <button
-                  onClick={() => handleSelectMentor(m)} // 选择导师
+                  onClick={() => handleSelectMentor(m)}
                   style={{
                     padding: "8px 16px",
                     background: "linear-gradient(135deg, #FFD700, #FF6B35)",
