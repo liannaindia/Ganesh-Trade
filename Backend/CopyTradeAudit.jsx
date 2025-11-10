@@ -98,7 +98,7 @@ export default function CopyTradeAudit() {
         return;
       }
 
-      // 3. 扣减余额 + 创建跟单明细 + 更新状态
+      // 3. 扣减余额
       const newBalance = user.available_balance - parsedAmount;
 
       const { error: balanceError } = await supabase
@@ -107,27 +107,23 @@ export default function CopyTradeAudit() {
         .eq("id", user_id);
       if (balanceError) throw balanceError;
 
-      const { error: detailError } = await supabase
-        .from("copytrade_details")
-        .insert({
-          user_id,
-          mentor_id,
-          amount: parsedAmount,
-          mentor_commission,
-          stock_id: stockId, // 确保是正确的 UUID 字符串
-          order_status: "Unsettled",
-          order_profit_amount: 0,
-          created_at: new Date().toISOString(),
-        });
-      if (detailError) throw detailError;
-
+      // 4. 更新 copytrades.status = 'approved' → 触发器会同步更新 copytrade_details.status = 'approved'
       const { error: statusError } = await supabase
         .from("copytrades")
         .update({ status: "approved" })
         .eq("id", id);
       if (statusError) throw statusError;
 
-      alert("跟单已批准！已扣除用户余额并创建跟单记录");
+      // 5. 手动关联 stock_id 到 copytrade_details（因为触发器不处理 stock_id）
+      const { error: detailUpdateError } = await supabase
+        .from("copytrade_details")
+        .update({ stock_id: stockId })
+        .eq("user_id", user_id)
+        .eq("mentor_id", mentor_id)
+        .eq("status", "approved"); // 确保更新刚批准的记录
+      if (detailUpdateError) throw detailUpdateError;
+
+      alert("跟单已批准！已扣除用户余额并更新跟单记录");
       fetchAudits(currentPage);
     } catch (error) {
       console.error("审批失败:", error);
@@ -137,6 +133,7 @@ export default function CopyTradeAudit() {
 
   const handleReject = async (id) => {
     try {
+      // 更新 copytrades.status = 'rejected' → 触发器会同步更新 copytrade_details.status = 'rejected'
       const { error } = await supabase
         .from("copytrades")
         .update({ status: "rejected" })
