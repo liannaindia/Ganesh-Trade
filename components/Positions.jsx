@@ -221,7 +221,7 @@ export default function Positions({
                   <div
                     className={`font-semibold ${
                       o.earnings.startsWith("+")
-                        ? "text-emerald-600
+                        ? "text-emerald-600"
                         : o.earnings.startsWith("-")
                         ? "text-rose-600"
                         : "text-slate-700"
