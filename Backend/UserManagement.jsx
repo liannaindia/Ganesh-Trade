@@ -26,48 +26,42 @@ export default function UserManagement() {
 
   if (loading) return <div className="p-6 text-center text-gray-500">加载中...</div>;
 
-  return (
-    <div className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-200">
-      <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-        <h2 className="text-xl font-bold text-gray-800">用户信息管理</h2>
-        <button
-          onClick={fetchUsers}
-          className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition"
-        >
-          刷新
-        </button>
-      </div>
-
-      <div className="overflow-auto max-h-[80vh]">
-        <table className="w-full border-collapse">
-          <thead className="bg-gray-50 border-b border-gray-200">
-            <tr>
-              <th className="w-[80px] px-6 py-3 text-center font-semibold text-gray-600 uppercase tracking-wider">ID</th>
-              <th className="w-[180px] px-6 py-3 text-center font-semibold text-gray-600 uppercase tracking-wider">手机号</th>
-              <th className="w-[100px] px-6 py-3 text-center font-semibold text-gray-600 uppercase tracking-wider">余额</th>
-              <th className="w-[200px] px-6 py-3 text-center font-semibold text-gray-600 uppercase tracking-wider">创建时间</th>
-              <th className="w-[120px] px-6 py-3 text-center font-semibold text-gray-600 uppercase tracking-wider">操作</th>
-            </tr>
-          </thead>
-
-          <tbody className="divide-y divide-gray-100 text-sm text-gray-800">
-            {users.map((user) => (
-              <tr key={user.id} className="hover:bg-gray-50 text-center align-middle">
-                <td className="px-6 py-3">{user.id}</td>
-                <td className="px-6 py-3">{user.phone_number}</td>
-                <td className="px-6 py-3 text-blue-600 font-semibold">${user.balance || 0}</td>
-                <td className="px-6 py-3 text-gray-500">
-                  {new Date(user.created_at).toLocaleString("zh-CN")}
-                </td>
-                <td className="px-6 py-3">
-                  <button className="text-blue-600 hover:text-blue-800 mr-3">编辑</button>
-                  <button className="text-red-600 hover:text-red-800">删除</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+ return (
+  <div className="admin-card">
+    <div className="flex justify-between items-center mb-6 p-6 border-b border-gray-100">
+      <h2 className="text-xl font-bold text-gray-800">用户信息管理</h2>
+      <button onClick={fetchUsers} className="btn-primary text-sm">
+        刷新
+      </button>
     </div>
-  );
+
+    <div className="overflow-auto max-h-[80vh]">
+      <table className="admin-table">
+        <thead>
+          <tr>
+            <th className="admin-table th">ID</th>
+            <th className="admin-table th">手机号</th>
+            <th className="admin-table th">余额</th>
+            <th className="admin-table th">创建时间</th>
+            <th className="admin-table th">操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          {users.map((user) => (
+            <tr key={user.id} className="hover:bg-gray-50 transition">
+              <td className="admin-table td">{user.id}</td>
+              <td className="admin-table td">{user.phone_number}</td>
+              <td className="admin-table td text-blue-600 font-semibold">${user.balance || 0}</td>
+              <td className="admin-table td text-gray-500">{new Date(user.created_at).toLocaleString("zh-CN")}</td>
+              <td className="admin-table td space-x-2">
+                <button className="btn-primary text-xs">编辑</button>
+                <button className="btn-danger text-xs">删除</button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </div>
+);
 }
