@@ -170,7 +170,7 @@ export default function Positions({
       </div>
 
       {/* Order List */}
-      <div className="space-y-3 max-h-[500px] overflow-y-auto">
+      <div className="space-y-3 max-h-[600px] overflow-y-auto">
         {list.length === 0 ? (
           <p className="text-center text-slate-500 py-8">
             {tab === "pending"
