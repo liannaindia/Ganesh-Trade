@@ -53,11 +53,13 @@ export default function StockManagement() {
 
       const stocksWithCount = await Promise.all(
         data.map(async (stock) => {
+          // 已绑定人数
           const { count: boundCount } = await supabase
             .from("copytrade_details")
             .select("id", { count: "exact", head: true })
             .eq("stock_id", stock.id);
 
+          // 可绑定人数（同导师、approved、未绑定）
           const { count: pendingBindCount } = await supabase
             .from("copytrade_details")
             .select("id", { count: "exact", head: true })
@@ -176,7 +178,7 @@ export default function StockManagement() {
       }
 
       const priceDiff = parseFloat(stock.sell_price) - parseFloat(stock.buy_price);
-      const updates = [];
+      const detailUpdates = [];
       const userUpdates = {};
 
       for (const detail of details) {
@@ -187,10 +189,9 @@ export default function StockManagement() {
         const userProfit = totalProfit * (1 - commissionRate);
         const finalAmount = amount + userProfit;
 
-        updates.push({
+        detailUpdates.push({
           id: detail.id,
           order_profit_amount: userProfit,
-          status: "settled",
         });
 
         const uid = detail.user_id.toString();
@@ -199,11 +200,21 @@ export default function StockManagement() {
         userUpdates[uid].available_balance += finalAmount;
       }
 
-      const { error: detailError } = await supabase
-        .from("copytrade_details")
-        .upsert(updates);
-      if (detailError) throw detailError;
+      // 批量更新 copytrade_details
+      const updateDetailPromises = detailUpdates.map(update =>
+        supabase
+          .from("copytrade_details")
+          .update({
+            order_profit_amount: update.order_profit_amount,
+            status: "settled"
+          })
+          .eq("id", update.id)
+      );
+      const detailResults = await Promise.all(updateDetailPromises);
+      const detailFailed = detailResults.find(r => r.error);
+      if (detailFailed) throw detailFailed.error;
 
+      // 更新用户余额
       const userBalancePromises = Object.entries(userUpdates).map(([uid, change]) =>
         supabase
           .from("users")
@@ -213,10 +224,11 @@ export default function StockManagement() {
           })
           .eq("id", uid)
       );
-      const results = await Promise.all(userBalancePromises);
-      const failed = results.find((r) => r.error);
-      if (failed) throw failed.error;
+      const userResults = await Promise.all(userBalancePromises);
+      const userFailed = userResults.find(r => r.error);
+      if (userFailed) throw userFailed.error;
 
+      // 更新股票状态
       const { error: stockError } = await supabase
         .from("stocks")
         .update({ status: "settled" })
@@ -477,14 +489,18 @@ export default function StockManagement() {
                     </span>
                   </td>
                   <td className="admin-table td">
-                    <div>
+                    <button
+                      onClick={() => openDetails(stock)}
+                      className="text-left text-blue-600 hover:underline cursor-pointer"
+                      title="点击查看跟单详情"
+                    >
                       <div className="font-medium">{stock.bound_count} 人</div>
                       {stock.pending_bind_count > 0 && stock.status === "pending" && (
-                        <div className="text-xs text-blue-600">
+                        <div className="text-xs text-gray-500">
                           可绑定: {stock.pending_bind_count} 人
                         </div>
                       )}
-                    </div>
+                    </button>
                   </td>
                   <td className="admin-table td space-x-1">
                     {stock.status === "pending" && (
