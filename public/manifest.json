@@ -1,1 +1,21 @@
-
+{
+  "name": "Trady DeFi",
+  "short_name": "TradyFi",
+  "description": "Trade, Invest and Play with TradyFi  Trade",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ff9933",
+  "icons": [
+    {
+      "src": "/image/3.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/image/3.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
