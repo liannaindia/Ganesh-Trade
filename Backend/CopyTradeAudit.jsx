@@ -38,12 +38,12 @@ export default function CopyTradeAudit() {
 
       const formatted = data.map((item) => ({
         ...item,
-        phone_number: item.users?.phone_number || "Unknown",
+        phone_number: item.users?.phone_number || "未知",
       }));
 
       setAudits(formatted);
     } catch (error) {
-      alert("Failed to load data: " + error.message);
+      alert("加载数据失败: " + error.message);
     } finally {
       setLoading(false);
     }
@@ -54,12 +54,12 @@ export default function CopyTradeAudit() {
     const parsedAmount = parseFloat(amount);
 
     if (isNaN(parsedAmount) || parsedAmount <= 0) {
-      alert("Invalid amount");
+      alert("金额无效");
       return;
     }
 
     try {
-      // 1. Check user balance
+      // 1. 检查用户余额
       const { data: user, error: userError } = await supabase
         .from("users")
         .select("available_balance")
@@ -67,11 +67,11 @@ export default function CopyTradeAudit() {
         .single();
       if (userError) throw userError;
       if (user.available_balance < parsedAmount) {
-        alert("Insufficient user balance");
+        alert("用户余额不足");
         return;
       }
 
-      // 2. Get current published stock for this mentor
+      // 2. 获取该导师当前进行中的上股
       const { data: stock, error: stockError } = await supabase
         .from("stocks")
         .select("id")
@@ -82,11 +82,11 @@ export default function CopyTradeAudit() {
         .single();
 
       if (stockError || !stock) {
-        alert("No active trading signal for this mentor");
+        alert("该导师暂无进行中的交易信号，无法批准跟单");
         return;
       }
 
-      // 3. Deduct balance + create detail + update status
+      // 3. 扣减余额 + 创建跟单明细 + 更新状态
       const newBalance = user.available_balance - parsedAmount;
 
       const { error: balanceError } = await supabase
@@ -115,11 +115,11 @@ export default function CopyTradeAudit() {
         .eq("id", id);
       if (statusError) throw statusError;
 
-      alert("Follow approved! Balance deducted and record created.");
+      alert("跟单已批准！已扣除用户余额并创建跟单记录");
       fetchAudits(currentPage);
     } catch (error) {
-      console.error("Approval failed:", error);
-      alert("Operation failed: " + error.message);
+      console.error("审批失败:", error);
+      alert("操作失败: " + error.message);
     }
   };
 
@@ -130,23 +130,23 @@ export default function CopyTradeAudit() {
         .update({ status: "rejected" })
         .eq("id", id);
       if (error) throw error;
-      alert("Follow rejected");
+      alert("跟单已拒绝");
       fetchAudits(currentPage);
     } catch (error) {
-      alert("Operation failed: " + error.message);
+      alert("操作失败: " + error.message);
     }
   };
 
   const totalPages = Math.ceil(totalCount / pageSize);
 
-  if (loading) return <div className="p-6 text-center text-gray-500">Loading...</div>;
+  if (loading) return <div className="p-6 text-center text-gray-500">加载中...</div>;
 
   return (
     <div className="admin-card">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-bold text-gray-800">Follow Requests</h2>
+        <h2 className="text-xl font-bold text-gray-800">跟单审核</h2>
         <button onClick={() => fetchAudits(currentPage)} className="btn-primary text-sm">
-          Refresh
+          刷新
         </button>
       </div>
 
@@ -155,19 +155,19 @@ export default function CopyTradeAudit() {
           <thead>
             <tr>
               <th className="admin-table th">ID</th>
-              <th className="admin-table th">Phone</th>
-              <th className="admin-table th">User ID</th>
-              <th className="admin-table th">Mentor ID</th>
-              <th className="admin-table th">Amount</th>
-              <th className="admin-table th">Commission</th>
-              <th className="admin-table th">Action</th>
+              <th className="admin-table th">手机号</th>
+              <th className="admin-table th">用户ID</th>
+              <th className="admin-table th">导师ID</th>
+              <th className="admin-table th">金额</th>
+              <th className="admin-table th">佣金率</th>
+              <th className="admin-table th">操作</th>
             </tr>
           </thead>
           <tbody>
             {audits.length === 0 ? (
               <tr>
                 <td colSpan="7" className="py-8 text-center text-gray-500">
-                  No pending requests
+                  暂无待审核跟单
                 </td>
               </tr>
             ) : (
@@ -188,13 +188,13 @@ export default function CopyTradeAudit() {
                       onClick={() => handleApprove(a)}
                       className="btn-primary text-xs"
                     >
-                      Approve
+                      批准
                     </button>
                     <button
                       onClick={() => handleReject(a.id)}
                       className="btn-danger text-xs"
                     >
-                      Reject
+                      拒绝
                     </button>
                   </td>
                 </tr>
@@ -211,17 +211,17 @@ export default function CopyTradeAudit() {
             disabled={currentPage === 1}
             className="btn-primary text-sm disabled:opacity-50"
           >
-            Previous
+            上一页
           </button>
           <span className="text-sm text-gray-600">
-            Page {currentPage} / {totalPages} (Total {totalCount})
+            第 {currentPage} / {totalPages} 页（共 {totalCount} 条）
           </span>
           <button
             onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
             disabled={currentPage === totalPages}
             className="btn-primary text-sm disabled:opacity-50"
           >
-            Next
+            下一页
           </button>
         </div>
       )}
