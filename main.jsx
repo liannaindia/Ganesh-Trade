@@ -1,335 +1,135 @@
-import React, { useState, useEffect } from "react";
+// src/main.jsx (已添加完整登录保护 + 防止直接访问)
+import React from "react";
+import ReactDOM from "react-dom/client";
 import {
-  RefreshCw,
-  Eye,
-  Settings,
-  Wallet,
-  ArrowDownCircle,
-  FileText,
-  UserCheck,
-  Bell,
-  Download,
-} from "lucide-react";
-import { supabase } from "../supabaseClient";
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Link,
+  useNavigate,
+  useLocation,
+} from "react-router-dom";
+import "./index.css";
 
-export default function Me({ setTab, userId, isLoggedIn }) {
-  const [balance, setBalance] = useState(0);
-  const [availableBalance, setAvailableBalance] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [showBalance, setShowBalance] = useState(true);
-  const [pnlToday, setPnlToday] = useState(0); // 当天利润
+// ==================== 前台组件 ====================
+import App from "./App";
+import Home from "./components/Home.jsx";
+import Markets from "./components/Markets.jsx";
+import Trade from "./components/Trade.jsx";
+import Positions from "./components/Positions.jsx";
+import Me from "./components/Me.jsx";
+import Recharge from "./components/Recharge.jsx";
+import Withdraw from "./components/Withdraw.jsx";
+import Invite from "./components/Invite.jsx";
 
-  // PWA 安装相关状态
-  const [showInstallBtn, setShowInstallBtn] = useState(false);
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+// ==================== 后台组件 ====================
+import AdminLogin from "./Backend/AdminLogin.jsx";
+import AdminDashboard from "./Backend/AdminDashboard.jsx";
+import UserManagement from "./Backend/UserManagement.jsx";
+import RechargeManagement from "./Backend/RechargeManagement.jsx";
+import WithdrawManagement from "./Backend/WithdrawManagement.jsx";
+import RechargeChannel from "./Backend/RechargeChannel.jsx";
+import MentorManagement from "./Backend/MentorManagement.jsx";
+import CopyTradeAudit from "./Backend/CopyTradeAudit.jsx";
+import StockManagement from "./Backend/StockManagement.jsx";
 
-  // 计算当天利润（印度时区）
-  const calculateTodayPnL = async (uid: string) => {
-    try {
-      const indiaTime = new Date().toLocaleString("en-US", {
-        timeZone: "Asia/Kolkata",
-      });
-      const indiaDate = new Date(indiaTime);
-      const startOfDay = new Date(indiaDate);
-      startOfDay.setHours(0, 0, 0, 0);
-      const endOfDay = new Date(indiaDate);
-      endOfDay.setHours(23, 59, 59, 999);
+// ==================== 受保护路由组件 ====================
+function ProtectedRoute({ children }) {
+  const navigate = useNavigate();
+  const location = useLocation();
 
-      const startUTC = new Date(startOfDay.toISOString());
-      const endUTC = new Date(endOfDay.toISOString());
-
-      const { data, error } = await supabase
-        .from("copytrade_details")
-        .select("order_profit_amount")
-        .eq("user_id", uid)
-        .eq("status", "settled")
-        .gte("created_at", startUTC.toISOString())
-        .lte("created_at", endUTC.toISOString());
-
-      if (error) {
-        console.error("Error fetching today's PnL:", error);
-        return;
-      }
-
-      const totalProfit = data.reduce(
-        (sum, row) => sum + (parseFloat(row.order_profit_amount) || 0),
-        0
-      );
-      setPnlToday(totalProfit);
-    } catch (err) {
-      console.error("Error calculating today's PnL:", err);
+  React.useEffect(() => {
+    const isAdmin = localStorage.getItem("adminLoggedIn") === "true";
+    // 任何 /admin 开头的路径，未登录一律跳转到登录页
+    if (!isAdmin && location.pathname.startsWith("/admin")) {
+      navigate("/admin-login", { replace: true, state: { from: location } });
     }
-  };
+  }, [location, navigate]);
 
-  // 实时获取用户余额 + PnL
-  useEffect(() => {
-    if (!isLoggedIn || !userId) {
-      setLoading(false);
-      return;
-    }
+  const isAdmin = localStorage.getItem("adminLoggedIn") === "true";
+  if (!isAdmin && location.pathname.startsWith("/admin")) {
+    return null; // 跳转中，防止闪烁
+  }
 
-    const fetchBalance = async () => {
-      try {
-        setLoading(true);
-        const { data, error } = await supabase
-          .from("users")
-          .select("balance, available_balance")
-          .eq("id", userId)
-          .single();
-
-        if (error) throw error;
-
-        setBalance(data.balance || 0);
-        setAvailableBalance(data.available_balance || 0);
-
-        // 首次计算当天利润
-        await calculateTodayPnL(userId);
-      }: any) => {
-        console.error("Failed to fetch balance:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchBalance();
-
-    // 实时订阅用户余额变化
-    const balanceSub = supabase
-      .channel(`user-balance-${userId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "users",
-          filter: `id=eq.${userId}`,
-        },
-        (payload) => {
-          setBalance(payload.new.balance || 0);
-          setAvailableBalance(payload.new.available_balance || 0);
-        }
-      )
-      .subscribe();
-
-    // 实时订阅 copytrade_details 表，当状态为 settled 时更新 PnL
-    const pnlSub = supabase
-      .channel(`pnl-today-${userId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "copytrade_details",
-          filter: `user_id=eq.${userId}`,
-        },
-        async (payload) => {
-          if (payload.new?.status === "settled") {
-            await calculateTodayPnL(userId);
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(balanceSub);
-      supabase.removeChannel(pnlSub);
-    };
-  }, [userId, isLoggedIn]);
-
-  // PWA 安装提示监听
-  useEffect(() => {
-    const handler = (e: any) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
-      setShowInstallBtn(true);
-    };
-    window.addEventListener("beforeinstallprompt", handler);
-
-    return () => window.removeEventListener("beforeinstallprompt", handler);
-  }, []);
-
-  // 触发安装
-  const handleInstall = () => {
-    if (!deferredPrompt) return;
-    deferredPrompt.prompt();
-    deferredPrompt.userChoice.then((choice: any) => {
-      if (choice.outcome === "accepted") {
-        console.log("PWA installed");
-        setShowInstallBtn(false);
-      }
-      setDeferredPrompt(null);
-    });
-  };
-
-  const handleRefresh = async () => {
-    if (!userId) return;
-    setLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from("users")
-        .select("balance, available_balance")
-        .eq("id", userId)
-        .single();
-      if (error) throw error;
-      setBalance(data.balance || 0);
-      setAvailableBalance(data.available_balance || 0);
-      await calculateTodayPnL(userId);
-    } catch (err) {
-      console.error("Refresh failed:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const formatNumber = (num: number) => {
-    return Number(num).toLocaleString("en-US", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
-  };
-
-  return (
-    <div className="px-4 pb-24 max-w-md mx-auto">
-      {/* ===== Header ===== */}
-      <div className="flex justify-center items-center mt-4 mb-3 relative">
-        <h2 className="text-lg font-bold text-slate-800 text-center">Me</h2>
-        <div className="absolute right-0 flex items-center gap-3 text-slate-500">
-          <RefreshCw
-            className="h-5 w-5 cursor-pointer hover:text-slate-700 transition"
-            onClick={handleRefresh}
-          />
-          <Settings className="h-5 w-5 cursor-pointer hover:text-slate-700 transition" />
-        </div>
-      </div>
-
-      {/* ===== Assets Card ===== */}
-      <div className="rounded-2xl bg-gradient-to-r from-slate-50 to-slate-100 border border-slate-200 shadow-sm p-4 mb-5">
-        <div className="flex items-center justify-between text-sm text-slate-500 mb-1">
-          <span>Total Assets (USDT)</span>
-          <Eye
-            className={`h-4 w-4 cursor-pointer transition ${
-              showBalance ? "text-slate-600" : "text-slate-400"
-            }`}
-            onClick={() => setShowBalance(!showBalance)}
-          />
-        </div>
-
-        <div className="text-3xl font-extrabold tracking-tight text-slate-900">
-          {loading ? (
-            <span className="animate-pulse">...</span>
-          ) : showBalance ? (
-            formatNumber(balance)
-          ) : (
-            "••••••"
-          )}
-        </div>
-
-        <div className="flex justify-between mt-3 text-[13px] text-slate-600">
-          <div>
-            <div>Available Balance</div>
-            <div className="font-bold text-slate-800">
-              {loading ? "..." : showBalance ? formatNumber(availableBalance) : "••••••"}
-            </div>
-          </div>
-          <div className="text-right">
-            <div>PnL Today</div>
-            <div
-              className={`font-bold ${
-                pnlToday > 0
-                  ? "text-emerald-600"
-                  : pnlToday < 0
-                  ? "text-rose-600"
-                  : "text-slate-800"
-              }`}
-            >
-              {loading
-                ? "..."
-                : showBalance
-                ? `${pnlToday >= 0 ? "+" : ""}${formatNumber(pnlToday)}`
-                : "••••••"}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ===== Recharge / Withdraw Buttons ===== */}
-      <div className="grid grid-cols-2 gap-3 mb-5">
-        <button
-          onClick={() => setTab("recharge")}
-          className="flex flex-col items-center justify-center rounded-2xl bg-white border border-slate-200 py-4 shadow-sm hover:bg-slate-50 transition"
-        >
-          <Wallet className="h-6 w-6 text-blue-500 mb-1" />
-          <span className="text-sm font-semibold text-slate-800">Recharge</span>
-        </button>
-
-        <button
-          onClick={() => setTab("withdraw")}
-          className="flex flex-col items-center justify-center rounded-2xl bg-white border border-slate-200 py-4 shadow-sm hover:bg-slate-50 transition"
-        >
-          <ArrowDownCircle className="h-6 w-6 text-orange-500 mb-1" />
-          <span className="text-sm font-semibold text-slate-800">Withdraw</span>
-        </button>
-      </div>
-
-      {/* ===== Menu List ===== */}
-      <div className="space-y-2">
-        {[
-          {
-            icon: <FileText className="h-5 w-5 text-slate-600" />,
-            label: "Follow Order",
-            tab: "positions",
-          },
-          {
-            icon: <FileText className="h-5 w-5 text-slate-600" />,
-            label: "Transactions",
-            tab: null,
-          },
-          {
-            icon: <UserCheck className="h-5 w-5 text-yellow-600" />,
-            label: "Agent Center",
-            tab: "invite",
-          },
-          {
-            icon: <Bell className="h-5 w-5 text-slate-600" />,
-            label: "Notification",
-            tab: null,
-          },
-          {
-            icon: <Download className="h-5 w-5 text-green-600" />,
-            label: "Install App",
-            tab: null,
-            onClick: handleInstall,
-          },
-        ].map((item, i) => (
-          <div
-            key={i}
-            onClick={() => {
-              if (item.tab) setTab(item.tab);
-              else if (item.onClick) item.onClick();
-            }}
-            className={`flex items-center justify-between bg-white border border-slate-200 rounded-xl px-4 py-3 shadow-sm hover:bg-slate-50 cursor-pointer transition ${
-              item.tab || item.onClick ? "" : "opacity-70"
-            }`}
-          >
-            <div className="flex items-center gap-3">
-              {item.icon}
-              <span className="text-sm font-medium text-slate-800">{item.label}</span>
-            </div>
-            <span className="text-slate-400">{">"}</span>
-          </div>
-        ))}
-      </div>
-
-      {/* 浮动安装按钮（仅在支持 PWA 时显示） */}
-      {showInstallBtn && (
-        <button
-          onClick={handleInstall}
-          className="fixed bottom-20 right-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white px-5 py-3 rounded-full shadow-lg flex items-center gap-2 hover:from-green-600 hover:to-emerald-700 transition z-50 animate-bounce"
-        >
-          <Download className="h-5 w-5" />
-          Install App
-        </button>
-      )}
-    </div>
-  );
+  return children;
 }
+
+// ==================== 404 页面 ====================
+const NotFound = () => (
+  <div className="flex items-center justify-center h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+    <div className="text-center p-10 bg-white rounded-2xl shadow-xl">
+      <h1 className="text-7xl font-bold text-gray-200 mb-4">404</h1>
+      <p className="text-xl text-gray-600 mb-6">页面不存在</p>
+      <div className="space-x-4">
+        <Link
+          to="/"
+          className="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition transform hover:scale-105"
+        >
+          返回首页
+        </Link>
+        <Link
+          to="/admin-login"
+          className="inline-block px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition transform hover:scale-105"
+        >
+          后台登录
+        </Link>
+      </div>
+    </div>
+  </div>
+);
+
+// ==================== 主渲染 ====================
+ReactDOM.createRoot(document.getElementById("root")).render(
+  <React.StrictMode>
+    <Router>
+      <Routes>
+        {/* ==================== 前台路由 ==================== */}
+        <Route path="/" element={<App />}>
+          <Route index element={<Home />} />
+          <Route path="markets" element={<Markets />} />
+          <Route path="trade" element={<Trade />} />
+          <Route path="positions" element={<Positions />} />
+          <Route path="me" element={<Me />} />
+          <Route path="recharge" element={<Recharge />} />
+          <Route path="withdraw" element={<Withdraw />} />
+          <Route path="invite" element={<Invite />} />
+        </Route>
+
+        {/* ==================== 后台独立登录页 ==================== */}
+        <Route path="/admin-login" element={<AdminLogin />} />
+
+        {/* ==================== 后台管理面板（必须登录） ==================== */}
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute>
+              <AdminDashboard />
+            </ProtectedRoute>
+          }
+        >
+          <Route
+            index
+            element={
+              <div className="p-8 bg-white rounded-xl shadow-sm">
+                <h1 className="text-3xl font-bold text-gray-800 mb-4">
+                  欢迎进入后台管理系统
+                </h1>
+                <p className="text-gray-600">请选择左侧菜单进行操作</p>
+              </div>
+            }
+          />
+          <Route path="users" element={<UserManagement />} />
+          <Route path="recharge" element={<RechargeManagement />} />
+          <Route path="withdraw" element={<WithdrawManagement />} />
+          <Route path="channels" element={<RechargeChannel />} />
+          <Route path="mentors" element={<MentorManagement />} />
+          <Route path="copytrade" element={<CopyTradeAudit />} />
+          <Route path="stocks" element={<StockManagement />} />
+        </Route>
+
+        {/* ==================== 404 兜底 ==================== */}
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </Router>
+  </React.StrictMode>
+);
