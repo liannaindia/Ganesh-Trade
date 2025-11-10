@@ -278,15 +278,15 @@ export default function Me({ setTab, userId, isLoggedIn }) {
             label: "Notification",
             tab: null,
           },
-          {
+         {
             icon: <Download className="h-5 w-5 text-slate-600" />,
             label: "Download APP",
-            tab: null,
+            onClick: handleInstallApp, // ✅ 改为点击安装
           },
         ].map((item, i) => (
           <div
             key={i}
-            onClick={() => item.tab && setTab(item.tab)}
+           onClick={item.onClick || (() => item.tab && setTab(item.tab))}
             className={`flex items-center justify-between bg-white border border-slate-200 rounded-xl px-4 py-3 shadow-sm hover:bg-slate-50 cursor-pointer transition ${
               item.tab ? "" : "opacity-70"
             }`}
