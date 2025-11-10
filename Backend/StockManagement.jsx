@@ -115,28 +115,29 @@ export default function StockManagement() {
     }
   };
 
+  // 修复：移除 profit 和 settled_at 更新，只更新 status
   const handleSettle = async (stock) => {
     if (!window.confirm(`确定结算 ${stock.crypto_name}？`)) return;
 
     try {
+      // 计算盈亏（仅用于显示，不存数据库）
       const profit = stock.sell_price - stock.buy_price;
 
+      // 只更新 status（避免 schema 错误）
       const { error } = await supabase
         .from("stocks")
         .update({ 
-          status: "settled", 
-          profit,
-          settled_at: new Date().toISOString()
+          status: "settled" 
         })
         .eq("id", stock.id);
 
       if (error) throw error;
 
       alert(
-        `结算成功！\\n币种：${stock.crypto_name}\\n盈亏：${profit > 0 ? "+" : ""}${profit.toFixed(2)} USD`
+        `结算成功！\n币种：${stock.crypto_name}\n盈亏：${profit > 0 ? "+" : ""}${profit.toFixed(2)} USD`
       );
 
-      fetchStocks();
+      fetchStocks(); // 刷新，跟单数保持不变
     } catch (error) {
       console.error("结算失败:", error);
       alert("结算失败: " + error.message);
@@ -204,7 +205,7 @@ export default function StockManagement() {
       setCopytradeDetails(
         data.map((d) => ({
           ...d,
-          phone_number: d.users?.phone_number || "未知",  // 修复：从 move_number 改为 phone_number
+          phone_number: d.users?.phone_number || "未知",
         }))
       );
     } catch (error) {
@@ -398,7 +399,7 @@ export default function StockManagement() {
                     {stock.status === "pending" && (
                       <button
                         onClick={() => handlePublish(stock.id)}
-                        className="btn-primary text-xs"  // 已确认：上股按钮使用 btn-primary
+                        className="btn-primary text-xs"
                       >
                         上架
                       </button>
@@ -406,7 +407,7 @@ export default function StockManagement() {
                     {stock.status === "published" && (
                       <button
                         onClick={() => handleSettle(stock)}
-                        className="btn-primary text-xs"  // 修复：结算按钮统一为 btn-primary（渐变样式）
+                        className="btn-primary text-xs"
                       >
                         结算
                       </button>
@@ -433,7 +434,7 @@ export default function StockManagement() {
 
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl p-6 w-full max-w-4xl shadow-2xl max-h-[90vh] overflow-y-auto">  {/* 修复：统一高度 + 滚动 */}
+          <div className="bg-white rounded-xl p-6 w-full max-w-4xl shadow-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-xl font-bold">
                 跟单详情 - {selectedStock?.crypto_name}
@@ -451,7 +452,7 @@ export default function StockManagement() {
               <div className="text-center py-8 text-gray-500">暂无跟单记录</div>
             ) : (
               <div className="overflow-auto">
-                <table className="admin-table">  {/* 修复：模态框表格也使用 admin-table */}
+                <table className="admin-table">
                   <thead>
                     <tr>
                       <th className="admin-table th">手机号</th>
