@@ -2,8 +2,8 @@ import { useState, useEffect } from "react";
 import { supabase } from "../supabaseClient";
 
 export default function StockManagement() {
-  const [stocks, setStocks] = useState<any[]>([]);
-  const [mentors, setMentors] = useState<any[]>([]);
+  const [stocks, setStocks] = useState([]);
+  const [mentors, setMentors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isAdding, setIsAdding] = useState(false);
   const [newStock, setNewStock] = useState({
@@ -12,8 +12,8 @@ export default function StockManagement() {
     buy_price: "",
     sell_price: "",
   });
-  const [selectedStock, setSelectedStock] = useState<any>(null);
-  const [copytradeDetails, setCopytradeDetails] = useState<any[]>([]);
+  const [selectedStock, setSelectedStock] = useState(null);
+  const [copytradeDetails, setCopytradeDetails] = useState([]);
   const [detailsLoading, setDetailsLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -37,7 +37,7 @@ export default function StockManagement() {
         .select("id, name, commission");
       if (error) throw error;
       setMentors(data || []);
-    } catch (error: any) {
+    } catch (error) {
       alert("加载导师失败: " + error.message);
     }
   };
@@ -52,14 +52,14 @@ export default function StockManagement() {
 
       const stocksWithCount = await Promise.all(
         data.map(async (stock) => {
-          // 已绑定（approved）
+          // 已绑定人数（只算 approved）
           const { count: boundCount } = await supabase
             .from("copytrade_details")
             .select("id", { count: "exact", head: true })
             .eq("stock_id", stock.id)
             .eq("status", "approved");
 
-          // 可绑定（approved + 未绑定）
+          // 可绑定人数（approved + 未绑定）
           const { count: pendingBindCount } = await supabase
             .from("copytrade_details")
             .select("id", { count: "exact", head: true })
@@ -76,7 +76,7 @@ export default function StockManagement() {
       );
 
       setStocks(stocksWithCount);
-    } catch (error: any) {
+    } catch (error) {
       alert("加载上股信息失败: " + error.message);
     } finally {
       setLoading(false);
@@ -101,12 +101,12 @@ export default function StockManagement() {
       setNewStock({ mentor_id: "", crypto_name: "", buy_price: "", sell_price: "" });
       setIsAdding(false);
       fetchStocks();
-    } catch (error: any) {
+    } catch (error) {
       alert("添加失败: " + error.message);
     }
   };
 
-  const handlePublish = async (id: string) => {
+  const handlePublish = async (id) => {
     const stock = stocks.find((s) => s.id === id);
     if (!stock) return;
 
@@ -136,19 +136,27 @@ export default function StockManagement() {
 
       alert(`上架成功！已为 ${approvedDetails?.length || 0} 位用户绑定跟单`);
       fetchStocks();
-    } catch (error: any) {
+    } catch (error) {
       alert("上架失败: " + error.message);
     }
   };
 
-  const handleSettle = async (stock: any) => {
+  const handleSettle = async (stock) => {
     if (stock.status !== "published") {
       alert("只有「进行中」的上股可以结算");
       return;
     }
+
     if (parseFloat(stock.sell_price) <= parseFloat(stock.buy_price)) {
-      if (!window.confirm("卖出价 ≤ 买入价，将导致用户亏损。\n是否继续？")) return;
+      if (
+        !window.confirm(
+          "卖出价 ≤ 买入价，将导致用户亏损。\n是否继续？"
+        )
+      ) {
+        return;
+      }
     }
+
     if (!window.confirm(`确定结算 ${stock.crypto_name}？\n此操作不可逆！`)) return;
 
     try {
@@ -168,17 +176,21 @@ export default function StockManagement() {
       }
 
       const priceDiff = parseFloat(stock.sell_price) - parseFloat(stock.buy_price);
-      const detailUpdates: any[] = [];
-      const userUpdates: Record<string, { balance: number; available_balance: number }> = {};
+      const detailUpdates = [];
+      const userUpdates = {};
 
       for (const detail of details) {
         const amount = parseFloat(detail.amount);
         const commissionRate = detail.mentor_commission / 100;
+
         const totalProfit = priceDiff * amount;
         const userProfit = totalProfit * (1 - commissionRate);
         const finalAmount = amount + userProfit;
 
-        detailUpdates.push({ id: detail.id, order_profit_amount: userProfit });
+        detailUpdates.push({
+          id: detail.id,
+          order_profit_amount: userProfit,
+        });
 
         const uid = detail.user_id.toString();
         if (!userUpdates[uid]) userUpdates[uid] = { balance: 0, available_balance: 0 };
@@ -186,74 +198,89 @@ export default function StockManagement() {
         userUpdates[uid].available_balance += finalAmount;
       }
 
-      // 批量更新明细
-      await Promise.all(
-        detailUpdates.map((u) =>
-          supabase
-            .from("copytrade_details")
-            .update({ order_profit_amount: u.order_profit_amount, status: "settled" })
-            .eq("id", u.id)
-        )
+      // 批量更新 copytrade_details
+      const updateDetailPromises = detailUpdates.map((update) =>
+        supabase
+          .from("copytrade_details")
+          .update({
+            order_profit_amount: update.order_profit_amount,
+            status: "settled",
+          })
+          .eq("id", update.id)
       );
+      const detailResults = await Promise.all(updateDetailPromises);
+      const detailFailed = detailResults.find((r) => r.error);
+      if (detailFailed) throw detailFailed.error;
 
       // 更新用户余额
-      await Promise.all(
-        Object.entries(userUpdates).map(async ([uid, change]) => {
-          const { data: user, error: fetchError } = await supabase
-            .from("users")
-            .select("balance, available_balance")
-            .eq("id", uid)
-            .single();
-          if (fetchError) throw fetchError;
+      const userBalancePromises = Object.entries(userUpdates).map(async ([uid, change]) => {
+        const { data: user, error: fetchError } = await supabase
+          .from("users")
+          .select("balance, available_balance")
+          .eq("id", uid)
+          .single();
+        if (fetchError) throw fetchError;
 
-          const newBalance = (parseFloat(user.balance) || 0) + change.balance;
-          const newAvailable = (parseFloat(user.available_balance) || 0) + change.available_balance;
+        const newBalance = (parseFloat(user.balance) || 0) + change.balance;
+        const newAvailable = (parseFloat(user.available_balance) || 0) + change.available_balance;
 
-          await supabase
-            .from("users")
-            .update({ balance: newBalance, available_balance: newAvailable })
-            .eq("id", uid);
-        })
-      );
+        const { error: updateError } = await supabase
+          .from("users")
+          .update({
+            balance: newBalance,
+            available_balance: newAvailable,
+          })
+          .eq("id", uid);
+        if (updateError) throw updateError;
+      });
+      await Promise.all(userBalancePromises);
 
       // 更新股票状态
-      await supabase.from("stocks").update({ status: "settled" }).eq("id", stock.id);
+      const { error: stockError } = await supabase
+        .from("stocks")
+        .update({ status: "settled" })
+        .eq("id", stock.id);
+      if (stockError) throw stockError;
 
       const totalReleased = details.reduce((s, d) => s + parseFloat(d.amount), 0);
       const totalUserProfit = details.reduce((s, d) => {
-        const profit = (priceDiff * parseFloat(d.amount)) * (1 - d.mentor_commission / 100);
+        const profit =
+          (priceDiff * parseFloat(d.amount)) * (1 - d.mentor_commission / 100);
         return s + profit;
       }, 0);
 
       alert(
-        `结算成功！\n跟单人数：${details.length}\n释放冻结资金：${totalReleased.toFixed(
-          2
-        )} USD\n用户实得盈亏：${totalUserProfit.toFixed(2)} USD\n总到账：${(
-          totalReleased + totalUserProfit
-        ).toFixed(2)} USD`
+        `结算成功！\n` +
+          `跟单人数：${details.length}\n` +
+          `释放冻结资金：${totalReleased.toFixed(2)} USD\n` +
+          `用户实得盈亏：${totalUserProfit.toFixed(2)} USD\n` +
+          `总到账：${(totalReleased + totalUserProfit).toFixed(2)} USD`
       );
+
       fetchStocks();
-    } catch (error: any) {
+    } catch (error) {
+      console.error("结算失败:", error);
       alert("结算失败: " + error.message);
     }
   };
 
-  const handleDeleteStock = async (id: string) => {
+  const handleDeleteStock = async (id) => {
     if (!window.confirm("确定删除此上股？")) return;
     try {
       const { error } = await supabase.from("stocks").delete().eq("id", id);
       if (error) throw error;
       alert("删除成功");
-      fetchStocks(); // 修复原代码中的 typo
-    } catch (error: any) {
+      fetchStocks(); // 修复 typo
+    } catch (error) {
       alert("删除失败: " + error.message);
     }
   };
 
-  const openDetails = async (stock: any) => {
+  const openDetails = async (stock) => {
     setSelectedStock(stock);
     setDetailsLoading(true);
     setIsModalOpen(true);
+
     try {
       const { data, error } = await supabase
         .from("copytrade_details")
@@ -265,12 +292,14 @@ export default function StockManagement() {
         .eq("status", "approved");
 
       if (error) throw error;
-      const formatted = data.map((d) => ({
-        ...d,
-        phone_number: d.users?.phone_number || "未知",
+
+      const formattedDetails = data.map((detail) => ({
+        ...detail,
+        phone_number: detail.users?.phone_number || "未知",
       }));
-      setCopytradeDetails(formatted);
-    } catch (error: any) {
+
+      setCopytradeDetails(formattedDetails);
+    } catch (error) {
       alert("加载跟单详情失败: " + error.message);
     } finally {
       setDetailsLoading(false);
@@ -283,7 +312,7 @@ export default function StockManagement() {
     setSelectedStock(null);
   };
 
-  const handleEditStock = (stock: any) => {
+  const handleEditStock = (stock) => {
     setEditStock({
       id: stock.id,
       mentor_id: stock.mentor_id,
@@ -294,7 +323,7 @@ export default function StockManagement() {
     setIsEditing(true);
   };
 
-  const handleUpdateStock = async (e: React.FormEvent) => {
+  const handleUpdateStock = async (e) => {
     e.preventDefault();
     try {
       const { error } = await supabase
@@ -310,7 +339,7 @@ export default function StockManagement() {
       alert("更新成功");
       setIsEditing(false);
       fetchStocks();
-    } catch (error: any) {
+    } catch (error) {
       alert("更新失败: " + error.message);
     }
   };
@@ -319,7 +348,7 @@ export default function StockManagement() {
 
   return (
     <div className="admin-card">
-      {/* ---------- 添加表单 ---------- */}
+      {/* 添加表单 */}
       {isAdding && (
         <form
           onSubmit={(e) => {
@@ -373,7 +402,7 @@ export default function StockManagement() {
         </form>
       )}
 
-      {/* ---------- 编辑表单 ---------- */}
+      {/* 编辑表单 */}
       {isEditing && (
         <form onSubmit={handleUpdateStock} className="space-y-4 mb-6">
           <select
@@ -426,7 +455,7 @@ export default function StockManagement() {
         </form>
       )}
 
-      {/* ---------- 股票表格 ---------- */}
+      {/* 股票列表 */}
       <div className="overflow-auto max-h-[80vh]">
         <table className="admin-table">
           <thead>
@@ -511,7 +540,7 @@ export default function StockManagement() {
         </table>
       </div>
 
-      {/* ---------- 跟单详情模态框 ---------- */}
+      {/* 跟单详情模态框 */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl p-6 w-full max-w-4xl shadow-2xl max-h-[90vh] overflow-y-auto">
