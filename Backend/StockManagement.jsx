@@ -3,27 +3,27 @@ import { supabase } from "../supabaseClient";
 
 export default function StockManagement() {
   const [stocks, setStocks] = useState([]);
-const [mentors, setMentors] = useState([]);
-const [loading, setLoading] = useState(true);
-const [isAdding, setIsAdding] = useState(false);
-const [newStock, setNewStock] = useState({
-  mentor_id: "",
-  crypto_name: "",
-  buy_price: "",
-  sell_price: "",
-});
-const [selectedStock, setSelectedStock] = useState(null);
-const [copytradeDetails, setCopytradeDetails] = useState([]);
-const [detailsLoading, setDetailsLoading] = useState(false);
-const [isModalOpen, setIsModalOpen] = useState(false);
-const [isEditing, setIsEditing] = useState(false);
-const [editStock, setEditStock] = useState({
-  id: "",
-  mentor_id: "",
-  crypto_name: "",
-  buy_price: "",
-  sell_price: "",
-});
+  const [mentors, setMentors] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [isAdding, setIsAdding] = useState(false);
+  const [newStock, setNewStock] = useState({
+    mentor_id: "",
+    crypto_name: "",
+    buy_price: "",
+    sell_price: "",
+  });
+  const [selectedStock, setSelectedStock] = useState(null);
+  const [copytradeDetails, setCopytradeDetails] = useState([]);
+  const [detailsLoading, setDetailsLoading] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editStock, setEditStock] = useState({
+    id: "",
+    mentor_id: "",
+    crypto_name: "",
+    buy_price: "",
+    sell_price: "",
+  });
 
   useEffect(() => {
     fetchMentors();
@@ -53,13 +53,11 @@ const [editStock, setEditStock] = useState({
 
       const stocksWithCount = await Promise.all(
         data.map(async (stock) => {
-          // 已绑定人数（当前 stock_id）
           const { count: boundCount } = await supabase
             .from("copytrade_details")
             .select("id", { count: "exact", head: true })
             .eq("stock_id", stock.id);
 
-          // 可绑定人数（同导师、approved、未绑定）
           const { count: pendingBindCount } = await supabase
             .from("copytrade_details")
             .select("id", { count: "exact", head: true })
@@ -102,17 +100,16 @@ const [editStock, setEditStock] = useState({
       setNewStock({ mentor_id: "", crypto_name: "", buy_price: "", sell_price: "" });
       setIsAdding(false);
       fetchStocks();
-    } catch (error: any) {
+    } catch (error) {
       alert("添加失败: " + error.message);
     }
   };
 
-  const handlePublish = async (id: string) => {
+  const handlePublish = async (id) => {
     const stock = stocks.find(s => s.id === id);
     if (!stock) return;
 
     try {
-      // 查找可绑定记录
       const { data: approvedDetails, error: queryError } = await supabase
         .from("copytrade_details")
         .select("id")
@@ -122,7 +119,6 @@ const [editStock, setEditStock] = useState({
 
       if (queryError) throw queryError;
 
-      // 批量绑定 stock_id
       if (approvedDetails && approvedDetails.length > 0) {
         const { error: bindError } = await supabase
           .from("copytrade_details")
@@ -131,7 +127,6 @@ const [editStock, setEditStock] = useState({
         if (bindError) throw bindError;
       }
 
-      // 更新股票状态
       const { error: publishError } = await supabase
         .from("stocks")
         .update({ status: "published" })
@@ -141,12 +136,12 @@ const [editStock, setEditStock] = useState({
       const bound = approvedDetails?.length || 0;
       alert(`上架成功！已为 ${bound} 位用户绑定跟单`);
       fetchStocks();
-    } catch (error: any) {
+    } catch (error) {
       alert("上架失败: " + error.message);
     }
   };
 
-  const handleSettle = async (stock: any) => {
+  const handleSettle = async (stock) => {
     if (stock.status !== "published") {
       alert("只有「进行中」的上股可以结算");
       return;
@@ -181,8 +176,8 @@ const [editStock, setEditStock] = useState({
       }
 
       const priceDiff = parseFloat(stock.sell_price) - parseFloat(stock.buy_price);
-      const updates: any[] = [];
-      const userUpdates: Record<string, { balance: number; available_balance: number }> = {};
+      const updates = [];
+      const userUpdates = {};
 
       for (const detail of details) {
         const amount = parseFloat(detail.amount);
@@ -244,25 +239,25 @@ const [editStock, setEditStock] = useState({
       );
 
       fetchStocks();
-    } catch (error: any) {
+    } catch (error) {
       console.error("结算失败:", error);
       alert("结算失败: " + error.message);
     }
   };
 
-  const handleDeleteStock = async (id: string) => {
+  const handleDeleteStock = async (id) => {
     if (!window.confirm("确定删除此上股？")) return;
     try {
       const { error } = await supabase.from("stocks").delete().eq("id", id);
       if (error) throw error;
       alert("删除成功");
       fetchStocks();
-    } catch (error: any) {
+    } catch (error) {
       alert("删除失败: " + error.message);
     }
   };
 
-  const handleEditStock = (stock: any) => {
+  const handleEditStock = (stock) => {
     setEditStock({
       id: stock.id,
       mentor_id: stock.mentor_id.toString(),
@@ -273,7 +268,7 @@ const [editStock, setEditStock] = useState({
     setIsEditing(true);
   };
 
-  const handleUpdateStock = async (e: React.FormEvent) => {
+  const handleUpdateStock = async (e) => {
     e.preventDefault();
     try {
       const { error } = await supabase
@@ -289,12 +284,12 @@ const [editStock, setEditStock] = useState({
       alert("更新成功");
       setIsEditing(false);
       fetchStocks();
-    } catch (error: any) {
+    } catch (error) {
       alert("更新失败: " + error.message);
     }
   };
 
-  const openDetails = async (stock: any) => {
+  const openDetails = async (stock) => {
     setSelectedStock(stock);
     setIsModalOpen(true);
     setDetailsLoading(true);
@@ -308,13 +303,13 @@ const [editStock, setEditStock] = useState({
         .eq("stock_id", stock.id);
       if (error) throw error;
 
-      const formattedDetails = data.map((item: any) => ({
+      const formattedDetails = data.map((item) => ({
         ...item,
         phone_number: item.users?.phone_number || "未知",
       }));
 
       setCopytradeDetails(formattedDetails);
-    } catch (error: any) {
+    } catch (error) {
       alert("加载跟单详情失败: " + error.message);
     } finally {
       setDetailsLoading(false);
@@ -404,7 +399,7 @@ const [editStock, setEditStock] = useState({
             placeholder="币种名称"
             value={editStock.crypto_name}
             onChange={(e) => setEditStock({ ...editStock, crypto_name: e.target.value })}
-            className="admin-input tuổi
+            className="admin-input"
           />
 
           <input
@@ -545,7 +540,7 @@ const [editStock, setEditStock] = useState({
                     </tr>
                   </thead>
                   <tbody>
-                    {copytradeDetails.map((detail: any) => (
+                    {copytradeDetails.map((detail) => (
                       <tr key={detail.id} className="hover:bg-gray-50">
                         <td className="admin-table td font-medium text-blue-600">{detail.phone_number}</td>
                         <td className="admin-table td text-green-600">${detail.amount}</td>
