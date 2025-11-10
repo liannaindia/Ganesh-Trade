@@ -96,47 +96,54 @@ export default function StockManagement() {
 
   const handlePublish = async (id) => {
     try {
-      const { data: stockData, error: stockError } = await supabase
+      // 1. 获取该上股的导师ID
+      const { data: stockData, error: fetchError } = await supabase
         .from("stocks")
         .select("mentor_id")
         .eq("id", id)
         .single();
-      if (stockError) throw stockError;
+      if (fetchError) throw fetchError;
 
       const mentorId = stockData.mentor_id;
 
+      // 2. 上架
       const { error: publishError } = await supabase
         .from("stocks")
         .update({ status: "published" })
         .eq("id", id);
       if (publishError) throw publishError;
 
-      // 自动绑定所有已批准但未绑定的跟单
-      const { data: pendingDetails, error: bindError } = await supabase
+      // 3. 查找该导师所有已批准但未绑定的跟单
+      const { data: approvedDetails, error: queryError } = await supabase
         .from("copytrade_details")
         .select("id")
         .eq("mentor_id", mentorId)
         .eq("status", "approved")
         .is("stock_id", null);
-      if (bindError) throw bindError;
 
-      const updates = pendingDetails.map(d => ({
-        id: d.id,
-        stock_id: id
-      }));
+      if (queryError) throw queryError;
 
-      if (updates.length > 0) {
-        const { error: updateError } = await supabase
+      // 4. 批量绑定 stock_id
+      if (approvedDetails.length > 0) {
+        const updates = approvedDetails.map((detail) => ({
+          id: detail.id,
+          stock_id: id,
+        }));
+
+        const { error: bindError } = await supabase
           .from("copytrade_details")
           .upsert(updates);
-        if (updateError) throw updateError;
-        alert(`上股已上架！已为 ${updates.length} 位用户绑定跟单`);
+        if (bindError) throw bindError;
+
+        alert(`上股已上架！已为 ${approvedDetails.length} 位用户绑定跟单`);
       } else {
-        alert("上股已上架");
+        alert("上股已上架（暂无待绑定跟单）");
       }
 
+      // 5. 刷新列表
       fetchStocks();
     } catch (error) {
+      console.error("上架失败:", error);
       alert("操作失败: " + error.message);
     }
   };
