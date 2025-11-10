@@ -12,24 +12,12 @@ import {
 } from "lucide-react";
 import { supabase } from "../supabaseClient";
 
-// ✅ 点击安装 APP（方案 A）
-const handleInstallApp = async () => {
-  if (window.deferredPrompt) {
-    window.deferredPrompt.prompt(); // 弹出安装提示
-    const { outcome } = await window.deferredPrompt.userChoice;
-    console.log(`📲 用户选择安装结果: ${outcome}`);
-    window.deferredPrompt = null; // 防止重复触发
-  } else {
-    alert("Please use your browser's 'Add to Home Screen' option to install the app.");
-  }
-};
-
 export default function Me({ setTab, userId, isLoggedIn }) {
   const [balance, setBalance] = useState(0);
   const [availableBalance, setAvailableBalance] = useState(0);
   const [loading, setLoading] = useState(true);
   const [showBalance, setShowBalance] = useState(true);
-  const [pnlToday, setPnlToday] = useState(0); // ✅ 当天利润
+  const [pnlToday, setPnlToday] = useState(0); // ✅ 新增：当天利润
 
   // ✅ 计算当天利润（印度时区）
   const calculateTodayPnL = async (uid) => {
@@ -69,7 +57,7 @@ export default function Me({ setTab, userId, isLoggedIn }) {
     }
   };
 
-  // ✅ 实时更新余额与 PnL
+  // ✅ 实时获取用户余额 + PnL
   useEffect(() => {
     if (!isLoggedIn || !userId) {
       setLoading(false);
@@ -90,6 +78,7 @@ export default function Me({ setTab, userId, isLoggedIn }) {
         setBalance(data.balance || 0);
         setAvailableBalance(data.available_balance || 0);
 
+        // 首次计算当天利润
         await calculateTodayPnL(userId);
       } catch (err) {
         console.error("Failed to fetch balance:", err);
@@ -118,7 +107,7 @@ export default function Me({ setTab, userId, isLoggedIn }) {
       )
       .subscribe();
 
-    // ✅ 实时订阅订单变化（更新利润）
+    // ✅ 实时订阅 copytrade_details 表，当状态为 settled 时更新 PnL
     const pnlSub = supabase
       .channel(`pnl-today-${userId}`)
       .on(
@@ -163,11 +152,12 @@ export default function Me({ setTab, userId, isLoggedIn }) {
     }
   };
 
-  const formatNumber = (num) =>
-    Number(num).toLocaleString("en-US", {
+  const formatNumber = (num) => {
+    return Number(num).toLocaleString("en-US", {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     });
+  };
 
   return (
     <div className="px-4 pb-24 max-w-md mx-auto">
@@ -278,12 +268,12 @@ export default function Me({ setTab, userId, isLoggedIn }) {
           {
             icon: <Download className="h-5 w-5 text-slate-600" />,
             label: "Download APP",
-            onClick: handleInstallApp, // ✅ 点击立即触发安装提示
+            tab: null,
           },
         ].map((item, i) => (
           <div
             key={i}
-            onClick={item.onClick || (() => item.tab && setTab(item.tab))}
+            onClick={() => item.tab && setTab(item.tab)}
             className={`flex items-center justify-between bg-white border border-slate-200 rounded-xl px-4 py-3 shadow-sm hover:bg-slate-50 cursor-pointer transition ${
               item.tab ? "" : "opacity-70"
             }`}
