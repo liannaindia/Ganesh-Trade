@@ -214,19 +214,28 @@ export default function StockManagement() {
       const detailFailed = detailResults.find(r => r.error);
       if (detailFailed) throw detailFailed.error;
 
-      // 更新用户余额
-      const userBalancePromises = Object.entries(userUpdates).map(([uid, change]) =>
-        supabase
+      // 修复：客户端查询 + 计算 + 更新用户余额
+      const userBalancePromises = Object.entries(userUpdates).map(async ([uid, change]) => {
+        const { data: user, error: fetchError } = await supabase
+          .from("users")
+          .select("balance, available_balance")
+          .eq("id", uid)
+          .single();
+        if (fetchError) throw fetchError;
+
+        const newBalance = (parseFloat(user.balance) || 0) + change.balance;
+        const newAvailable = (parseFloat(user.available_balance) || 0) + change.available_balance;
+
+        const { error: updateError } = await supabase
           .from("users")
           .update({
-            balance: supabase.raw(`balance + ${change.balance}`),
-            available_balance: supabase.raw(`available_balance + ${change.available_balance}`),
+            balance: newBalance,
+            available_balance: newAvailable,
           })
-          .eq("id", uid)
-      );
-      const userResults = await Promise.all(userBalancePromises);
-      const userFailed = userResults.find(r => r.error);
-      if (userFailed) throw userFailed.error;
+          .eq("id", uid);
+        if (updateError) throw updateError;
+      });
+      await Promise.all(userBalancePromises);
 
       // 更新股票状态
       const { error: stockError } = await supabase
