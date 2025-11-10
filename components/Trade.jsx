@@ -49,39 +49,39 @@ export default function Trade({ setTab, balance, userId, isLoggedIn }) {
   };
 
   const handleFollow = async () => {
-    if (!followingAmount || parseFloat(followingAmount) <= 0) {
-      alert("Please enter a valid amount");
-      return;
-    }
-    if (parseFloat(followingAmount) > balance) {
-      alert("Insufficient balance");
-      return;
-    }
-    if (!selectedMentor) {
-      alert("Please select a mentor");
-      return;
-    }
+  if (!followingAmount || parseFloat(followingAmount) <= 0) {
+    alert("Please enter a valid amount");
+    return;
+  }
+  if (parseFloat(followingAmount) > balance) {
+    alert("Insufficient balance");
+    return;
+  }
+  if (!selectedMentor) {
+    alert("Please select a mentor");
+    return;
+  }
 
+  try {
+    const { error } = await supabase.from("copytrades").insert([{
+      user_id: userId,
+      mentor_id: selectedMentor.id,
+      amount: parseFloat(followingAmount),
+      status: "pending",
+      mentor_commission: selectedMentor.commission,
+    }]);
 
-      const { error } = await supabase.from("copytrades").insert([{
-        user_id: userId,
-        mentor_id: selectedMentor.id,
-        amount: parseFloat(followingAmount),
-        status: "pending",
-        mentor_commission: selectedMentor.commission,
-      }]);
+    if (error) throw error;
 
-      if (error) throw error;
-
-      alert("Follow request submitted, awaiting approval");
-      setIsFollowing(false);
-      setFollowingAmount("");
-      setSelectedMentor(null);
-    } catch (error) {
-      console.error("Follow request failed:", error);
-      alert("Request failed, please try again");
-    }
-  };
+    alert("Follow request submitted, awaiting approval");
+    setIsFollowing(false);
+    setFollowingAmount("");
+    setSelectedMentor(null);
+  } catch (error) {
+    console.error("Follow request failed:", error);
+    alert("Request failed, please try again");
+  }
+};
 
   const handleBack = () => {
     setIsFollowing(false);
