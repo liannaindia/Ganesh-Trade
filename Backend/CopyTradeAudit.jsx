@@ -6,15 +6,15 @@ export default function CopyTradeAudit() {
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
-  const [statusFilter, setStatusFilter] = useState("all"); // 新增：状态过滤
+  const [statusFilter, setStatusFilter] = useState("all"); // 全部状态
   const pageSize = 10;
 
-  // 每次分页或过滤改变时重新加载
+  // 页面加载或过滤改变时重新请求
   useEffect(() => {
     fetchAudits(currentPage, statusFilter);
   }, [currentPage, statusFilter]);
 
-  const fetchAudits = async (page: number, filter: string) => {
+  const fetchAudits = async (page, filter) => {
     try {
       setLoading(true);
 
@@ -49,19 +49,18 @@ export default function CopyTradeAudit() {
       const formatted = data.map((item) => ({
         ...item,
         phone_number: item.users?.phone_number || "未知",
-        detail_status:
-          item.copytrade_details?.[0]?.status || item.status, // 优先使用明细状态
+        detail_status: item.copytrade_details?.[0]?.status || item.status,
       }));
 
       setAudits(formatted);
-    } catch (error: any) {
+    } catch (error) {
       alert("加载数据失败: " + error.message);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleApprove = async (copytrade: any) => {
+  const handleApprove = async (copytrade) => {
     const { id, user_id, amount } = copytrade;
     const parsedAmount = parseFloat(amount);
     if (isNaN(parsedAmount) || parsedAmount <= 0) {
@@ -70,7 +69,7 @@ export default function CopyTradeAudit() {
     }
 
     try {
-      // 1. 检查余额
+      // 检查余额
       const { data: user, error: userError } = await supabase
         .from("users")
         .select("available_balance")
@@ -82,7 +81,7 @@ export default function CopyTradeAudit() {
         return;
       }
 
-      // 2. 扣减余额
+      // 扣减余额
       const newBalance = user.available_balance - parsedAmount;
       const { error: balanceError } = await supabase
         .from("users")
@@ -90,7 +89,7 @@ export default function CopyTradeAudit() {
         .eq("id", user_id);
       if (balanceError) throw balanceError;
 
-      // 3. 批准（触发器会同步到 copytrade_details）
+      // 批准
       const { error: statusError } = await supabase
         .from("copytrades")
         .update({ status: "approved" })
@@ -99,12 +98,12 @@ export default function CopyTradeAudit() {
 
       alert("跟单已批准！");
       fetchAudits(currentPage, statusFilter);
-    } catch (error: any) {
+    } catch (error) {
       alert("操作失败: " + error.message);
     }
   };
 
-  const handleReject = async (id: number) => {
+  const handleReject = async (id) => {
     try {
       const { error } = await supabase
         .from("copytrades")
@@ -113,7 +112,7 @@ export default function CopyTradeAudit() {
       if (error) throw error;
       alert("跟单已拒绝");
       fetchAudits(currentPage, statusFilter);
-    } catch (error: any) {
+    } catch (error) {
       alert("操作失败: " + error.message);
     }
   };
@@ -127,7 +126,7 @@ export default function CopyTradeAudit() {
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-bold text-gray-800">跟单审核（全部订单）</h2>
 
-        {/* 新增：状态过滤 + 刷新 */}
+        {/* 状态过滤 + 刷新 */}
         <div className="flex items-center gap-2">
           <select
             value={statusFilter}
