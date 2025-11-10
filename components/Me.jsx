@@ -17,8 +17,47 @@ export default function Me({ setTab, userId, isLoggedIn }) {
   const [availableBalance, setAvailableBalance] = useState(0);
   const [loading, setLoading] = useState(true);
   const [showBalance, setShowBalance] = useState(true);
+  const [pnlToday, setPnlToday] = useState(0); // ✅ 新增：当天利润
 
-  // 实时获取用户余额
+  // ✅ 计算当天利润（印度时区）
+  const calculateTodayPnL = async (uid) => {
+    try {
+      const indiaTime = new Date().toLocaleString("en-US", {
+        timeZone: "Asia/Kolkata",
+      });
+      const indiaDate = new Date(indiaTime);
+      const startOfDay = new Date(indiaDate);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(indiaDate);
+      endOfDay.setHours(23, 59, 59, 999);
+
+      const startUTC = new Date(startOfDay.toISOString());
+      const endUTC = new Date(endOfDay.toISOString());
+
+      const { data, error } = await supabase
+        .from("copytrade_details")
+        .select("order_profit_amount")
+        .eq("user_id", uid)
+        .eq("status", "settled")
+        .gte("created_at", startUTC.toISOString())
+        .lte("created_at", endUTC.toISOString());
+
+      if (error) {
+        console.error("Error fetching today's PnL:", error);
+        return;
+      }
+
+      const totalProfit = data.reduce(
+        (sum, row) => sum + (parseFloat(row.order_profit_amount) || 0),
+        0
+      );
+      setPnlToday(totalProfit);
+    } catch (err) {
+      console.error("Error calculating today's PnL:", err);
+    }
+  };
+
+  // ✅ 实时获取用户余额 + PnL
   useEffect(() => {
     if (!isLoggedIn || !userId) {
       setLoading(false);
@@ -38,6 +77,9 @@ export default function Me({ setTab, userId, isLoggedIn }) {
 
         setBalance(data.balance || 0);
         setAvailableBalance(data.available_balance || 0);
+
+        // 首次计算当天利润
+        await calculateTodayPnL(userId);
       } catch (err) {
         console.error("Failed to fetch balance:", err);
       } finally {
@@ -47,8 +89,8 @@ export default function Me({ setTab, userId, isLoggedIn }) {
 
     fetchBalance();
 
-    // 实时订阅余额变化
-    const subscription = supabase
+    // ✅ 实时订阅用户余额变化
+    const balanceSub = supabase
       .channel(`user-balance-${userId}`)
       .on(
         "postgres_changes",
@@ -65,8 +107,28 @@ export default function Me({ setTab, userId, isLoggedIn }) {
       )
       .subscribe();
 
+    // ✅ 实时订阅 copytrade_details 表，当状态为 settled 时更新 PnL
+    const pnlSub = supabase
+      .channel(`pnl-today-${userId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "copytrade_details",
+          filter: `user_id=eq.${userId}`,
+        },
+        async (payload) => {
+          if (payload.new?.status === "settled") {
+            await calculateTodayPnL(userId);
+          }
+        }
+      )
+      .subscribe();
+
     return () => {
-      supabase.removeChannel(subscription);
+      supabase.removeChannel(balanceSub);
+      supabase.removeChannel(pnlSub);
     };
   }, [userId, isLoggedIn]);
 
@@ -82,6 +144,7 @@ export default function Me({ setTab, userId, isLoggedIn }) {
       if (error) throw error;
       setBalance(data.balance || 0);
       setAvailableBalance(data.available_balance || 0);
+      await calculateTodayPnL(userId);
     } catch (err) {
       console.error("Refresh failed:", err);
     } finally {
@@ -99,9 +162,9 @@ export default function Me({ setTab, userId, isLoggedIn }) {
   return (
     <div className="px-4 pb-24 max-w-md mx-auto">
       {/* ===== Header ===== */}
-      <div className="flex justify-between items-center mt-4 mb-3">
-        <h2 className="text-lg font-bold text-slate-800">Me</h2>
-        <div className="flex items-center gap-3 text-slate-500">
+      <div className="flex justify-center items-center mt-4 mb-3 relative">
+        <h2 className="text-lg font-bold text-slate-800 text-center">Me</h2>
+        <div className="absolute right-0 flex items-center gap-3 text-slate-500">
           <RefreshCw
             className="h-5 w-5 cursor-pointer hover:text-slate-700 transition"
             onClick={handleRefresh}
@@ -141,7 +204,21 @@ export default function Me({ setTab, userId, isLoggedIn }) {
           </div>
           <div className="text-right">
             <div>PnL Today</div>
-            <div className="font-bold text-slate-800">0.00 / 0%</div>
+            <div
+              className={`font-bold ${
+                pnlToday > 0
+                  ? "text-emerald-600"
+                  : pnlToday < 0
+                  ? "text-rose-600"
+                  : "text-slate-800"
+              }`}
+            >
+              {loading
+                ? "..."
+                : showBalance
+                ? `${pnlToday >= 0 ? "+" : ""}${formatNumber(pnlToday)}`
+                : "••••••"}
+            </div>
           </div>
         </div>
       </div>
