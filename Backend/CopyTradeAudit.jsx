@@ -87,10 +87,10 @@ export default function CopyTradeAudit() {
       }
 
       // 安全提取 UUID 字符串（防御 Supabase 返回 { value: '...' } 的情况）
-      let stockId: string;
+      let stockId;
       if (typeof stock.id === "string") {
         stockId = stock.id;
-      } else if (stock.id && typeof stock.id === "object" && "value" in stock.id) {
+      } else if (stock.id && typeof stock.id === "object" && stock.id.value) {
         stockId = stock.id.value;
       } else {
         console.error("Invalid stock.id format:", stock.id);
