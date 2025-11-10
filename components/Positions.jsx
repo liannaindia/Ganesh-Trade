@@ -26,7 +26,7 @@ export default function Positions({
       const { data: details, error } = await supabase
         .from("copytrade_details")
         .select(`
-          id, amount, order_profit_amount, order_status, created_at,
+          id, amount, order_profit_amount, status, created_at,
           mentor_id, stock_id,
           mentors (name, years, img)
         `)
@@ -59,7 +59,7 @@ export default function Positions({
 
         entrust += amount;
 
-        if (d.order_status === "Unsettled") {
+        if (d.status === "approved") {
           posAssets += amount;
           pend.push({
             id: d.id,
@@ -74,7 +74,7 @@ export default function Positions({
               mentor.img ||
               "https://randomuser.me/api/portraits/women/65.jpg",
           });
-        } else if (d.order_status === "Settled") {
+        } else if (d.status === "settled") {
           floatPL += profit;
           const earnings =
             profit >= 0 ? `+${profit.toFixed(2)}` : profit.toFixed(2);
