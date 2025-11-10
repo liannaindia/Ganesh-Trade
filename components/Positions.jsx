@@ -21,12 +21,10 @@ export default function Positions({ isLoggedIn, balance, availableBalance, userI
     setAvailable(availableBalance || 0);
 
     const fetchCopytradeDetails = async () => {
-      // 定义当天日期范围（使用当前日期动态计算）
       const today = new Date();
       const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate()).toISOString();
       const todayEnd = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59).toISOString();
 
-      // 查询copytrade_details，当天数据，联表mentors
       const { data: details, error: detailsError } = await supabase
         .from('copytrade_details')
         .select(`id, amount, order_profit_amount, order_status, created_at, mentor_id, mentors (name, years, img)`)
@@ -39,10 +37,9 @@ export default function Positions({ isLoggedIn, balance, availableBalance, userI
         return;
       }
 
-      // 计算汇总
       let posAssets = 0;
       let floatPL = 0;
-      let entrust = 0; // 假设entrusted为所有amount总和
+      let entrust = 0;
       const pend = [];
       const comp = [];
 
