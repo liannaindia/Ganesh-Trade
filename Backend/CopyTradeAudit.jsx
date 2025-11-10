@@ -6,64 +6,71 @@ export default function CopyTradeAudit() {
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
+  const [statusFilter, setStatusFilter] = useState("all"); // 新增：状态过滤
   const pageSize = 10;
 
+  // 每次分页或过滤改变时重新加载
   useEffect(() => {
-    fetchAudits(currentPage);
-  }, [currentPage]);
+    fetchAudits(currentPage, statusFilter);
+  }, [currentPage, statusFilter]);
 
-  const fetchAudits = async (page) => {
+  const fetchAudits = async (page: number, filter: string) => {
     try {
       setLoading(true);
 
-      // 统计 pending + approved 总数，使用 "planned" 计数来优化性能
-      const { count } = await supabase
+      // 1. 统计总数（根据过滤）
+      const countQuery = supabase
         .from("copytrades")
-        .select("*", { count: "planned", head: true })
-        .in("status", ["pending", "approved"]);
+        .select("*", { count: "planned", head: true });
 
+      if (filter !== "all") countQuery.eq("status", filter);
+      const { count } = await countQuery;
       setTotalCount(count || 0);
 
+      // 2. 分页查询
       const from = (page - 1) * pageSize;
       const to = from + pageSize - 1;
 
-      // 查询 pending 和 approved 的订单
-      const { data, error } = await supabase
+      const query = supabase
         .from("copytrades")
         .select(`
           id, user_id, mentor_id, amount, status, created_at, mentor_commission,
-          users (phone_number)
+          users (phone_number),
+          copytrade_details!copytrade_id (status, stock_id, order_profit_amount)
         `)
-        .in("status", ["pending", "approved"])
         .range(from, to)
         .order("id", { ascending: false });
+
+      if (filter !== "all") query.eq("status", filter);
+      const { data, error } = await query;
 
       if (error) throw error;
 
       const formatted = data.map((item) => ({
         ...item,
         phone_number: item.users?.phone_number || "未知",
+        detail_status:
+          item.copytrade_details?.[0]?.status || item.status, // 优先使用明细状态
       }));
 
       setAudits(formatted);
-    } catch (error) {
+    } catch (error: any) {
       alert("加载数据失败: " + error.message);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleApprove = async (copytrade) => {
-    const { id, user_id, mentor_id, amount, mentor_commission } = copytrade;
+  const handleApprove = async (copytrade: any) => {
+    const { id, user_id, amount } = copytrade;
     const parsedAmount = parseFloat(amount);
-
     if (isNaN(parsedAmount) || parsedAmount <= 0) {
       alert("金额无效");
       return;
     }
 
     try {
-      // 1. 检查用户余额
+      // 1. 检查余额
       const { data: user, error: userError } = await supabase
         .from("users")
         .select("available_balance")
@@ -83,24 +90,21 @@ export default function CopyTradeAudit() {
         .eq("id", user_id);
       if (balanceError) throw balanceError;
 
-      // 3. 更新状态为 approved
+      // 3. 批准（触发器会同步到 copytrade_details）
       const { error: statusError } = await supabase
         .from("copytrades")
         .update({ status: "approved" })
         .eq("id", id);
       if (statusError) throw statusError;
 
-      alert("跟单已批准！已扣除用户余额并更新跟单记录");
-
-      // 刷新当前页（approved 订单仍会显示）
-      fetchAudits(currentPage);
-    } catch (error) {
-      console.error("审批失败:", error);
+      alert("跟单已批准！");
+      fetchAudits(currentPage, statusFilter);
+    } catch (error: any) {
       alert("操作失败: " + error.message);
     }
   };
 
-  const handleReject = async (id) => {
+  const handleReject = async (id: number) => {
     try {
       const { error } = await supabase
         .from("copytrades")
@@ -108,8 +112,8 @@ export default function CopyTradeAudit() {
         .eq("id", id);
       if (error) throw error;
       alert("跟单已拒绝");
-      fetchAudits(currentPage);
-    } catch (error) {
+      fetchAudits(currentPage, statusFilter);
+    } catch (error: any) {
       alert("操作失败: " + error.message);
     }
   };
@@ -121,10 +125,33 @@ export default function CopyTradeAudit() {
   return (
     <div className="admin-card">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-bold text-gray-800">跟单审核</h2>
-        <button onClick={() => fetchAudits(currentPage)} className="btn-primary text-sm">
-          刷新
-        </button>
+        <h2 className="text-xl font-bold text-gray-800">跟单审核（全部订单）</h2>
+
+        {/* 新增：状态过滤 + 刷新 */}
+        <div className="flex items-center gap-2">
+          <select
+            value={statusFilter}
+            onChange={(e) => {
+              setStatusFilter(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="admin-input w-40"
+          >
+            <option value="all">全部状态</option>
+            <option value="pending">待审核</option>
+            <option value="approved">已批准</option>
+            <option value="rejected">已拒绝</option>
+            <option value="cancelled">已取消</option>
+            <option value="settled">已结算</option>
+          </select>
+
+          <button
+            onClick={() => fetchAudits(currentPage, statusFilter)}
+            className="btn-primary text-sm"
+          >
+            刷新
+          </button>
+        </div>
       </div>
 
       <div className="overflow-auto max-h-[80vh]">
@@ -144,8 +171,8 @@ export default function CopyTradeAudit() {
           <tbody>
             {audits.length === 0 ? (
               <tr>
-                <td colSpan="8" className="py-8 text-center text-gray-500">
-                  暂无待处理跟单
+                <td colSpan={8} className="py-8 text-center text-gray-500">
+                  暂无跟单记录
                 </td>
               </tr>
             ) : (
@@ -164,18 +191,34 @@ export default function CopyTradeAudit() {
                   <td className="admin-table td">
                     <span
                       className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        a.status === "pending"
+                        a.detail_status === "pending"
                           ? "bg-yellow-100 text-yellow-800"
-                          : a.status === "approved"
+                          : a.detail_status === "approved"
                           ? "bg-emerald-100 text-emerald-800"
+                          : a.detail_status === "rejected"
+                          ? "bg-red-100 text-red-800"
+                          : a.detail_status === "cancelled"
+                          ? "bg-orange-100 text-orange-800"
+                          : a.detail_status === "settled"
+                          ? "bg-gray-100 text-gray-800"
                           : "bg-gray-100 text-gray-800"
                       }`}
                     >
-                      {a.status === "pending" ? "待审核" : a.status === "approved" ? "已批准" : "已拒绝"}
+                      {a.detail_status === "pending"
+                        ? "待审核"
+                        : a.detail_status === "approved"
+                        ? "已批准"
+                        : a.detail_status === "rejected"
+                        ? "已拒绝"
+                        : a.detail_status === "cancelled"
+                        ? "已取消"
+                        : a.detail_status === "settled"
+                        ? "已结算"
+                        : a.detail_status}
                     </span>
                   </td>
                   <td className="admin-table td space-x-2">
-                    {a.status === "pending" ? (
+                    {a.detail_status === "pending" ? (
                       <>
                         <button
                           onClick={() => handleApprove(a)}
@@ -201,6 +244,7 @@ export default function CopyTradeAudit() {
         </table>
       </div>
 
+      {/* 分页 */}
       {totalCount > pageSize && (
         <div className="flex justify-center items-center gap-4 p-4 border-t border-gray-200">
           <button
