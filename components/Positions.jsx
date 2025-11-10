@@ -257,9 +257,11 @@ export default function Positions({
                     <span
                       className={`font-semibold ${
                         o.status === "In Progress"
-                          ? "text-yellow-500"
-                          : "text-emerald-600"
-                      }`}
+                           ? "text-yellow-500"
+                            : o.status === "Rejected"
+                            ? "text-rose-600"
+                            : "text-emerald-600"
+                       }`}
                     >
                       {o.status}
                     </span>
