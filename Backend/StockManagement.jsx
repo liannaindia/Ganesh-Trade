@@ -134,7 +134,7 @@ export default function StockManagement() {
           users!inner (id, balance, available_balance)
         `)
         .eq("stock_id", stock.id)
-        .eq("order_status", "Unsettled");
+        .eq("status", "approved");
 
       if (fetchError) throw fetchError;
       if (!details || details.length === 0) {
@@ -157,7 +157,7 @@ export default function StockManagement() {
         updates.push({
           id: detail.id,
           order_profit_amount: userProfit,
-          order_status: "Settled",
+          status: "settled",
         });
 
         const uid = detail.user_id;
@@ -213,34 +213,30 @@ export default function StockManagement() {
   };
 
   const handleDeleteStock = async (id) => {
-    if (!window.confirm("确定删除该上股？")) return;
+    if (!window.confirm("确定删除此上股？")) return;
     try {
       const { error } = await supabase.from("stocks").delete().eq("id", id);
       if (error) throw error;
+      alert("删除成功");
       fetchStocks();
     } catch (error) {
-      alert("删除失败");
+      alert("删除失败: " + error.message);
     }
   };
 
   const handleEditStock = (stock) => {
-    setEditStock({
-      id: stock.id,
-      mentor_id: stock.mentor_id,
-      crypto_name: stock.crypto_name,
-      buy_price: stock.buy_price,
-      sell_price: stock.sell_price,
-    });
+    setEditStock(stock);
     setIsEditing(true);
   };
 
-  const handleUpdateStock = async () => {
+  const handleUpdateStock = async (e) => {
+    e.preventDefault();
     try {
       const { error } = await supabase
         .from("stocks")
         .update({
           mentor_id: parseInt(editStock.mentor_id),
-          crypto_name: editStock.crypto_name,
+          crypto_name: editStock.crypto_name.trim(),
           buy_price: parseFloat(editStock.buy_price),
           sell_price: parseFloat(editStock.sell_price),
         })
@@ -250,34 +246,32 @@ export default function StockManagement() {
       setIsEditing(false);
       fetchStocks();
     } catch (error) {
-      alert("更新失败");
+      alert("更新失败: " + error.message);
     }
   };
 
   const openDetails = async (stock) => {
     setSelectedStock(stock);
-    setDetailsLoading(true);
     setIsModalOpen(true);
+    setDetailsLoading(true);
     try {
       const { data, error } = await supabase
         .from("copytrade_details")
         .select(`
-          id, amount, mentor_commission, created_at, user_id,
+          id, user_id, mentor_id, amount, mentor_commission, created_at,
           users (phone_number)
         `)
-        .eq("stock_id", stock.id)
-        .order("created_at", { ascending: false });
-
+        .eq("stock_id", stock.id);
       if (error) throw error;
 
-      setCopytradeDetails(
-        data.map((d) => ({
-          ...d,
-          phone_number: d.users?.phone_number || "未知",
-        }))
-      );
+      const formattedDetails = data.map((item) => ({
+        ...item,
+        phone_number: item.users?.phone_number || "未知",
+      }));
+
+      setCopytradeDetails(formattedDetails);
     } catch (error) {
-      alert("加载详情失败");
+      alert("加载跟单详情失败: " + error.message);
     } finally {
       setDetailsLoading(false);
     }
@@ -285,7 +279,6 @@ export default function StockManagement() {
 
   const closeModal = () => {
     setIsModalOpen(false);
-    setSelectedStock(null);
     setCopytradeDetails([]);
   };
 
@@ -295,106 +288,99 @@ export default function StockManagement() {
     <div className="admin-card">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-bold text-gray-800">上股管理</h2>
-        <button onClick={() => setIsAdding(true)} className="btn-primary text-sm">
-          添加上股
+        <button onClick={() => setIsAdding(!isAdding)} className="btn-primary text-sm">
+          {isAdding ? "取消添加" : "添加上股"}
         </button>
       </div>
 
       {isAdding && (
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleAddStock();
-          }}
-          className="mb-6 p-4 bg-gray-50 rounded-lg space-y-4"
-        >
+        <form onSubmit={(e) => { e.preventDefault(); handleAddStock(); }} className="space-y-4 mb-6">
           <select
             value={newStock.mentor_id}
             onChange={(e) => setNewStock({ ...newStock, mentor_id: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            className="admin-input"
           >
             <option value="">选择导师</option>
             {mentors.map((m) => (
               <option key={m.id} value={m.id}>
-                {m.name}
+                {m.name} (佣金 {m.commission}%)
               </option>
             ))}
           </select>
+
           <input
             type="text"
-            placeholder="币种名称"
+            placeholder="币种名称 (e.g. BTC)"
             value={newStock.crypto_name}
             onChange={(e) => setNewStock({ ...newStock, crypto_name: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            className="admin-input"
           />
+
           <input
             type="number"
             step="0.01"
             placeholder="买入价"
             value={newStock.buy_price}
             onChange={(e) => setNewStock({ ...newStock, buy_price: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            className="admin-input"
           />
+
           <input
             type="number"
             step="0.01"
             placeholder="卖出价"
             value={newStock.sell_price}
             onChange={(e) => setNewStock({ ...newStock, sell_price: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            className="admin-input"
           />
-          <div className="flex gap-2">
-            <button type="submit" className="btn-primary">
-              提交
-            </button>
-            <button type="button" onClick={() => setIsAdding(false)} className="btn-danger">
-              取消
-            </button>
-          </div>
+
+          <button type="submit" className="btn-primary w-full">
+            添加
+          </button>
         </form>
       )}
 
       {isEditing && (
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleUpdateStock();
-          }}
-          className="mb-6 p-4 bg-blue-50 rounded-lg space-y-4"
-        >
-          <h3 className="text-lg font-semibold">编辑上股</h3>
+        <form onSubmit={handleUpdateStock} className="space-y-4 mb-6">
           <select
             value={editStock.mentor_id}
             onChange={(e) => setEditStock({ ...editStock, mentor_id: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            className="admin-input"
           >
             <option value="">选择导师</option>
             {mentors.map((m) => (
               <option key={m.id} value={m.id}>
-                {m.name}
+                {m.name} (佣金 {m.commission}%)
               </option>
             ))}
           </select>
+
           <input
             type="text"
+            placeholder="币种名称"
             value={editStock.crypto_name}
             onChange={(e) => setEditStock({ ...editStock, crypto_name: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            className="admin-input"
           />
+
           <input
             type="number"
             step="0.01"
+            placeholder="买入价"
             value={editStock.buy_price}
             onChange={(e) => setEditStock({ ...editStock, buy_price: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            className="admin-input"
           />
+
           <input
             type="number"
             step="0.01"
+            placeholder="卖出价"
             value={editStock.sell_price}
             onChange={(e) => setEditStock({ ...editStock, sell_price: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            className="admin-input"
           />
+
           <div className="flex gap-2">
             <button type="submit" className="btn-primary">
               更新
