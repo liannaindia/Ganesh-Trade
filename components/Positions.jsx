@@ -9,10 +9,8 @@ export default function Positions({
 }) {
   const [tab, setTab] = useState("pending");
   const [totalAssets, setTotalAssets] = useState(0);
-  const [positionAssets, setPositionAssets] = useState(0);
   const [floatingPL, setFloatingPL] = useState(0);
   const [available, setAvailable] = useState(0);
-  const [entrusted, setEntrusted] = useState(0);
   const [pendingOrders, setPendingOrders] = useState([]);
   const [completedOrders, setCompletedOrders] = useState([]);
 
@@ -38,9 +36,7 @@ export default function Positions({
         return;
       }
 
-      let posAssets = 0;
       let floatPL = 0;
-      let entrust = 0;
       const pend = [];
       const comp = [];
 
@@ -57,10 +53,7 @@ export default function Positions({
           hour12: true,
         });
 
-        entrust += amount;
-
         if (d.status === "approved") {
-          posAssets += amount;
           pend.push({
             id: d.id,
             name: mentor.name || "Unknown Mentor",
@@ -91,29 +84,26 @@ export default function Positions({
               mentor.img ||
               "https://randomuser.me/api/portraits/men/51.jpg",
           });
+        } else if (d.status === "cancelled") {
+          // ✅ 被拒绝订单
+          const earnings = "---";
+          comp.push({
+            id: d.id,
+            name: mentor.name || "Unknown Mentor",
+            years: mentor.years || 0,
+            type: "Completed",
+            amount,
+            earnings,
+            time,
+            status: "Rejected",
+            img:
+              mentor.img ||
+              "https://randomuser.me/api/portraits/men/52.jpg",
+          });
         }
-         // ✅ 被拒绝订单
-  else if (d.status === "cancelled") {
-    const earnings = "---"; // 拒绝不显示盈亏
-    comp.push({
-      id: d.id,
-      name: mentor.name || "Unknown Mentor",
-      years: mentor.years || 0,
-      type: "Completed", // 显示在已完成页
-      amount,
-      earnings,
-      time,
-      status: "Rejected",
-      img:
-        mentor.img ||
-        "https://randomuser.me/api/portraits/men/52.jpg",
-    });
-  }
       });
 
-      setPositionAssets(posAssets);
       setFloatingPL(floatPL);
-      setEntrusted(entrust);
       setPendingOrders(pend);
       setCompletedOrders(comp);
     };
@@ -136,19 +126,12 @@ export default function Positions({
       <div className="rounded-2xl bg-white border border-slate-200 shadow-sm p-4 mb-4">
         <div className="flex items-center justify-between text-sm text-slate-500 mb-1">
           <span>Total Assets (USDT)</span>
-          <span className="text-slate-400 cursor-pointer">Eye</span>
         </div>
         <div className="text-3xl font-extrabold tracking-tight text-slate-900">
           {totalAssets.toLocaleString()}
         </div>
 
         <div className="grid grid-cols-2 gap-4 text-[13px] text-slate-600 mt-3">
-          <div>
-            <div>Position Assets</div>
-            <div className="font-bold text-slate-800">
-              {positionAssets.toFixed(2)}
-            </div>
-          </div>
           <div>
             <div>Floating P/L</div>
             <div className="font-bold text-slate-800">
@@ -158,10 +141,6 @@ export default function Positions({
           <div>
             <div>Available Balance</div>
             <div className="font-bold text-slate-800">{available.toFixed(2)}</div>
-          </div>
-          <div>
-            <div>Entrusted Amount</div>
-            <div className="font-bold text-slate-800">{entrusted.toFixed(2)}</div>
           </div>
         </div>
       </div>
@@ -257,11 +236,11 @@ export default function Positions({
                     <span
                       className={`font-semibold ${
                         o.status === "In Progress"
-                           ? "text-yellow-500"
-                            : o.status === "Rejected"
-                            ? "text-rose-600"
-                            : "text-emerald-600"
-                       }`}
+                          ? "text-yellow-500"
+                          : o.status === "Rejected"
+                          ? "text-rose-600"
+                          : "text-emerald-600"
+                      }`}
                     >
                       {o.status}
                     </span>
