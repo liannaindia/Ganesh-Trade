@@ -62,21 +62,6 @@ export default function Trade({ setTab, balance, userId, isLoggedIn }) {
       return;
     }
 
-    try {
-      // 检查是否有 published stock
-      const { data: activeStock, error: stockError } = await supabase
-        .from("stocks")
-        .select("id")
-        .eq("mentor_id", selectedMentor.id)
-        .eq("status", "published")
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .single();
-
-      if (stockError || !activeStock) {
-        alert("该导师暂无进行中的交易信号，无法跟单");
-        return;
-      }
 
       const { error } = await supabase.from("copytrades").insert([{
         user_id: userId,
