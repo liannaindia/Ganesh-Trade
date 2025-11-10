@@ -93,7 +93,7 @@ export default function Positions({
           });
         }
          // ✅ 被拒绝订单
-  else if (d.status === "rejected") {
+  else if (d.status === "cancelled") {
     const earnings = "---"; // 拒绝不显示盈亏
     comp.push({
       id: d.id,
