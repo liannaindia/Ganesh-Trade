@@ -48,8 +48,8 @@ const MarketDataSection = ({ setTab }) => (
   </div>
 );
 
-// ✅ 增强版 BalanceSection，动态显示当天 PnL
-const BalanceSection = ({ isLoggedIn, balance, handleLoginRedirect, setTab, pnlToday }) => (
+// 余额部分单独封装（新增 setTab prop）
+const BalanceSection = ({ isLoggedIn, balance, handleLoginRedirect, setTab }) => (
   <div className="text-center mt-1">
     {!isLoggedIn ? (
       <>
@@ -70,9 +70,7 @@ const BalanceSection = ({ isLoggedIn, balance, handleLoginRedirect, setTab, pnlT
             <div>
               <div className="text-xs text-slate-500">Total Assets (USDT)</div>
               <div className="text-2xl font-bold mt-1">{balance.toFixed(2)}</div>
-              <div className="text-xs text-slate-500 mt-1">
-                Pnl Today {pnlToday.toFixed(2)} USDT
-              </div>
+              <div className="text-xs text-slate-500 mt-1">Pnl Today 0.00 / 0%</div>
             </div>
             <button
               className="bg-yellow-400 hover:bg-yellow-500 text-sm font-medium text-slate-900 rounded-full px-4 py-1.5 transition"
@@ -87,32 +85,32 @@ const BalanceSection = ({ isLoggedIn, balance, handleLoginRedirect, setTab, pnlT
   </div>
 );
 
-export default function Home({ setTab, isLoggedIn: propIsLoggedIn }) {
+export default function Home({ setTab, isLoggedIn: propIsLoggedIn }) { // 新增：接收 prop
   const [coins, setCoins] = useState([]);
   const [activeTab, setActiveTab] = useState("favorites");
   const [bannerIndex, setBannerIndex] = useState(0);
-  const [localBalance, setLocalBalance] = useState(0);
-  const [localIsLoggedIn, setLocalIsLoggedIn] = useState(false);
-  const [pnlToday, setPnlToday] = useState(0); // ✅ 新增状态
-  const isLoggedIn = propIsLoggedIn !== undefined ? propIsLoggedIn : localIsLoggedIn;
-  const balance = localBalance;
+  const [localBalance, setLocalBalance] = useState(0); // 本地余额
+  const [localIsLoggedIn, setLocalIsLoggedIn] = useState(false); // 本地 fallback
+  const isLoggedIn = propIsLoggedIn !== undefined ? propIsLoggedIn : localIsLoggedIn; // 优先 prop
+  const balance = localBalance; // 使用本地余额
   const navigate = useNavigate();
 
   const banners = [banner1, banner2];
 
-  // ✅ 获取并实时更新用户余额
+  // 检查用户是否登录并获取用户的资产信息（优先 prop，fallback localStorage）
   useEffect(() => {
-    let realtimeSubscription = null;
+    let realtimeSubscription = null; // 新增：实时订阅引用
 
     const fetchSession = async () => {
-      const phoneNumber = localStorage.getItem('phone_number');
+      const phoneNumber = localStorage.getItem('phone_number'); // 从 localStorage 获取手机号码
 
       if (phoneNumber) {
-        setLocalIsLoggedIn(true);
+        setLocalIsLoggedIn(true); // 只设本地（全局由 App 处理）
 
+        // 从 `users` 表中获取余额
         const { data, error } = await supabase
           .from('users')
-          .select('balance, id')
+          .select('balance')
           .eq('phone_number', phoneNumber)
           .single();
 
@@ -120,102 +118,39 @@ export default function Home({ setTab, isLoggedIn: propIsLoggedIn }) {
           console.error('Error fetching user balance:', error);
         } else {
           setLocalBalance(data?.balance || 0);
-          const userId = data?.id;
-
-          // ✅ 首次计算当天利润
-          calculateTodayPnL(userId);
-
-          // ✅ 实时订阅当天利润变化
-          const pnlSub = supabase
-            .channel('pnl-today-sub')
-            .on(
-              'postgres_changes',
-              {
-                event: '*',
-                schema: 'public',
-                table: 'copytrade_details',
-                filter: `user_id=eq.${userId}`,
-              },
-              async (payload) => {
-                // 仅当状态变为 settled 时重新计算
-                if (payload.new?.status === 'settled') {
-                  await calculateTodayPnL(userId);
-                }
-              }
-            )
-            .subscribe((status) => {
-              console.log('PnL realtime status:', status);
-            });
-
-          realtimeSubscription = pnlSub;
         }
 
-        // ✅ 余额实时订阅
-        const balanceSub = supabase
-          .channel('user-balance-updates')
+        // 新增：实时订阅余额变化（基于 phone_number）
+        realtimeSubscription = supabase
+          .channel('user-balance-updates') // channel 名（任意，但唯一）
           .on(
             'postgres_changes',
             {
-              event: 'UPDATE',
+              event: 'UPDATE', // 只监听更新事件
               schema: 'public',
               table: 'users',
-              filter: `phone_number=eq.${phoneNumber}`,
+              filter: `phone_number=eq.${phoneNumber}`, // 过滤当前用户
             },
             (payload) => {
-              console.log('Balance updated via Realtime:', payload.new.balance);
-              setLocalBalance(payload.new.balance || 0);
+              console.log('Balance updated via Realtime:', payload.new.balance); // 调试日志
+              setLocalBalance(payload.new.balance || 0); // 自动更新余额
             }
           )
-          .subscribe();
-
-        realtimeSubscription = balanceSub;
+          .subscribe((status) => {
+            console.log('Realtime subscription status:', status); // 调试：确认订阅成功
+          });
       }
     };
 
     fetchSession();
 
+    // 清理订阅
     return () => {
-      if (realtimeSubscription) supabase.removeChannel(realtimeSubscription);
-    };
-  }, []);
-
-  // ✅ 计算当天利润（按印度时区）
-  const calculateTodayPnL = async (userId) => {
-    try {
-      const indiaTime = new Date().toLocaleString("en-US", {
-        timeZone: "Asia/Kolkata",
-      });
-      const indiaDate = new Date(indiaTime);
-      const startOfDay = new Date(indiaDate);
-      startOfDay.setHours(0, 0, 0, 0);
-      const endOfDay = new Date(indiaDate);
-      endOfDay.setHours(23, 59, 59, 999);
-
-      const startUTC = new Date(startOfDay.toISOString());
-      const endUTC = new Date(endOfDay.toISOString());
-
-      const { data, error } = await supabase
-        .from("copytrade_details")
-        .select("order_profit_amount")
-        .eq("user_id", userId)
-        .eq("status", "settled")
-        .gte("created_at", startUTC.toISOString())
-        .lte("created_at", endUTC.toISOString());
-
-      if (error) {
-        console.error("Error fetching today's PnL:", error);
-        return;
+      if (realtimeSubscription) {
+        supabase.removeChannel(realtimeSubscription);
       }
-
-      const totalProfit = data.reduce(
-        (sum, row) => sum + (parseFloat(row.order_profit_amount) || 0),
-        0
-      );
-      setPnlToday(totalProfit);
-    } catch (err) {
-      console.error("Error calculating today's PnL:", err);
-    }
-  };
+    };
+  }, []); // 空数组依赖，确保只运行一次
 
   // Banner自动切换
   useEffect(() => {
@@ -268,8 +203,9 @@ export default function Home({ setTab, isLoggedIn: propIsLoggedIn }) {
 
   const displayed = getFilteredCoins();
 
+  // 点击登录跳转到登录页面
   const handleLoginRedirect = () => {
-    setTab("login");
+    setTab("login");  // 设置当前tab为login
   };
 
   return (
@@ -298,8 +234,7 @@ export default function Home({ setTab, isLoggedIn: propIsLoggedIn }) {
         isLoggedIn={isLoggedIn}
         balance={balance}
         handleLoginRedirect={handleLoginRedirect}
-        setTab={setTab}
-        pnlToday={pnlToday}
+        setTab={setTab}  // 新增：传递 setTab
       />
 
       {/* Market Data Section */}
