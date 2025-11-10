@@ -12,6 +12,19 @@ import {
 } from "lucide-react";
 import { supabase } from "../supabaseClient";
 
+// ✅ 触发 PWA 安装提示
+const handleInstallApp = async () => {
+  if (window.deferredPrompt) {
+    window.deferredPrompt.prompt(); // 显示安装对话框
+    const { outcome } = await window.deferredPrompt.userChoice;
+    console.log(`User response to install prompt: ${outcome}`);
+    window.deferredPrompt = null; // 防止重复触发
+  } else {
+    alert("Please use your browser's 'Add to Home Screen' option to install the app.");
+  }
+};
+
+
 export default function Me({ setTab, userId, isLoggedIn }) {
   const [balance, setBalance] = useState(0);
   const [availableBalance, setAvailableBalance] = useState(0);
