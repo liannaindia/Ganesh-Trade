@@ -17,7 +17,8 @@ export default function CopyTradeAudit() {
       setLoading(true);
       const { count } = await supabase
         .from("copytrades")
-        .select("*", { count: "exact", head: true });
+        .select("*", { count: "exact", head: true })
+        .eq("status", "pending");
       setTotalCount(count || 0);
 
       const from = (page - 1) * pageSize;
@@ -26,9 +27,10 @@ export default function CopyTradeAudit() {
       const { data, error } = await supabase
         .from("copytrades")
         .select(`
-          id, user_id, mentor_id, amount, status, created_at, updated_at, mentor_commission,
+          id, user_id, mentor_id, amount, status, created_at, mentor_commission,
           users (phone_number)
         `)
+        .eq("status", "pending")
         .range(from, to)
         .order("id", { ascending: false });
 
@@ -36,52 +38,88 @@ export default function CopyTradeAudit() {
 
       const formatted = data.map((item) => ({
         ...item,
-        phone_number: item.users?.phone_number || "未知",
+        phone_number: item.users?.phone_number || "Unknown",
       }));
 
       setAudits(formatted);
     } catch (error) {
-      alert("获取数据失败: " + error.message);
+      alert("Failed to load data: " + error.message);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleApprove = async (id, userId, amount) => {
-    try {
-      const parsedAmount = parseFloat(amount);
-      if (isNaN(parsedAmount) || parsedAmount <= 0) throw new Error("无效的金额");
+  const handleApprove = async (copytrade) => {
+    const { id, user_id, mentor_id, amount, mentor_commission } = copytrade;
+    const parsedAmount = parseFloat(amount);
 
-      const { data: userData, error: userError } = await supabase
+    if (isNaN(parsedAmount) || parsedAmount <= 0) {
+      alert("Invalid amount");
+      return;
+    }
+
+    try {
+      // 1. Check user balance
+      const { data: user, error: userError } = await supabase
         .from("users")
         .select("available_balance")
-        .eq("id", userId)
+        .eq("id", user_id)
         .single();
       if (userError) throw userError;
-
-      if (userData.available_balance < parsedAmount) {
-        alert("用户余额不足，无法批准");
+      if (user.available_balance < parsedAmount) {
+        alert("Insufficient user balance");
         return;
       }
 
-      const newBalance = userData.available_balance - parsedAmount;
+      // 2. Get current published stock for this mentor
+      const { data: stock, error: stockError } = await supabase
+        .from("stocks")
+        .select("id")
+        .eq("mentor_id", mentor_id)
+        .eq("status", "published")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .single();
 
-      const { error: updateError } = await supabase
+      if (stockError || !stock) {
+        alert("No active trading signal for this mentor");
+        return;
+      }
+
+      // 3. Deduct balance + create detail + update status
+      const newBalance = user.available_balance - parsedAmount;
+
+      const { error: balanceError } = await supabase
+        .from("users")
+        .update({ available_balance: newBalance })
+        .eq("id", user_id);
+      if (balanceError) throw balanceError;
+
+      const { error: detailError } = await supabase
+        .from("copytrade_details")
+        .insert({
+          user_id,
+          mentor_id,
+          amount: parsedAmount,
+          mentor_commission,
+          stock_id: stock.id,
+          order_status: "Unsettled",
+          order_profit_amount: 0,
+          created_at: new Date().toISOString(),
+        });
+      if (detailError) throw detailError;
+
+      const { error: statusError } = await supabase
         .from("copytrades")
         .update({ status: "approved" })
         .eq("id", id);
-      if (updateError) throw updateError;
+      if (statusError) throw statusError;
 
-      const { error: updateUserError } = await supabase
-        .from("users")
-        .update({ available_balance: newBalance })
-        .eq("id", userId);
-      if (updateUserError) throw updateUserError;
-
-      alert("跟单已批准！");
+      alert("Follow approved! Balance deducted and record created.");
       fetchAudits(currentPage);
     } catch (error) {
-      alert("操作失败: " + error.message);
+      console.error("Approval failed:", error);
+      alert("Operation failed: " + error.message);
     }
   };
 
@@ -92,23 +130,23 @@ export default function CopyTradeAudit() {
         .update({ status: "rejected" })
         .eq("id", id);
       if (error) throw error;
-      alert("跟单已拒绝！");
+      alert("Follow rejected");
       fetchAudits(currentPage);
     } catch (error) {
-      alert("操作失败: " + error.message);
+      alert("Operation failed: " + error.message);
     }
   };
 
   const totalPages = Math.ceil(totalCount / pageSize);
 
-  if (loading) return <div className="p-6 text-center text-gray-500">加载中...</div>;
+  if (loading) return <div className="p-6 text-center text-gray-500">Loading...</div>;
 
   return (
     <div className="admin-card">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-bold text-gray-800">跟单审核</h2>
+        <h2 className="text-xl font-bold text-gray-800">Follow Requests</h2>
         <button onClick={() => fetchAudits(currentPage)} className="btn-primary text-sm">
-          刷新
+          Refresh
         </button>
       </div>
 
@@ -117,75 +155,47 @@ export default function CopyTradeAudit() {
           <thead>
             <tr>
               <th className="admin-table th">ID</th>
-              <th className="admin-table th">手机号</th>
-              <th className="admin-table th">用户ID</th>
-              <th className="admin-table th">导师ID</th>
-              <th className="admin-table th">金额</th>
-              <th className="admin-table th">状态</th>
-              <th className="admin-table th">佣金</th>
-              <th className="admin-table th">操作</th>
+              <th className="admin-table th">Phone</th>
+              <th className="admin-table th">User ID</th>
+              <th className="admin-table th">Mentor ID</th>
+              <th className="admin-table th">Amount</th>
+              <th className="admin-table th">Commission</th>
+              <th className="admin-table th">Action</th>
             </tr>
           </thead>
           <tbody>
             {audits.length === 0 ? (
               <tr>
-                <td colSpan="8" className="py-8 text-center text-gray-500">
-                  暂无待审核跟单
+                <td colSpan="7" className="py-8 text-center text-gray-500">
+                  No pending requests
                 </td>
               </tr>
             ) : (
               audits.map((a) => (
                 <tr key={a.id} className="hover:bg-gray-50 transition">
                   <td className="admin-table td">{a.id}</td>
-                  <td className="admin-table td font-medium text-blue-600">
-                    {a.phone_number}
-                  </td>
+                  <td className="admin-table td font-medium text-blue-600">{a.phone_number}</td>
                   <td className="admin-table td">{a.user_id}</td>
                   <td className="admin-table td">{a.mentor_id}</td>
-                  <td className="admin-table td text-green-600 font-semibold">
-                    ${a.amount}
-                  </td>
-                  <td className="admin-table td">
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        a.status === "pending"
-                          ? "bg-yellow-100 text-yellow-800"
-                          : a.status === "approved"
-                          ? "bg-green-100 text-green-800"
-                          : "bg-red-100 text-red-800"
-                      }`}
-                    >
-                      {a.status === "pending"
-                        ? "待审"
-                        : a.status === "approved"
-                        ? "已批准"
-                        : "已拒绝"}
-                    </span>
-                  </td>
+                  <td className="admin-table td text-green-600 font-semibold">${a.amount}</td>
                   <td className="admin-table td">
                     <span className="px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">
                       {a.mentor_commission}%
                     </span>
                   </td>
                   <td className="admin-table td space-x-2">
-                    {a.status === "pending" ? (
-                      <>
-                        <button
-                          onClick={() => handleApprove(a.id, a.user_id, a.amount)}
-                          className="btn-primary text-xs"
-                        >
-                          批准
-                        </button>
-                        <button
-                          onClick={() => handleReject(a.id)}
-                          className="btn-danger text-xs"
-                        >
-                          拒绝
-                        </button>
-                      </>
-                    ) : (
-                      <span className="text-gray-400 text-xs">操作已完成</span>
-                    )}
+                    <button
+                      onClick={() => handleApprove(a)}
+                      className="btn-primary text-xs"
+                    >
+                      Approve
+                    </button>
+                    <button
+                      onClick={() => handleReject(a.id)}
+                      className="btn-danger text-xs"
+                    >
+                      Reject
+                    </button>
                   </td>
                 </tr>
               ))
@@ -197,21 +207,21 @@ export default function CopyTradeAudit() {
       {totalCount > pageSize && (
         <div className="flex justify-center items-center gap-4 p-4 border-t border-gray-200">
           <button
-            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
             disabled={currentPage === 1}
             className="btn-primary text-sm disabled:opacity-50"
           >
-            上一页
+            Previous
           </button>
           <span className="text-sm text-gray-600">
-            第 {currentPage} / {totalPages} 页 (总 {totalCount} 条)
+            Page {currentPage} / {totalPages} (Total {totalCount})
           </span>
           <button
-            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
             disabled={currentPage === totalPages}
             className="btn-primary text-sm disabled:opacity-50"
           >
-            下一页
+            Next
           </button>
         </div>
       )}
