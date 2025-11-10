@@ -41,7 +41,6 @@ export default function StockManagement() {
     }
   };
 
-  // 修改点 1：fetchStocks 永远只统计 status = "approved" 的跟单
   const fetchStocks = async () => {
     try {
       const { data, error } = await supabase.from("stocks").select("*");
@@ -53,7 +52,7 @@ export default function StockManagement() {
             .from("copytrades")
             .select("id", { count: "exact", head: true })
             .eq("mentor_id", stock.mentor_id)
-            .eq("status", "approved"); // 永远只算 approved 的数量
+            .eq("status", "approved");
 
           if (countError) console.error("计算跟单数量失败:", countError);
 
@@ -101,16 +100,6 @@ export default function StockManagement() {
     }
   };
 
-  const handleCancelAdd = () => {
-    setNewStock({
-      mentor_id: "",
-      crypto_name: "",
-      buy_price: "",
-      sell_price: "",
-    });
-    setIsAdding(false);
-  };
-
   const handlePublish = async (id) => {
     try {
       const { error } = await supabase
@@ -126,7 +115,6 @@ export default function StockManagement() {
     }
   };
 
-  // 修改点 2：handleSettle 只更新 stock 状态，不影响 copytrades
   const handleSettle = async (stock) => {
     if (!window.confirm(`确定结算 ${stock.crypto_name}？`)) return;
 
@@ -138,17 +126,17 @@ export default function StockManagement() {
         .update({ 
           status: "settled", 
           profit,
-          settled_at: new Date().toISOString() // 可选：记录结算时间
+          settled_at: new Date().toISOString()
         })
         .eq("id", stock.id);
 
       if (error) throw error;
 
       alert(
-        `结算成功！\n币种：${stock.crypto_name}\n盈亏：${profit > 0 ? "+" : ""}${profit.toFixed(2)} USD`
+        `结算成功！\\n币种：${stock.crypto_name}\\n盈亏：${profit > 0 ? "+" : ""}${profit.toFixed(2)} USD`
       );
 
-      fetchStocks(); // 刷新，跟单数保持不变
+      fetchStocks();
     } catch (error) {
       console.error("结算失败:", error);
       alert("结算失败: " + error.message);
@@ -216,7 +204,7 @@ export default function StockManagement() {
       setCopytradeDetails(
         data.map((d) => ({
           ...d,
-          phone_number: d.users?.move_number || "未知",
+          phone_number: d.users?.phone_number || "未知",  // 修复：从 move_number 改为 phone_number
         }))
       );
     } catch (error) {
@@ -410,7 +398,7 @@ export default function StockManagement() {
                     {stock.status === "pending" && (
                       <button
                         onClick={() => handlePublish(stock.id)}
-                        className="btn-primary text-xs"
+                        className="btn-primary text-xs"  // 已确认：上股按钮使用 btn-primary
                       >
                         上架
                       </button>
@@ -418,7 +406,7 @@ export default function StockManagement() {
                     {stock.status === "published" && (
                       <button
                         onClick={() => handleSettle(stock)}
-                        className="bg-purple-600 hover:bg-purple-700 text-white px-2 py-1 rounded text-xs"
+                        className="btn-primary text-xs"  // 修复：结算按钮统一为 btn-primary（渐变样式）
                       >
                         结算
                       </button>
@@ -444,10 +432,12 @@ export default function StockManagement() {
       </div>
 
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 w-4/5 max-w-4xl shadow-2xl">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl p-6 w-full max-w-4xl shadow-2xl max-h-[90vh] overflow-y-auto">  {/* 修复：统一高度 + 滚动 */}
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold">跟单详情 - {selectedStock?.crypto_name}</h3>
+              <h3 className="text-xl font-bold">
+                跟单详情 - {selectedStock?.crypto_name}
+              </h3>
               <button onClick={closeModal} className="text-gray-500 hover:text-gray-700">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -460,23 +450,25 @@ export default function StockManagement() {
             ) : copytradeDetails.length === 0 ? (
               <div className="text-center py-8 text-gray-500">暂无跟单记录</div>
             ) : (
-              <div className="overflow-auto max-h-[60vh]">
-                <table className="w-full text-sm text-gray-800">
-                  <thead className="bg-gray-50 sticky top-0">
+              <div className="overflow-auto">
+                <table className="admin-table">  {/* 修复：模态框表格也使用 admin-table */}
+                  <thead>
                     <tr>
-                      <th className="px-4 py-2 text-left">手机号</th>     
-                      <th className="px-4 py-2 text-left">金额</th>
-                      <th className="px-4 py-2 text-left">佣金率</th>
-                      <th className="px-4 py-2 text-left">创建时间</th>
+                      <th className="admin-table th">手机号</th>
+                      <th className="admin-table th">金额</th>
+                      <th className="admin-table th">佣金率</th>
+                      <th className="admin-table th">时间</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-100">
+                  <tbody>
                     {copytradeDetails.map((detail) => (
                       <tr key={detail.id} className="hover:bg-gray-50">
-                        <td className="px-4 py-2 font-medium text-blue-600">{detail.phone_number}</td>
-                        <td className="px-4 py-2 text-green-600">${detail.amount}</td>
-                        <td className="px-4 py-2">{detail.mentor_commission}%</td>
-                        <td className="px-4 py-2 text-gray-500">{new Date(detail.created_at).toLocaleString()}</td>
+                        <td className="admin-table td font-medium text-blue-600">{detail.phone_number}</td>
+                        <td className="admin-table td text-green-600">${detail.amount}</td>
+                        <td className="admin-table td">{detail.mentor_commission}%</td>
+                        <td className="admin-table td text-gray-500">
+                          {new Date(detail.created_at).toLocaleString()}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
