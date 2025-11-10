@@ -71,34 +71,7 @@ export default function CopyTradeAudit() {
         return;
       }
 
-      // 2. 获取该导师当前进行中的上股（status = published）
-      const { data: stock, error: stockError } = await supabase
-        .from("stocks")
-        .select("id")
-        .eq("mentor_id", mentor_id)
-        .eq("status", "published")
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .single();
-
-      if (stockError || !stock?.id) {
-        alert("该导师暂无进行中的交易信号，无法批准跟单");
-        return;
-      }
-
-      // 安全提取 UUID 字符串（防御 Supabase 返回 { value: '...' } 的情况）
-      let stockId;
-      if (typeof stock.id === "string") {
-        stockId = stock.id;
-      } else if (stock.id && typeof stock.id === "object" && stock.id.value) {
-        stockId = stock.id.value;
-      } else {
-        console.error("Invalid stock.id format:", stock.id);
-        alert("系统错误：无法获取交易信号ID");
-        return;
-      }
-
-      // 3. 扣减余额
+      // 2. 扣减余额
       const newBalance = user.available_balance - parsedAmount;
 
       const { error: balanceError } = await supabase
@@ -107,21 +80,12 @@ export default function CopyTradeAudit() {
         .eq("id", user_id);
       if (balanceError) throw balanceError;
 
-      // 4. 更新 copytrades.status = 'approved' → 触发器会同步更新 copytrade_details.status = 'approved'
+      // 3. 更新 copytrades.status = 'approved' → 触发器会同步更新 copytrade_details.status = 'approved'
       const { error: statusError } = await supabase
         .from("copytrades")
         .update({ status: "approved" })
         .eq("id", id);
       if (statusError) throw statusError;
-
-      // 5. 手动关联 stock_id 到 copytrade_details（因为触发器不处理 stock_id）
-      const { error: detailUpdateError } = await supabase
-        .from("copytrade_details")
-        .update({ stock_id: stockId })
-        .eq("user_id", user_id)
-        .eq("mentor_id", mentor_id)
-        .eq("status", "approved"); // 确保更新刚批准的记录
-      if (detailUpdateError) throw detailUpdateError;
 
       alert("跟单已批准！已扣除用户余额并更新跟单记录");
       fetchAudits(currentPage);
