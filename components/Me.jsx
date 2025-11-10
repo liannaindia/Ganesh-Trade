@@ -12,18 +12,6 @@ import {
 } from "lucide-react";
 import { supabase } from "../supabaseClient";
 
-// ✅ 触发 PWA 安装提示
-const handleInstallApp = async () => {
-  if (window.deferredPrompt) {
-    window.deferredPrompt.prompt(); // 显示安装对话框
-    const { outcome } = await window.deferredPrompt.userChoice;
-    console.log(`User response to install prompt: ${outcome}`);
-    window.deferredPrompt = null; // 防止重复触发
-  } else {
-    alert("Please use your browser's 'Add to Home Screen' option to install the app.");
-  }
-};
-
 export default function Me({ setTab, userId, isLoggedIn }) {
   const [balance, setBalance] = useState(0);
   const [availableBalance, setAvailableBalance] = useState(0);
@@ -31,7 +19,6 @@ export default function Me({ setTab, userId, isLoggedIn }) {
   const [showBalance, setShowBalance] = useState(true);
   const [pnlToday, setPnlToday] = useState(0); // ✅ 新增：当天利润
   const [installPromptEvent, setInstallPromptEvent] = useState(null);
-  const [showInstallBanner, setShowInstallBanner] = useState(false);
 
   // ✅ 计算当天利润（印度时区）
   const calculateTodayPnL = async (uid) => {
@@ -143,8 +130,7 @@ export default function Me({ setTab, userId, isLoggedIn }) {
     // 捕获安装提示事件
     const handleBeforeInstallPrompt = (e) => {
       e.preventDefault();
-      setInstallPromptEvent(e);
-      setShowInstallBanner(true); // 显示安装提示条
+      setInstallPromptEvent(e);  // 保存事件对象
     };
 
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
@@ -163,7 +149,6 @@ export default function Me({ setTab, userId, isLoggedIn }) {
       const { outcome } = await installPromptEvent.userChoice;
       console.log(`User response to install prompt: ${outcome}`);
       setInstallPromptEvent(null); // 清空事件，防止多次弹出
-      setShowInstallBanner(false); // 安装后关闭提示条
     }
   };
 
@@ -218,7 +203,7 @@ export default function Me({ setTab, userId, isLoggedIn }) {
       </div>
 
       {/* ===== Install Banner ===== */}
-      {showInstallBanner && (
+      {installPromptEvent && (
         <div className="bg-yellow-500 text-white text-center py-2 rounded-lg mb-4">
           <span>📱 Add TradyFi to your Home Screen for full app experience</span>
           <button
