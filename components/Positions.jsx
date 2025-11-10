@@ -12,9 +12,7 @@ export default function Positions({ isLoggedIn, balance, availableBalance, userI
   const [completedOrders, setCompletedOrders] = useState([]);
 
   useEffect(() => {
-    if (!isLoggedIn || !userId) {
-      return;
-    }
+    if (!isLoggedIn || !userId) return;
 
     // 使用从App传递的balance和availableBalance
     setTotalAssets(balance || 0);
