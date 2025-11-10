@@ -92,6 +92,23 @@ export default function Positions({
               "https://randomuser.me/api/portraits/men/51.jpg",
           });
         }
+         // ✅ 被拒绝订单
+  else if (d.status === "rejected") {
+    const earnings = "---"; // 拒绝不显示盈亏
+    comp.push({
+      id: d.id,
+      name: mentor.name || "Unknown Mentor",
+      years: mentor.years || 0,
+      type: "Completed", // 显示在已完成页
+      amount,
+      earnings,
+      time,
+      status: "Rejected",
+      img:
+        mentor.img ||
+        "https://randomuser.me/api/portraits/men/52.jpg",
+    });
+  }
       });
 
       setPositionAssets(posAssets);
