@@ -133,3 +133,20 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     </Router>
   </React.StrictMode>
 );
+
+// ✅ 注册 PWA Service Worker
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker
+      .register("/service-worker.js")
+      .then(() => console.log("✅ Service Worker registered successfully"))
+      .catch((err) => console.error("❌ Service Worker registration failed:", err));
+  });
+}
+
+// ✅ 捕获 PWA 安装事件
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();
+  window.deferredPrompt = e;
+  console.log("📲 beforeinstallprompt event captured");
+});
