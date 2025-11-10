@@ -2,28 +2,28 @@ import { useState, useEffect } from "react";
 import { supabase } from "../supabaseClient";
 
 export default function StockManagement() {
-  const [stocks, setStocks] = useState<any[]>([]);
-  const [mentors, setMentors] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [isAdding, setIsAdding] = useState(false);
-  const [newStock, setNewStock] = useState({
-    mentor_id: "",
-    crypto_name: "",
-    buy_price: "",
-    sell_price: "",
-  });
-  const [selectedStock, setSelectedStock] = useState<any>(null);
-  const [copytradeDetails, setCopytradeDetails] = useState<any[]>([]);
-  const [detailsLoading, setDetailsLoading] = useState(false);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
-  const [editStock, setEditStock] = useState({
-    id: "",
-    mentor_id: "",
-    crypto_name: "",
-    buy_price: "",
-    sell_price: "",
-  });
+  const [stocks, setStocks] = useState([]);
+const [mentors, setMentors] = useState([]);
+const [loading, setLoading] = useState(true);
+const [isAdding, setIsAdding] = useState(false);
+const [newStock, setNewStock] = useState({
+  mentor_id: "",
+  crypto_name: "",
+  buy_price: "",
+  sell_price: "",
+});
+const [selectedStock, setSelectedStock] = useState(null);
+const [copytradeDetails, setCopytradeDetails] = useState([]);
+const [detailsLoading, setDetailsLoading] = useState(false);
+const [isModalOpen, setIsModalOpen] = useState(false);
+const [isEditing, setIsEditing] = useState(false);
+const [editStock, setEditStock] = useState({
+  id: "",
+  mentor_id: "",
+  crypto_name: "",
+  buy_price: "",
+  sell_price: "",
+});
 
   useEffect(() => {
     fetchMentors();
