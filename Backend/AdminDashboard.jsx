@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
-import "./admin.css";  // 假设 admin.css 在 Backend 目录下
 import { Link, useLocation, Outlet, useNavigate } from "react-router-dom";
 import {
   Users, DollarSign, CreditCard, Settings, UserCheck,
   Copy, TrendingUp, Menu, X, LogOut, Search, Bell, ChevronDown,
 } from "lucide-react";
+import "./admin.css"; // 已导入
 
 const menuItems = [
   { label: "用户信息", path: "/admin/users", icon: <Users className="w-5 h-5" /> },
@@ -22,7 +22,7 @@ export default function AdminDashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [searchOpen, setSearchOpen] = useState(false);
 
-  // ✅ 登录验证
+  // 登录保护
   useEffect(() => {
     const isAdmin = localStorage.getItem("adminLoggedIn") === "true";
     if (!isAdmin) navigate("/admin-login", { replace: true });
@@ -46,28 +46,28 @@ export default function AdminDashboard() {
     });
 
   return (
-    <div className="flex h-screen w-full bg-gray-100 overflow-hidden">
-      {/* ==== 侧边栏 ==== */}
+    <div className="admin-container flex h-screen w-full overflow-hidden">
+      {/* 侧边栏 */}
       <aside
-        className={`${
+        className={`admin-sidebar ${
           sidebarOpen ? "w-64" : "w-20"
-        } bg-gradient-to-b from-slate-900 to-slate-800 text-white transition-all duration-300 flex flex-col shadow-2xl`}
+        } bg-white text-slate-900 transition-all duration-300 flex flex-col shadow-2xl`}
       >
         {/* Logo */}
-        <div className="flex items-center justify-between p-5 border-b border-slate-700">
+        <div className="flex items-center justify-between p-5 border-b border-slate-200">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center shadow-lg">
               <span className="text-white font-bold text-xl">G</span>
             </div>
             {sidebarOpen && (
-              <h1 className="font-bold text-xl text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400">
+              <h1 className="font-bold text-xl bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
                 Ganesh Trade
               </h1>
             )}
           </div>
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-2 rounded-lg hover:bg-slate-700 transition"
+            className="p-2 rounded-lg hover:bg-slate-100 transition"
           >
             {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
@@ -84,13 +84,13 @@ export default function AdminDashboard() {
                     ${
                       location.pathname.startsWith(item.path)
                         ? "bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-lg"
-                        : "text-slate-300 hover:bg-slate-700 hover:text-white"
+                        : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
                     }`}
                 >
                   {item.icon}
                   {sidebarOpen && <span className="font-medium">{item.label}</span>}
                   {!sidebarOpen && (
-                    <div className="absolute left-full ml-2 px-3 py-2 bg-slate-700 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap shadow-xl">
+                    <div className="absolute left-full ml-2 px-3 py-2 bg-slate-800 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap shadow-xl transition-opacity">
                       {item.label}
                     </div>
                   )}
@@ -100,11 +100,11 @@ export default function AdminDashboard() {
           </ul>
         </nav>
 
-        {/* 登出按钮 */}
-        <div className="p-4 border-t border-slate-700">
+        {/* 退出登录 */}
+        <div className="p-4 border-t border-slate-200">
           <button
             onClick={handleLogout}
-            className={`flex items-center gap-3 w-full px-4 py-3 rounded-xl text-red-400 hover:bg-slate-700 hover:text-red-300 transition-all ${
+            className={`flex items-center gap-3 w-full px-4 py-3 rounded-xl text-red-600 hover:bg-red-50 transition-all ${
               !sidebarOpen && "justify-center"
             }`}
           >
@@ -114,21 +114,21 @@ export default function AdminDashboard() {
         </div>
       </aside>
 
-      {/* ==== 主内容区 ==== */}
+      {/* 主内容区 */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* 顶栏 */}
-        <header className="bg-white border-b border-gray-200 shadow-sm">
+        {/* 顶部栏 */}
+        <header className="admin-header shadow-sm">
           <div className="flex items-center justify-between px-6 py-4">
             {/* 面包屑 */}
             <nav className="flex items-center space-x-2 text-sm">
-              <Link to="/admin" className="text-gray-500 hover:text-gray-700 font-medium">
+              <Link to="/admin" className="text-slate-500 hover:text-slate-700 font-medium">
                 控制台
               </Link>
               {breadcrumbs.map((crumb, idx) => (
                 <span key={crumb.path} className="flex items-center">
-                  <span className="text-gray-400 mx-2">/</span>
+                  <span className="text-slate-400 mx-2">/</span>
                   {idx === breadcrumbs.length - 1 ? (
-                    <span className="text-gray-900 font-semibold">{crumb.label}</span>
+                    <span className="text-slate-900 font-semibold">{crumb.label}</span>
                   ) : (
                     <Link to={crumb.path} className="text-blue-600 hover:text-blue-800 font-medium">
                       {crumb.label}
@@ -141,25 +141,25 @@ export default function AdminDashboard() {
             {/* 右上角 */}
             <div className="flex items-center gap-4">
               {/* 搜索 */}
-              <div className="relative transition-all duration-300">
+              <div className="relative">
                 {searchOpen && (
                   <input
                     type="text"
                     placeholder="搜索用户、订单、导师..."
-                    className="w-64 pl-10 pr-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500"
+                    className="w-64 pl-10 pr-4 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
                   />
                 )}
                 <button
                   onClick={() => setSearchOpen(!searchOpen)}
-                  className="absolute left-0 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 p-2"
+                  className="absolute left-0 top-1/2 -translate-y-1/2 p-2 text-slate-500 hover:text-slate-700"
                 >
                   <Search className="w-5 h-5" />
                 </button>
               </div>
 
               {/* 通知 */}
-              <button className="relative p-2 rounded-xl hover:bg-gray-100 transition-all">
-                <Bell className="w-5 h-5 text-gray-600" />
+              <button className="relative p-2 rounded-xl hover:bg-slate-100 transition-all">
+                <Bell className="w-5 h-5 text-slate-600" />
                 <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
               </button>
 
@@ -168,19 +168,21 @@ export default function AdminDashboard() {
                 <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-full flex items-center justify-center shadow-md">
                   <span className="text-white font-bold">A</span>
                 </div>
-                <div>
-                  <p className="text-sm font-semibold text-gray-800">超级管理员</p>
-                  <p className="text-xs text-gray-500">admin@ganesh.com</p>
+                <div className="hidden md:block">
+                  <p className="text-sm font-semibold text-slate-800">超级管理员</p>
+                  <p className="text-xs text-slate-500">admin@ganesh.com</p>
                 </div>
-                <ChevronDown className="w-4 h-4 text-gray-500" />
+                <ChevronDown className="w-4 h-4 text-slate-500" />
               </div>
             </div>
           </div>
         </header>
 
-        {/* 主体内容 */}
-        <main className="flex-1 overflow-auto bg-gray-50 p-6">
-          <Outlet />
+        {/* 主体内容 - 使用 admin-card 包裹 Outlet */}
+        <main className="flex-1 overflow-auto p-6 bg-transparent">
+          <div className="admin-card">
+            <Outlet />
+          </div>
         </main>
       </div>
     </div>
