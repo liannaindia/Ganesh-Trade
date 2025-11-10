@@ -32,7 +32,9 @@ export default function StockManagement() {
 
   const fetchMentors = async () => {
     try {
-      const { data, error } = await supabase.from("mentors").select("id, name");
+      const { data, error } = await supabase
+        .from("mentors")
+        .select("id, name, commission");
       if (error) throw error;
       setMentors(data || []);
     } catch (error) {
@@ -48,14 +50,11 @@ export default function StockManagement() {
 
       const stocksWithCount = await Promise.all(
         data.map(async (stock) => {
-          const { count, error: countError } = await supabase
+          const { count } = await supabase
             .from("copytrades")
             .select("id", { count: "exact", head: true })
             .eq("mentor_id", stock.mentor_id)
             .eq("status", "approved");
-
-          if (countError) console.error("计算跟单数量失败:", countError);
-
           return { ...stock, copytrade_count: count || 0 };
         })
       );
@@ -74,7 +73,6 @@ export default function StockManagement() {
       alert("请填写所有字段");
       return;
     }
-
     try {
       const { error } = await supabase.from("stocks").insert({
         mentor_id: parseInt(newStock.mentor_id),
@@ -83,19 +81,12 @@ export default function StockManagement() {
         sell_price: parseFloat(newStock.sell_price),
         status: "pending",
       });
-
       if (error) throw error;
       alert("上股添加成功");
-      setNewStock({
-        mentor_id: "",
-        crypto_name: "",
-        buy_price: "",
-        sell_price: "",
-      });
+      setNewStock({ mentor_id: "", crypto_name: "", buy_price: "", sell_price: "" });
       setIsAdding(false);
       fetchStocks();
     } catch (error) {
-      console.error("添加上股失败:", error);
       alert("添加失败: " + error.message);
     }
   };
@@ -110,34 +101,111 @@ export default function StockManagement() {
       alert("上股已上架");
       fetchStocks();
     } catch (error) {
-      console.error("上架失败:", error);
       alert("操作失败: " + error.message);
     }
   };
 
-  // 修复：移除 profit 和 settled_at 更新，只更新 status
+  // 完整结算：释放冻结 + 分配盈亏 + 同时更新 balance 和 available_balance
   const handleSettle = async (stock) => {
-    if (!window.confirm(`确定结算 ${stock.crypto_name}？`)) return;
+    if (stock.status !== "published") {
+      alert("只有「进行中」的上股可以结算");
+      return;
+    }
+
+    if (!window.confirm(`确定结算 ${stock.crypto_name}？\n此操作不可逆！`)) return;
 
     try {
-      // 计算盈亏（仅用于显示，不存数据库）
-      const profit = stock.sell_price - stock.buy_price;
+      // 1. 查询未结算的跟单详情（必须包含用户余额）
+      const { data: details, error: fetchError } = await supabase
+        .from("copytrade_details")
+        .select(`
+          id, user_id, amount, mentor_commission,
+          users!inner (id, balance, available_balance)
+        `)
+        .eq("mentor_id", stock.mentor_id)
+        .eq("order_status", "Unsettled");
 
-      // 只更新 status（避免 schema 错误）
-      const { error } = await supabase
-        .from("stocks")
-        .update({ 
-          status: "settled" 
-        })
-        .eq("id", stock.id);
+      if (fetchError) throw fetchError;
+      if (!details || details.length === 0) {
+        alert("暂无跟单记录，无需结算");
+        return;
+      }
 
-      if (error) throw error;
+      const priceDiff = parseFloat(stock.sell_price) - parseFloat(stock.buy_price);
+      const updates = [];
+      const userUpdates = {}; // { user_id: { balance: X, available_balance: Y } }
 
-      alert(
-        `结算成功！\n币种：${stock.crypto_name}\n盈亏：${profit > 0 ? "+" : ""}${profit.toFixed(2)} USD`
+      for (const detail of details) {
+        const amount = parseFloat(detail.amount);
+        const commissionRate = detail.mentor_commission / 100;
+
+        // 盈亏总额
+        const totalProfit = priceDiff * amount;
+        // 用户实得（扣除佣金）
+        const userProfit = totalProfit * (1 - commissionRate);
+        // 释放冻结本金 + 用户实得盈亏
+        const finalAmount = amount + userProfit;
+
+        // 更新 copytrade_details
+        updates.push({
+          id: detail.id,
+          order_profit_amount: userProfit,
+          order_status: "Settled",
+        });
+
+        // 累加用户余额变更
+        const userId = detail.user_id;
+        if (!userUpdates[userId]) {
+          userUpdates[userId] = { balance: 0, available_balance: 0 };
+        }
+        userUpdates[userId].balance += finalAmount;
+        userUpdates[userId].available_balance += finalAmount;
+      }
+
+      // 2. 批量更新 copytrade_details
+      const { error: detailError } = await supabase
+        .from("copytrade_details")
+        .upsert(updates);
+      if (detailError) throw detailError;
+
+      // 3. 批量更新用户余额（balance + available_balance）
+      const userBalancePromises = Object.entries(userUpdates).map(([userId, change]) =>
+        supabase
+          .from("users")
+          .update({
+            balance: supabase.raw(`balance + ${change.balance}`),
+            available_balance: supabase.raw(`available_balance + ${change.available_balance}`),
+          })
+          .eq("id", userId)
       );
 
-      fetchStocks(); // 刷新，跟单数保持不变
+      const results = await Promise.all(userBalancePromises);
+      const failed = results.find(r => r.error);
+      if (failed) throw failed.error;
+
+      // 4. 更新 stocks 状态
+      const { error: stockError } = await supabase
+        .from("stocks")
+        .update({ status: "settled" })
+        .eq("id", stock.id);
+      if (stockError) throw stockError;
+
+      // 5. 成功提示
+      const totalReleased = details.reduce((s, d) => s + parseFloat(d.amount), 0);
+      const totalUserProfit = details.reduce((s, d) => {
+        const profit = (priceDiff * parseFloat(d.amount)) * (1 - d.mentor_commission / 100);
+        return s + profit;
+      }, 0);
+
+      alert(
+        `结算成功！\n` +
+        `跟单人数：${details.length}\n` +
+        `释放冻结资金：${totalReleased.toFixed(2)} USD\n` +
+        `用户实得盈亏：${totalUserProfit.toFixed(2)} USD\n` +
+        `总到账：${(totalReleased + totalUserProfit).toFixed(2)} USD`
+      );
+
+      fetchStocks();
     } catch (error) {
       console.error("结算失败:", error);
       alert("结算失败: " + error.message);
@@ -190,7 +258,6 @@ export default function StockManagement() {
     setSelectedStock(stock);
     setDetailsLoading(true);
     setIsModalOpen(true);
-
     try {
       const { data, error } = await supabase
         .from("copytrades")
@@ -200,7 +267,6 @@ export default function StockManagement() {
         `)
         .eq("mentor_id", stock.mentor_id)
         .eq("status", "approved");
-
       if (error) throw error;
       setCopytradeDetails(
         data.map((d) => ({
@@ -234,10 +300,7 @@ export default function StockManagement() {
 
       {isAdding && (
         <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleAddStock();
-          }}
+          onSubmit={(e) => { e.preventDefault(); handleAddStock(); }}
           className="mb-6 p-4 bg-gray-50 rounded-lg space-y-4"
         >
           <select
@@ -247,55 +310,31 @@ export default function StockManagement() {
           >
             <option value="">选择导师</option>
             {mentors.map((m) => (
-              <option key={m.id} value={m.id}>
-                {m.name}
-              </option>
+              <option key={m.id} value={m.id}>{m.name}</option>
             ))}
           </select>
-          <input
-            type="text"
-            placeholder="币种名称"
-            value={newStock.crypto_name}
+          <input type="text" placeholder="币种名称" value={newStock.crypto_name}
             onChange={(e) => setNewStock({ ...newStock, crypto_name: e.target.value })}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
           />
-          <input
-            type="number"
-            step="0.01"
-            placeholder="买入价"
-            value={newStock.buy_price}
+          <input type="number" step="0.01" placeholder="买入价" value={newStock.buy_price}
             onChange={(e) => setNewStock({ ...newStock, buy_price: e.target.value })}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
           />
-          <input
-            type="number"
-            step="0.01"
-            placeholder="卖出价"
-            value={newStock.sell_price}
+          <input type="number" step="0.01" placeholder="卖出价" value={newStock.sell_price}
             onChange={(e) => setNewStock({ ...newStock, sell_price: e.target.value })}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
           />
           <div className="flex gap-2">
-            <button type="submit" className="btn-primary">
-              提交
-            </button>
-            <button
-              type="button"
-              onClick={() => setIsAdding(false)}
-              className="btn-danger"
-            >
-              取消
-            </button>
+            <button type="submit" className="btn-primary">提交</button>
+            <button type="button" onClick={() => setIsAdding(false)} className="btn-danger">取消</button>
           </div>
         </form>
       )}
 
       {isEditing && (
         <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleUpdateStock();
-          }}
+          onSubmit={(e) => { e.preventDefault(); handleUpdateStock(); }}
           className="mb-6 p-4 bg-blue-50 rounded-lg space-y-4"
         >
           <h3 className="text-lg font-semibold">编辑上股</h3>
@@ -306,42 +345,24 @@ export default function StockManagement() {
           >
             <option value="">选择导师</option>
             {mentors.map((m) => (
-              <option key={m.id} value={m.id}>
-                {m.name}
-              </option>
+              <option key={m.id} value={m.id}>{m.name}</option>
             ))}
           </select>
-          <input
-            type="text"
-            value={editStock.crypto_name}
+          <input type="text" value={editStock.crypto_name}
             onChange={(e) => setEditStock({ ...editStock, crypto_name: e.target.value })}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
           />
-          <input
-            type="number"
-            step="0.01"
-            value={editStock.buy_price}
+          <input type="number" step="0.01" value={editStock.buy_price}
             onChange={(e) => setEditStock({ ...editStock, buy_price: e.target.value })}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
           />
-          <input
-            type="number"
-            step="0.01"
-            value={editStock.sell_price}
+          <input type="number" step="0.01" value={editStock.sell_price}
             onChange={(e) => setEditStock({ ...editStock, sell_price: e.target.value })}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
           />
           <div className="flex gap-2">
-            <button type="submit" className="btn-primary">
-              更新
-            </button>
-            <button
-              type="button"
-              onClick={() => setIsEditing(false)}
-              className="btn-danger"
-            >
-              取消
-            </button>
+            <button type="submit" className="btn-primary">更新</button>
+            <button type="button" onClick={() => setIsEditing(false)} className="btn-danger">取消</button>
           </div>
         </form>
       )}
@@ -373,16 +394,13 @@ export default function StockManagement() {
                   <td className="admin-table td">
                     <span
                       className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        stock.status === "pending"
-                          ? "bg-yellow-100 text-yellow-800"
-                          : stock.status === "published"
-                          ? "bg-blue-100 text-blue-800"
-                          : stock.status === "settled"
-                          ? "bg-gray-100 text-gray-800"
-                          : "bg-green-100 text-green-800"
+                        stock.status === "pending" ? "bg-yellow-100 text-yellow-800" :
+                        stock.status === "published" ? "bg-blue-100 text-blue-800" :
+                        stock.status === "settled" ? "bg-gray-100 text-gray-800" :
+                        "bg-green-100 text-green-800"
                       }`}
                     >
-                      {stock.status === "settled" ? "已结算" : 
+                      {stock.status === "settled" ? "已结算" :
                        stock.status === "pending" ? "待上架" :
                        stock.status === "published" ? "进行中" : "未知"}
                     </span>
@@ -397,31 +415,19 @@ export default function StockManagement() {
                   </td>
                   <td className="admin-table td space-x-1">
                     {stock.status === "pending" && (
-                      <button
-                        onClick={() => handlePublish(stock.id)}
-                        className="btn-primary text-xs"
-                      >
+                      <button onClick={() => handlePublish(stock.id)} className="btn-primary text-xs">
                         上架
                       </button>
                     )}
                     {stock.status === "published" && (
-                      <button
-                        onClick={() => handleSettle(stock)}
-                        className="btn-primary text-xs"
-                      >
+                      <button onClick={() => handleSettle(stock)} className="btn-primary text-xs">
                         结算
                       </button>
                     )}
-                    <button
-                      onClick={() => handleEditStock(stock)}
-                      className="btn-primary text-xs"
-                    >
+                    <button onClick={() => handleEditStock(stock)} className="btn-primary text-xs">
                       编辑
                     </button>
-                    <button
-                      onClick={() => handleDeleteStock(stock.id)}
-                      className="btn-danger text-xs"
-                    >
+                    <button onClick={() => handleDeleteStock(stock.id)} className="btn-danger text-xs">
                       删除
                     </button>
                   </td>
@@ -436,16 +442,13 @@ export default function StockManagement() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl p-6 w-full max-w-4xl shadow-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold">
-                跟单详情 - {selectedStock?.crypto_name}
-              </h3>
+              <h3 className="text-xl font-bold">跟单详情 - {selectedStock?.crypto_name}</h3>
               <button onClick={closeModal} className="text-gray-500 hover:text-gray-700">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </div>
-
             {detailsLoading ? (
               <div className="text-center py-8 text-gray-500">加载中...</div>
             ) : copytradeDetails.length === 0 ? (
