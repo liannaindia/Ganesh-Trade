@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
+    <link rel="manifest" href="/manifest.json" />
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Ganesh Trade</title>
@@ -13,5 +14,23 @@
 
     <!-- Main entry (Vite uses module system) -->
     <script type="module" src="./main.jsx"></script>
+    <script>
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker
+        .register("/service-worker.js")
+        .then(() => console.log("✅ Service Worker registered successfully"))
+        .catch((err) => console.error("Service Worker registration failed:", err));
+    });
+  }
+
+  // 捕获 beforeinstallprompt 事件
+  window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    window.deferredPrompt = e;
+    console.log("✅ PWA install prompt captured.");
+  });
+</script>
+
   </body>
 </html>
