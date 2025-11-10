@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import "./admin.css";  // 假设 admin.css 在 Backend 目录下
 import { Link, useLocation, Outlet, useNavigate } from "react-router-dom";
 import {
   Users, DollarSign, CreditCard, Settings, UserCheck,
