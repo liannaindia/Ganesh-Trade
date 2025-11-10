@@ -15,22 +15,26 @@ export default function CopyTradeAudit() {
   const fetchAudits = async (page) => {
     try {
       setLoading(true);
+
+      // 统计 pending + approved 总数，使用 "planned" 计数来优化性能
       const { count } = await supabase
         .from("copytrades")
-        .select("*", { count: "exact", head: true })
-        .eq("status", "pending");
+        .select("*", { count: "planned", head: true })
+        .in("status", ["pending", "approved"]);
+
       setTotalCount(count || 0);
 
       const from = (page - 1) * pageSize;
       const to = from + pageSize - 1;
 
+      // 查询 pending 和 approved 的订单
       const { data, error } = await supabase
         .from("copytrades")
         .select(`
           id, user_id, mentor_id, amount, status, created_at, mentor_commission,
           users (phone_number)
         `)
-        .eq("status", "pending")
+        .in("status", ["pending", "approved"])
         .range(from, to)
         .order("id", { ascending: false });
 
@@ -73,14 +77,13 @@ export default function CopyTradeAudit() {
 
       // 2. 扣减余额
       const newBalance = user.available_balance - parsedAmount;
-
       const { error: balanceError } = await supabase
         .from("users")
         .update({ available_balance: newBalance })
         .eq("id", user_id);
       if (balanceError) throw balanceError;
 
-      // 3. 更新 copytrades.status = 'approved' → 触发器会同步更新 copytrade_details.status = 'approved'
+      // 3. 更新状态为 approved
       const { error: statusError } = await supabase
         .from("copytrades")
         .update({ status: "approved" })
@@ -88,6 +91,8 @@ export default function CopyTradeAudit() {
       if (statusError) throw statusError;
 
       alert("跟单已批准！已扣除用户余额并更新跟单记录");
+
+      // 刷新当前页（approved 订单仍会显示）
       fetchAudits(currentPage);
     } catch (error) {
       console.error("审批失败:", error);
@@ -97,7 +102,6 @@ export default function CopyTradeAudit() {
 
   const handleReject = async (id) => {
     try {
-      // 更新 copytrades.status = 'rejected' → 触发器会同步更新 copytrade_details.status = 'rejected'
       const { error } = await supabase
         .from("copytrades")
         .update({ status: "rejected" })
@@ -133,14 +137,15 @@ export default function CopyTradeAudit() {
               <th className="admin-table th">导师ID</th>
               <th className="admin-table th">金额</th>
               <th className="admin-table th">佣金率</th>
+              <th className="admin-table th">状态</th>
               <th className="admin-table th">操作</th>
             </tr>
           </thead>
           <tbody>
             {audits.length === 0 ? (
               <tr>
-                <td colSpan="7" className="py-8 text-center text-gray-500">
-                  暂无待审核跟单
+                <td colSpan="8" className="py-8 text-center text-gray-500">
+                  暂无待处理跟单
                 </td>
               </tr>
             ) : (
@@ -156,19 +161,38 @@ export default function CopyTradeAudit() {
                       {a.mentor_commission}%
                     </span>
                   </td>
+                  <td className="admin-table td">
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        a.status === "pending"
+                          ? "bg-yellow-100 text-yellow-800"
+                          : a.status === "approved"
+                          ? "bg-emerald-100 text-emerald-800"
+                          : "bg-gray-100 text-gray-800"
+                      }`}
+                    >
+                      {a.status === "pending" ? "待审核" : a.status === "approved" ? "已批准" : "已拒绝"}
+                    </span>
+                  </td>
                   <td className="admin-table td space-x-2">
-                    <button
-                      onClick={() => handleApprove(a)}
-                      className="btn-primary text-xs"
-                    >
-                      批准
-                    </button>
-                    <button
-                      onClick={() => handleReject(a.id)}
-                      className="btn-danger text-xs"
-                    >
-                      拒绝
-                    </button>
+                    {a.status === "pending" ? (
+                      <>
+                        <button
+                          onClick={() => handleApprove(a)}
+                          className="btn-primary text-xs"
+                        >
+                          批准
+                        </button>
+                        <button
+                          onClick={() => handleReject(a.id)}
+                          className="btn-danger text-xs"
+                        >
+                          拒绝
+                        </button>
+                      </>
+                    ) : (
+                      <span className="text-xs text-gray-500">已处理</span>
+                    )}
                   </td>
                 </tr>
               ))
@@ -180,7 +204,7 @@ export default function CopyTradeAudit() {
       {totalCount > pageSize && (
         <div className="flex justify-center items-center gap-4 p-4 border-t border-gray-200">
           <button
-            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
             disabled={currentPage === 1}
             className="btn-primary text-sm disabled:opacity-50"
           >
@@ -190,7 +214,7 @@ export default function CopyTradeAudit() {
             第 {currentPage} / {totalPages} 页（共 {totalCount} 条）
           </span>
           <button
-            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
             disabled={currentPage === totalPages}
             className="btn-primary text-sm disabled:opacity-50"
           >
