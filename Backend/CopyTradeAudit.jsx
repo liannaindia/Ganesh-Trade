@@ -71,7 +71,7 @@ export default function CopyTradeAudit() {
         return;
       }
 
-      // 2. 获取该导师当前进行中的上股
+      // 2. 获取该导师当前进行中的上股（status = published）
       const { data: stock, error: stockError } = await supabase
         .from("stocks")
         .select("id")
@@ -81,8 +81,20 @@ export default function CopyTradeAudit() {
         .limit(1)
         .single();
 
-      if (stockError || !stock) {
+      if (stockError || !stock?.id) {
         alert("该导师暂无进行中的交易信号，无法批准跟单");
+        return;
+      }
+
+      // 安全提取 UUID 字符串（防御 Supabase 返回 { value: '...' } 的情况）
+      let stockId: string;
+      if (typeof stock.id === "string") {
+        stockId = stock.id;
+      } else if (stock.id && typeof stock.id === "object" && "value" in stock.id) {
+        stockId = stock.id.value;
+      } else {
+        console.error("Invalid stock.id format:", stock.id);
+        alert("系统错误：无法获取交易信号ID");
         return;
       }
 
@@ -102,7 +114,7 @@ export default function CopyTradeAudit() {
           mentor_id,
           amount: parsedAmount,
           mentor_commission,
-          stock_id: stock.id,
+          stock_id: stockId, // 确保是正确的 UUID 字符串
           order_status: "Unsettled",
           order_profit_amount: 0,
           created_at: new Date().toISOString(),
