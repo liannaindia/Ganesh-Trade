@@ -6,10 +6,9 @@ export default function CopyTradeAudit() {
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
-  const [statusFilter, setStatusFilter] = useState("all"); // 全部状态
+  const [statusFilter, setStatusFilter] = useState("all");
   const pageSize = 10;
 
-  // 页面加载或过滤改变时重新请求
   useEffect(() => {
     fetchAudits(currentPage, statusFilter);
   }, [currentPage, statusFilter]);
@@ -18,16 +17,13 @@ export default function CopyTradeAudit() {
     try {
       setLoading(true);
 
-      // 1. 统计总数（根据过滤）
       const countQuery = supabase
         .from("copytrades")
         .select("*", { count: "planned", head: true });
-
       if (filter !== "all") countQuery.eq("status", filter);
       const { count } = await countQuery;
       setTotalCount(count || 0);
 
-      // 2. 分页查询
       const from = (page - 1) * pageSize;
       const to = from + pageSize - 1;
 
@@ -40,10 +36,9 @@ export default function CopyTradeAudit() {
         `)
         .range(from, to)
         .order("id", { ascending: false });
-
       if (filter !== "all") query.eq("status", filter);
-      const { data, error } = await query;
 
+      const { data, error } = await query;
       if (error) throw error;
 
       const formatted = data.map((item) => ({
@@ -69,7 +64,6 @@ export default function CopyTradeAudit() {
     }
 
     try {
-      // 检查余额
       const { data: user, error: userError } = await supabase
         .from("users")
         .select("available_balance")
@@ -81,7 +75,6 @@ export default function CopyTradeAudit() {
         return;
       }
 
-      // 扣减余额
       const newBalance = user.available_balance - parsedAmount;
       const { error: balanceError } = await supabase
         .from("users")
@@ -89,7 +82,6 @@ export default function CopyTradeAudit() {
         .eq("id", user_id);
       if (balanceError) throw balanceError;
 
-      // 批准
       const { error: statusError } = await supabase
         .from("copytrades")
         .update({ status: "approved" })
@@ -125,8 +117,6 @@ export default function CopyTradeAudit() {
     <div className="admin-card">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-bold text-gray-800">跟单审核（全部订单）</h2>
-
-        {/* 状态过滤 + 刷新 */}
         <div className="flex items-center gap-2">
           <select
             value={statusFilter}
@@ -143,7 +133,6 @@ export default function CopyTradeAudit() {
             <option value="cancelled">已取消</option>
             <option value="settled">已结算</option>
           </select>
-
           <button
             onClick={() => fetchAudits(currentPage, statusFilter)}
             className="btn-primary text-sm"
@@ -219,16 +208,10 @@ export default function CopyTradeAudit() {
                   <td className="admin-table td space-x-2">
                     {a.detail_status === "pending" ? (
                       <>
-                        <button
-                          onClick={() => handleApprove(a)}
-                          className="btn-primary text-xs"
-                        >
+                        <button onClick={() => handleApprove(a)} className="btn-primary text-xs">
                           批准
                         </button>
-                        <button
-                          onClick={() => handleReject(a.id)}
-                          className="btn-danger text-xs"
-                        >
+                        <button onClick={() => handleReject(a.id)} className="btn-danger text-xs">
                           拒绝
                         </button>
                       </>
@@ -243,7 +226,6 @@ export default function CopyTradeAudit() {
         </table>
       </div>
 
-      {/* 分页 */}
       {totalCount > pageSize && (
         <div className="flex justify-center items-center gap-4 p-4 border-t border-gray-200">
           <button
