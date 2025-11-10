@@ -96,12 +96,45 @@ export default function StockManagement() {
 
   const handlePublish = async (id) => {
     try {
-      const { error } = await supabase
+      const { data: stockData, error: stockError } = await supabase
+        .from("stocks")
+        .select("mentor_id")
+        .eq("id", id)
+        .single();
+      if (stockError) throw stockError;
+
+      const mentorId = stockData.mentor_id;
+
+      const { error: publishError } = await supabase
         .from("stocks")
         .update({ status: "published" })
         .eq("id", id);
-      if (error) throw error;
-      alert("上股已上架");
+      if (publishError) throw publishError;
+
+      // 自动绑定所有已批准但未绑定的跟单
+      const { data: pendingDetails, error: bindError } = await supabase
+        .from("copytrade_details")
+        .select("id")
+        .eq("mentor_id", mentorId)
+        .eq("status", "approved")
+        .is("stock_id", null);
+      if (bindError) throw bindError;
+
+      const updates = pendingDetails.map(d => ({
+        id: d.id,
+        stock_id: id
+      }));
+
+      if (updates.length > 0) {
+        const { error: updateError } = await supabase
+          .from("copytrade_details")
+          .upsert(updates);
+        if (updateError) throw updateError;
+        alert(`上股已上架！已为 ${updates.length} 位用户绑定跟单`);
+      } else {
+        alert("上股已上架");
+      }
+
       fetchStocks();
     } catch (error) {
       alert("操作失败: " + error.message);
