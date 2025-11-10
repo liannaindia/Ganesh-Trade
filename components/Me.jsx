@@ -12,39 +12,24 @@ import {
 } from "lucide-react";
 import { supabase } from "../supabaseClient";
 
+// ✅ 点击安装 APP（方案 A）
+const handleInstallApp = async () => {
+  if (window.deferredPrompt) {
+    window.deferredPrompt.prompt(); // 弹出安装提示
+    const { outcome } = await window.deferredPrompt.userChoice;
+    console.log(`📲 用户选择安装结果: ${outcome}`);
+    window.deferredPrompt = null; // 防止重复触发
+  } else {
+    alert("Please use your browser's 'Add to Home Screen' option to install the app.");
+  }
+};
+
 export default function Me({ setTab, userId, isLoggedIn }) {
   const [balance, setBalance] = useState(0);
   const [availableBalance, setAvailableBalance] = useState(0);
   const [loading, setLoading] = useState(true);
   const [showBalance, setShowBalance] = useState(true);
   const [pnlToday, setPnlToday] = useState(0); // ✅ 当天利润
-  const [installPromptEvent, setInstallPromptEvent] = useState(null); // ✅ PWA 事件对象
-
-  // ✅ 监听 beforeinstallprompt
-  useEffect(() => {
-    const handleBeforeInstallPrompt = (e) => {
-      e.preventDefault();
-      setInstallPromptEvent(e); // 保存事件对象
-      console.log("✅ PWA 安装提示已捕获，可在按钮点击时触发安装");
-    };
-
-    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
-    return () => {
-      window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
-    };
-  }, []);
-
-  // ✅ 点击立即触发安装
-  const handleInstallApp = async () => {
-    if (installPromptEvent) {
-      installPromptEvent.prompt(); // 触发系统安装弹窗
-      const { outcome } = await installPromptEvent.userChoice;
-      console.log(`📲 用户选择结果: ${outcome}`);
-      setInstallPromptEvent(null); // 防止重复触发
-    } else {
-      console.log("⚠️ 未捕获安装事件，请通过浏览器菜单手动添加到主屏幕");
-    }
-  };
 
   // ✅ 计算当天利润（印度时区）
   const calculateTodayPnL = async (uid) => {
@@ -84,7 +69,7 @@ export default function Me({ setTab, userId, isLoggedIn }) {
     }
   };
 
-  // ✅ 实时获取用户余额 + PnL
+  // ✅ 实时更新余额与 PnL
   useEffect(() => {
     if (!isLoggedIn || !userId) {
       setLoading(false);
@@ -105,7 +90,6 @@ export default function Me({ setTab, userId, isLoggedIn }) {
         setBalance(data.balance || 0);
         setAvailableBalance(data.available_balance || 0);
 
-        // 首次计算当天利润
         await calculateTodayPnL(userId);
       } catch (err) {
         console.error("Failed to fetch balance:", err);
@@ -134,7 +118,7 @@ export default function Me({ setTab, userId, isLoggedIn }) {
       )
       .subscribe();
 
-    // ✅ 实时订阅 copytrade_details 表，当状态为 settled 时更新 PnL
+    // ✅ 实时订阅订单变化（更新利润）
     const pnlSub = supabase
       .channel(`pnl-today-${userId}`)
       .on(
@@ -179,12 +163,11 @@ export default function Me({ setTab, userId, isLoggedIn }) {
     }
   };
 
-  const formatNumber = (num) => {
-    return Number(num).toLocaleString("en-US", {
+  const formatNumber = (num) =>
+    Number(num).toLocaleString("en-US", {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     });
-  };
 
   return (
     <div className="px-4 pb-24 max-w-md mx-auto">
@@ -295,7 +278,7 @@ export default function Me({ setTab, userId, isLoggedIn }) {
           {
             icon: <Download className="h-5 w-5 text-slate-600" />,
             label: "Download APP",
-            onClick: handleInstallApp, // ✅ 点击立即触发安装
+            onClick: handleInstallApp, // ✅ 点击立即触发安装提示
           },
         ].map((item, i) => (
           <div
