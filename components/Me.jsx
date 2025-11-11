@@ -248,7 +248,7 @@ export default function Me({ setTab, userId, isLoggedIn }) {
           {
             icon: <FileText className="h-5 w-5 text-slate-600" />,
             label: "Follow Order",
-            tab: "positions",
+            tab: "followorder",
           },
           {
             icon: <FileText className="h-5 w-5 text-slate-600" />,
