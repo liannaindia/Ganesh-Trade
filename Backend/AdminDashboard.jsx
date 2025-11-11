@@ -79,22 +79,12 @@ export default function AdminDashboard() {
             {menuItems.map((item) => (
               <li key={item.path}>
                 <Link
-                  to={item.path}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group relative
-                    ${
-                      location.pathname.startsWith(item.path)
-                        ? "bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-lg"
-                        : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
-                    }`}
-                >
-                  {item.icon}
-                  {sidebarOpen && <span className="font-medium">{item.label}</span>}
-                  {!sidebarOpen && (
-                    <div className="absolute left-full ml-2 px-3 py-2 bg-slate-800 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap shadow-xl transition-opacity">
-                      {item.label}
-                    </div>
-                  )}
-                </Link>
+  to={item.path}
+  className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600"
+>
+  {item.icon}
+  {sidebarOpen && <span className="font-medium">{item.label}</span>}
+</Link>
               </li>
             ))}
           </ul>
