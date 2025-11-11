@@ -1,149 +1,154 @@
-// components/Register.jsx
 import React, { useState } from "react";
 import { supabase } from "../supabaseClient";
-import { ArrowLeft } from "lucide-react";
 
-export default function Register({ setTab, setIsLoggedIn, setUserId }) { // 新增 setUserId
+export default function Register({ setTab, setIsLoggedIn, setUserId }) {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const [referralCode, setReferralCode] = useState(""); // 邀请码字段
   const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  // 生成7位唯一邀请码的函数
+  const generateReferralCode = () => {
+    const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    let referralCode = "";
+    for (let i = 0; i < 7; i++) {
+      const randomIndex = Math.floor(Math.random() * characters.length);
+      referralCode += characters[randomIndex];
+    }
+    return referralCode;
+  };
 
   const handleRegister = async () => {
-    if (isLoading) return;
-    setIsLoading(true);
+    if (!phoneNumber || !password) {
+      setError("Please enter all required fields.");
+      return;
+    }
+
+    setLoading(true);
     setError("");
 
-    if (password !== confirmPassword) {
-      setError("Passwords do not match");
-      setIsLoading(false);
-      return;
-    }
-
-    if (phoneNumber.length < 10) {
-      setError("Phone number must be at least 10 digits");
-      setIsLoading(false);
-      return;
-    }
-
     try {
-      const { data, error: insertError } = await supabase
-        .from('users')
+      // 生成唯一的7位邀请码，默认邀请码为 Ganesh
+      const newReferralCode = referralCode || "Ganesh"; // 如果没有填写邀请码，则默认使用 "Ganesh"
+
+      // 如果填写了有效的邀请码，则验证其有效性
+      let invitedById = null;
+
+      if (referralCode) {
+        const { data, error: referralError } = await supabase
+          .from("users")
+          .select("id")
+          .eq("referral_code", referralCode)
+          .single();
+
+        if (referralError) {
+          throw referralError;
+        }
+
+        if (data) {
+          invitedById = data.id; // 获取邀请人的 ID
+        } else {
+          setError("Invalid referral code.");
+          setLoading(false);
+          return;
+        }
+      }
+
+      // 插入用户信息到数据库
+      const { data, error } = await supabase
+        .from("users")
         .insert([
           {
             phone_number: phoneNumber,
-            password_hash: password,
-            balance: 0.00,
-            available_balance: 0.00,
-          }
-        ])
-        .select(); // 必须加 .select() 才能返回 id
+            password_hash: password, // 您可以添加密码加密逻辑
+            referral_code: newReferralCode, // 保存生成的邀请码
+            invited_by: invitedById, // 如果有填写邀请码，则关联邀请人
+            created_at: new Date(),
+          },
+        ]);
 
-      if (insertError) {
-        console.error("Supabase insert error:", insertError);
-        setError(insertError.message || "Registration failed");
-        setIsLoading(false);
-        return;
-      }
+      if (error) throw error;
 
-      if (!data || data.length === 0) {
-        setError("Registration failed: no user returned");
-        setIsLoading(false);
-        return;
-      }
-
-      const newUserId = data[0].id;
-
-      // 关键：保存到 localStorage + 同步设置状态
-      localStorage.setItem('phone_number', phoneNumber);
-      localStorage.setItem('user_id', newUserId);
-
-      console.log("注册成功，user_id 已保存:", newUserId);
-
+      // 成功注册后，更新状态并跳转
       setIsLoggedIn(true);
-      setUserId(newUserId); // 关键：同步设置 userId
+      setUserId(data[0].id);
+      localStorage.setItem("user_id", data[0].id);
       setTab("home");
-    } catch (error) {
-      console.error("Unexpected error during registration:", error);
-      setError("An error occurred during registration: " + error.message);
+    } catch (err) {
+      setError("Registration failed. Please try again.");
+      console.error(err);
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
   return (
-    <div className="max-w-md mx-auto bg-[#f5f7fb] pb-24 min-h-screen text-slate-900">
-      <div className="flex items-center gap-3 py-3">
-        <ArrowLeft
-          className="h-5 w-5 text-slate-700 cursor-pointer"
-          onClick={() => setTab("home")}
+    <div style={{ padding: "24px", textAlign: "center" }}>
+      <h2 style={{ fontSize: "24px", fontWeight: "bold" }}>Register</h2>
+      {error && <p style={{ color: "red", fontSize: "14px" }}>{error}</p>}
+      <div style={{ marginBottom: "16px" }}>
+        <input
+          type="text"
+          placeholder="Phone Number"
+          value={phoneNumber}
+          onChange={(e) => setPhoneNumber(e.target.value)}
+          style={{
+            width: "100%",
+            padding: "12px",
+            borderRadius: "8px",
+            border: "1px solid #ccc",
+            fontSize: "16px",
+          }}
         />
-        <h2 className="font-semibold text-slate-800 text-lg">Register</h2>
       </div>
-
-      <div className="px-4 mt-8 space-y-4">
-        <div>
-          <label className="text-sm text-slate-500">Phone Number</label>
-          <input
-            type="text"
-            className="w-full py-2 px-3 text-sm text-slate-700 rounded-lg border focus:ring-2 focus:ring-yellow-400"
-            placeholder="Enter your phone number"
-            value={phoneNumber}
-            onChange={(e) => setPhoneNumber(e.target.value)}
-            disabled={isLoading}
-          />
-        </div>
-
-        <div>
-          <label className="text-sm text-slate-500">Password</label>
-          <input
-            type="password"
-            className="w-full py-2 px-3 text-sm text-slate-700 rounded-lg border focus:ring-2 focus:ring-yellow-400"
-            placeholder="Enter your password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            disabled={isLoading}
-          />
-        </div>
-
-        <div>
-          <label className="text-sm text-slate-500">Confirm Password</label>
-          <input
-            type="password"
-            className="w-full py-2 px-3 text-sm text-slate-700 rounded-lg border focus:ring-2 focus:ring-yellow-400"
-            placeholder="Confirm your password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            disabled={isLoading}
-          />
-        </div>
-
-        {error && <div className="text-red-500 text-sm mt-2 p-2 bg-red-50 rounded">{error}</div>}
-
-        <button
-          onClick={handleRegister}
-          disabled={isLoading}
-          className={`w-full text-slate-900 font-semibold py-3 rounded-xl mt-4 transition ${
-            isLoading ? 'bg-yellow-300 cursor-not-allowed' : 'bg-yellow-400 hover:bg-yellow-500'
-          }`}
-        >
-          {isLoading ? 'Registering...' : 'Register'}
-        </button>
-
-        <div className="mt-6 text-center text-sm text-slate-500">
-          <span>
-            Already have an account?{" "}
-            <button
-              onClick={() => setTab("login")}
-              className="text-yellow-500 font-semibold"
-              disabled={isLoading}
-            >
-              Login
-            </button>
-          </span>
-        </div>
+      <div style={{ marginBottom: "16px" }}>
+        <input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          style={{
+            width: "100%",
+            padding: "12px",
+            borderRadius: "8px",
+            border: "1px solid #ccc",
+            fontSize: "16px",
+          }}
+        />
       </div>
+      <div style={{ marginBottom: "16px" }}>
+        <input
+          type="text"
+          placeholder="Referral Code (Optional)"
+          value={referralCode}
+          onChange={(e) => setReferralCode(e.target.value)}
+          style={{
+            width: "100%",
+            padding: "12px",
+            borderRadius: "8px",
+            border: "1px solid #ccc",
+            fontSize: "16px",
+          }}
+        />
+      </div>
+      <button
+        onClick={handleRegister}
+        disabled={loading}
+        style={{
+          width: "100%",
+          padding: "14px",
+          borderRadius: "8px",
+          backgroundColor: "#f97316",
+          color: "white",
+          fontSize: "18px",
+          fontWeight: "bold",
+          cursor: loading ? "not-allowed" : "pointer",
+          opacity: loading ? 0.6 : 1,
+        }}
+      >
+        {loading ? "Registering..." : "Register"}
+      </button>
     </div>
   );
 }
