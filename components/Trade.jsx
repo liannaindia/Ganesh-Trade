@@ -8,13 +8,13 @@ export default function Trade({ setTab, balance, userId, isLoggedIn }) {
   const [followingAmount, setFollowingAmount] = useState("");
   const [selectedMentor, setSelectedMentor] = useState(null);
   const [userPhoneNumber, setUserPhoneNumber] = useState("");
-  const [availableBalance, setAvailableBalance] = useState(0); // 新增可用余额
+  const [availableBalance, setAvailableBalance] = useState(0); // 新增：可用余额
 
   useEffect(() => {
     if (!isLoggedIn || !userId) return;
     fetchMentors();
     fetchUserPhoneNumber();
-    fetchUserBalance(); // 获取可用余额
+    fetchAvailableBalance(); // 新增：获取可用余额
   }, [isLoggedIn, userId]);
 
   const fetchMentors = async () => {
@@ -41,17 +41,19 @@ export default function Trade({ setTab, balance, userId, isLoggedIn }) {
     }
   };
 
-  const fetchUserBalance = async () => {
+  // 新增：获取用户的 available_balance
+  const fetchAvailableBalance = async () => {
     try {
       const { data, error } = await supabase
         .from("users")
-        .select("available_balance") // 获取可用余额
+        .select("available_balance")
         .eq("id", userId)
         .single();
       if (error) throw error;
-      setAvailableBalance(data?.available_balance || 0); // 设置可用余额
+      setAvailableBalance(parseFloat(data?.available_balance) || 0);
     } catch (error) {
       console.error("Failed to load available balance:", error);
+      setAvailableBalance(0);
     }
   };
 
@@ -69,8 +71,8 @@ export default function Trade({ setTab, balance, userId, isLoggedIn }) {
       alert("Please enter a valid amount");
       return;
     }
-    if (parseFloat(followingAmount) > balance) {
-      alert("Insufficient balance");
+    if (parseFloat(followingAmount) > availableBalance) { // 使用 available_balance
+      alert("Insufficient available balance");
       return;
     }
     if (!selectedMentor) {
@@ -93,6 +95,8 @@ export default function Trade({ setTab, balance, userId, isLoggedIn }) {
       setIsFollowing(false);
       setFollowingAmount("");
       setSelectedMentor(null);
+      // 可选：刷新可用余额
+      fetchAvailableBalance();
     } catch (error) {
       console.error("Follow request failed:", error);
       alert("Request failed, please try again");
@@ -161,18 +165,17 @@ export default function Trade({ setTab, balance, userId, isLoggedIn }) {
               marginBottom: "16px",
             }}
           >
-            <span style={{ fontSize: "14px", color: "#374151" }}>
-              Balance:{" "}
-              <span style={{ fontWeight: "bold", color: "#FFD700" }}>
-                {balance.toFixed(2)} USDT
+            <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+              <span style={{ fontSize: "14px", color: "#374151" }}>
+                Available Balance:{" "}
+                <span style={{ fontWeight: "bold", color: "#FFD700" }}>
+                  {availableBalance.toFixed(2)} USDT
+                </span>
               </span>
-            </span>
-            <span style={{ fontSize: "14px", color: "#374151" }}>
-              Available Balance:{" "}
-              <span style={{ fontWeight: "bold", color: "#FFD700" }}>
-                {availableBalance.toFixed(2)} USDT
+              <span style={{ fontSize: "12px", color: "#6B7280" }}>
+                Total Balance: {balance.toFixed(2)} USDT
               </span>
-            </span>
+            </div>
             <button
               onClick={handleRecharge}
               style={{
@@ -219,6 +222,57 @@ export default function Trade({ setTab, balance, userId, isLoggedIn }) {
               onChange={(e) => setFollowingAmount(e.target.value)}
             />
           </div>
+
+          <label
+            style={{
+              display: "flex",
+              alignItems: "center",
+              fontSize: "12px",
+              color: "#6B7280",
+              marginBottom: "16px",
+            }}
+          >
+            <input
+              type="checkbox"
+              style={{
+                marginRight: "8px",
+                width: "20px",
+                height: "20px",
+                accentColor: "#FFD700",
+              }}
+            />
+            I have read and agree to{" "}
+            <a
+              href="#"
+              style={{
+                color: "#FF6B35",
+                textDecoration: "underline",
+                marginLeft: "4px",
+              }}
+            >
+              Service Agreement
+            </a>
+          </label>
+
+          <button
+            onClick={handleBack}
+            style={{
+              width: "100%",
+              padding: "12px",
+              background: "#6B7280",
+              color: "#FFFFFF",
+              fontWeight: "bold",
+              borderRadius: "12px",
+              border: "none",
+              marginBottom: "12px",
+              cursor: "pointer",
+              transition: "background 0.3s",
+            }}
+            onMouseEnter={(e) => (e.target.style.background = "#4B5563")}
+            onMouseLeave={(e) => (e.target.style.background = "#6B7280")}
+          >
+            Back
+          </button>
 
           <button
             onClick={handleFollow}
