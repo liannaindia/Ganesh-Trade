@@ -234,13 +234,7 @@ export default function Me({ setTab, userId, isLoggedIn, setIsLoggedIn, setUserI
         </div>
       </div>
 
-      {/* ===== Logout Button ===== */}
-      <button
-        onClick={handleLogout}
-        className="w-full text-slate-900 font-semibold py-3 rounded-xl bg-red-500 hover:bg-red-600 text-white"
-      >
-        Logout
-      </button>
+    
 
       {/* ===== Recharge / Withdraw Buttons ===== */}
       <div className="grid grid-cols-2 gap-3 mb-5">
@@ -304,6 +298,13 @@ export default function Me({ setTab, userId, isLoggedIn, setIsLoggedIn, setUserI
             <span className="text-slate-400">{">"}</span>
           </div>
         ))}
+          {/* ===== Logout Button ===== */}
+      <button
+        onClick={handleLogout}
+        className="w-full text-slate-900 font-semibold py-3 rounded-xl bg-red-500 hover:bg-red-600 text-white"
+      >
+        Logout
+      </button>
       </div>
     </div>
   );
