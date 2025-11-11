@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "../supabaseClient";
 
 export default function Trade({ setTab, balance, userId, isLoggedIn }) {
@@ -8,14 +8,85 @@ export default function Trade({ setTab, balance, userId, isLoggedIn }) {
   const [followingAmount, setFollowingAmount] = useState("");
   const [selectedMentor, setSelectedMentor] = useState(null);
   const [userPhoneNumber, setUserPhoneNumber] = useState("");
-  const [availableBalance, setAvailableBalance] = useState(0); // 新增：可用余额
+  const [availableBalance, setAvailableBalance] = useState(0); // 可用余额
 
+  // 使用 useRef 保存订阅实例，避免重复订阅
+  const subscriptionRef = useRef(null);
+
+  // 初始化：加载导师、手机号、可用余额
   useEffect(() => {
     if (!isLoggedIn || !userId) return;
     fetchMentors();
     fetchUserPhoneNumber();
-    fetchAvailableBalance(); // 新增：获取可用余额
+    fetchAvailableBalance(); // 初始加载
   }, [isLoggedIn, userId]);
+
+  // 实时订阅 available_balance
+  useEffect(() => {
+    if (!isLoggedIn || !userId) {
+      // 清理订阅
+      if (subscriptionRef.current) {
+        subscriptionRef.current.unsubscribe();
+        subscriptionRef.current = null;
+      }
+      return;
+    }
+
+    // 取消旧订阅
+    if (subscriptionRef.current) {
+      subscriptionRef.current.unsubscribe();
+    }
+
+    // 订阅 users 表中当前 userId 的 available_balance 变化
+    const channel = supabase
+      .channel(`user-balance-${userId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // 监听 INSERT, UPDATE, DELETE
+          schema: 'public',
+          table: 'users',
+          filter: `id=eq.${userId}`,
+        },
+        (payload) => {
+          if (payload.new && 'available_balance' in payload.new) {
+            setAvailableBalance(parseFloat(payload.new.available_balance) || 0);
+          }
+        }
+      )
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          console.log('Realtime subscription active for user:', userId);
+        }
+      });
+
+    subscriptionRef.current = channel;
+
+    // 清理函数：组件卸载或 userId 变化时取消订阅
+    return () => {
+      if (subscriptionRef.current) {
+        subscriptionRef.current.unsubscribe();
+        subscriptionRef.current = null;
+      }
+    };
+  }, [userId, isLoggedIn]);
+
+  // 初始加载可用余额（防止订阅延迟）
+  const fetchAvailableBalance = async () => {
+    if (!userId) return;
+    try {
+      const { data, error } = await supabase
+        .from("users")
+        .select("available_balance")
+        .eq("id", userId)
+        .single();
+      if (error) throw error;
+      setAvailableBalance(parseFloat(data?.available_balance) || 0);
+    } catch (error) {
+      console.error("Failed to load available balance:", error);
+      setAvailableBalance(0);
+    }
+  };
 
   const fetchMentors = async () => {
     try {
@@ -41,22 +112,6 @@ export default function Trade({ setTab, balance, userId, isLoggedIn }) {
     }
   };
 
-  // 新增：获取用户的 available_balance
-  const fetchAvailableBalance = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("users")
-        .select("available_balance")
-        .eq("id", userId)
-        .single();
-      if (error) throw error;
-      setAvailableBalance(parseFloat(data?.available_balance) || 0);
-    } catch (error) {
-      console.error("Failed to load available balance:", error);
-      setAvailableBalance(0);
-    }
-  };
-
   const filtered = mentors.filter((m) =>
     m.name.toLowerCase().includes(query.toLowerCase())
   );
@@ -71,7 +126,7 @@ export default function Trade({ setTab, balance, userId, isLoggedIn }) {
       alert("Please enter a valid amount");
       return;
     }
-    if (parseFloat(followingAmount) > availableBalance) { // 使用 available_balance
+    if (parseFloat(followingAmount) > availableBalance) {
       alert("Insufficient available balance");
       return;
     }
@@ -95,8 +150,10 @@ export default function Trade({ setTab, balance, userId, isLoggedIn }) {
       setIsFollowing(false);
       setFollowingAmount("");
       setSelectedMentor(null);
-      // 可选：刷新可用余额
-      fetchAvailableBalance();
+
+      // 不再需要手动刷新，Realtime 会自动更新
+      // fetchAvailableBalance(); // 已移除
+
     } catch (error) {
       console.error("Follow request failed:", error);
       alert("Request failed, please try again");
