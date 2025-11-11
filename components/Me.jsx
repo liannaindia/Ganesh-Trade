@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { supabase } from "../supabaseClient";
 
-export default function Me({ setTab, userId, isLoggedIn }) {
+export default function Me({ setTab, userId, isLoggedIn, setIsLoggedIn, setUserId }) {
   const [balance, setBalance] = useState(0);
   const [availableBalance, setAvailableBalance] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -152,6 +152,17 @@ export default function Me({ setTab, userId, isLoggedIn }) {
     }
   };
 
+  const handleLogout = () => {
+    // 清除 localStorage 中的用户信息
+    localStorage.removeItem("phone_number");
+    localStorage.removeItem("user_id");
+
+    // 更新状态
+    setIsLoggedIn(false);
+    setUserId(null);
+    setTab("home");
+  };
+
   const formatNumber = (num) => {
     return Number(num).toLocaleString("en-US", {
       minimumFractionDigits: 2,
@@ -222,6 +233,14 @@ export default function Me({ setTab, userId, isLoggedIn }) {
           </div>
         </div>
       </div>
+
+      {/* ===== Logout Button ===== */}
+      <button
+        onClick={handleLogout}
+        className="w-full text-slate-900 font-semibold py-3 rounded-xl bg-red-500 hover:bg-red-600 text-white"
+      >
+        Logout
+      </button>
 
       {/* ===== Recharge / Withdraw Buttons ===== */}
       <div className="grid grid-cols-2 gap-3 mb-5">
