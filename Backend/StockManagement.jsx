@@ -257,13 +257,13 @@ export default function StockManagement() {
       return s + profit;
     }, 0);
 
-    alert(
-      `结算成功！\n` +
-        `跟单人数：${details.length}\n` +
-        `释放冻结资金：${totalReleased.toFixed(2)} USD\n` +
-        `用户实得盈亏：${totalUserProfit.toFixed(2)} USD\n` +
-        `总到账：${(totalReleased + totalUserProfit).toFixed(2)} USD`
-    );
+   alert(
+  `结算成功！\n` +
+    `跟单人数：${details.length}\n` +
+    `释放冻结资金：${totalReleased.toFixed(2)} USD\n` + 
+    `用户实得盈亏：${totalUserProfit.toFixed(2)} USD\n` + 
+    `总到账：${totalAmount.toFixed(2)} USD` // 计算总到账金额时使用正确的逻辑
+);
 
     fetchStocks();
   } catch (error) {
