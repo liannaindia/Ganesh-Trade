@@ -159,7 +159,7 @@ export default function App() {
       case "withdraw":
         return <WithdrawPage setTab={setTab} balance={balance} availableBalance={availableBalance} isLoggedIn={isLoggedIn} userId={userId} />;
       case "invite":
-        return <InvitePage setTab={setTab} isLoggedIn={isLoggedIn} />;
+        return <InvitePage setTab={setTab} userId={userId} isLoggedIn={isLoggedIn} />;
       default:
         return <HomePage setTab={setTab} isLoggedIn={isLoggedIn} balance={balance} />;
     }
