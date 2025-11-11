@@ -149,7 +149,10 @@ export default function StockManagement() {
     return;
   }
 
-  if (parseFloat(stock.sell_price) <= parseFloat(stock.buy_price)) {
+  const buyPrice = parseFloat(stock.buy_price);
+  const sellPrice = parseFloat(stock.sell_price);
+
+  if (sellPrice <= buyPrice) {
     if (
       !window.confirm(
         "卖出价 ≤ 买入价，将导致用户亏损。\n是否继续？"
@@ -162,6 +165,7 @@ export default function StockManagement() {
   if (!window.confirm(`确定结算 ${stock.crypto_name}？\n此操作不可逆！`)) return;
 
   try {
+    // 1. 获取所有已绑定的跟单记录（含用户余额）
     const { data: details, error: fetchError } = await supabase
       .from("copytrade_details")
       .select(`
@@ -177,60 +181,62 @@ export default function StockManagement() {
       return;
     }
 
-    const priceDiff = parseFloat(stock.sell_price) - parseFloat(stock.buy_price);
+    const priceDiff = sellPrice - buyPrice;
     const detailUpdates = [];
-    const userUpdates = {};
+    const userUpdates = {}; // { user_id: { profit: X, unfreeze: Y } }
 
+    // 2. 计算每位用户的盈亏
     for (const detail of details) {
-      const amount = parseFloat(detail.amount); // 跟单金额
-      const commissionRate = detail.mentor_commission / 100; // 导师佣金率
+      const amount = parseFloat(detail.amount);
+      const commissionRate = detail.mentor_commission / 100;
 
-      // 计算每单位资产的盈利
-      const clientAssetAmount = amount / parseFloat(stock.buy_price); // 客户购买的资产数量
-      const totalProfit = priceDiff * clientAssetAmount; // 总利润
-      const userProfit = totalProfit * (1 - commissionRate); // 扣除佣金后的盈利
+      // 购买的资产数量
+      const assetUnits = amount / buyPrice;
+      // 总利润（未扣佣金）
+      const totalProfit = priceDiff * assetUnits;
+      // 用户实得利润
+      const userProfit = totalProfit * (1 - commissionRate);
 
-      const finalAmount = amount + userProfit; // 用户最终到账金额（包括盈利部分）
-
-      // 更新跟单记录中的盈利
+      // 更新跟单记录
       detailUpdates.push({
         id: detail.id,
-        order_profit_amount: userProfit, // 更新跟单的盈利部分
+        order_profit_amount: userProfit,
+        status: "settled",
       });
 
       const uid = detail.user_id.toString();
-      if (!userUpdates[uid]) userUpdates[uid] = { balance: 0, available_balance: 0 };
-
-      // 更新用户总金额和有效余额
-      userUpdates[uid].balance += finalAmount; // 更新总金额
-      userUpdates[uid].available_balance += amount + userProfit; // 更新有效余额（解冻后的跟单金额 + 盈利）
+      if (!userUpdates[uid]) {
+        userUpdates[uid] = { profit: 0, unfreeze: 0 };
+      }
+      userUpdates[uid].profit += userProfit;
+      userUpdates[uid].unfreeze += amount;
     }
 
-    // 批量更新 copytrade_details 状态
+    // 3. 批量更新 copytrade_details 状态
     const updateDetailPromises = detailUpdates.map(update =>
       supabase
         .from("copytrade_details")
         .update({
           order_profit_amount: update.order_profit_amount,
-          status: "settled" // 更新状态为已结算
+          status: "settled",
         })
         .eq("id", update.id)
     );
+
     const detailResults = await Promise.all(updateDetailPromises);
     const detailFailed = detailResults.find(r => r.error);
     if (detailFailed) throw detailFailed.error;
 
-    // 更新用户的余额和有效余额
+    // 4. 更新用户余额（带乐观锁，防止并发覆盖）
     const userBalancePromises = Object.entries(userUpdates).map(async ([uid, change]) => {
-      const { data: user, error: fetchError } = await supabase
-        .from("users")
-        .select("balance, available_balance")
-        .eq("id", uid)
-        .single();
-      if (fetchError) throw fetchError;
+      const user = details.find(d => d.user_id.toString() === uid)?.users;
+      if (!user) throw new Error(`用户 ${uid} 数据缺失`);
 
-      const newBalance = (parseFloat(user.balance) || 0) + change.balance; // 更新总金额
-      const newAvailable = (parseFloat(user.available_balance) || 0) + change.available_balance; // 更新有效余额
+      const oldBalance = parseFloat(user.balance) || 0;
+      const oldAvailable = parseFloat(user.available_balance) || 0;
+
+      const newBalance = oldBalance + change.profit;
+      const newAvailable = oldAvailable + change.unfreeze + change.profit;
 
       const { error: updateError } = await supabase
         .from("users")
@@ -238,32 +244,42 @@ export default function StockManagement() {
           balance: newBalance,
           available_balance: newAvailable,
         })
-        .eq("id", uid);
-      if (updateError) throw updateError;
+        .eq("id", uid)
+        .eq("balance", oldBalance)           // 乐观锁
+        .eq("available_balance", oldAvailable); // 乐观锁
+
+      if (updateError) {
+        console.error(`用户 ${uid} 更新失败:`, updateError);
+        throw new Error(`用户 ${uid} 余额更新失败，请重试`);
+      }
     });
+
     await Promise.all(userBalancePromises);
 
-    // 更新股票状态
+    // 5. 更新股票状态为已结算
     const { error: stockError } = await supabase
       .from("stocks")
       .update({ status: "settled" })
       .eq("id", stock.id);
+
     if (stockError) throw stockError;
 
+    // 6. 计算统计信息用于提示
     const totalReleased = details.reduce((s, d) => s + parseFloat(d.amount), 0);
     const totalUserProfit = details.reduce((s, d) => {
-      const profit =
-        (priceDiff * parseFloat(d.amount)) * (1 - d.mentor_commission / 100);
+      const asset = parseFloat(d.amount) / buyPrice;
+      const profit = priceDiff * asset * (1 - d.mentor_commission / 100);
       return s + profit;
     }, 0);
+    const totalAmount = totalReleased + totalUserProfit;
 
-   alert(
-  `结算成功！\n` +
-    `跟单人数：${details.length}\n` +
-    `释放冻结资金：${totalReleased.toFixed(2)} USD\n` + 
-    `用户实得盈亏：${totalUserProfit.toFixed(2)} USD\n` + 
-    `总到账：${totalAmount.toFixed(2)} USD` // 计算总到账金额时使用正确的逻辑
-);
+    alert(
+      `结算成功！\n` +
+      `跟单人数：${details.length}\n` +
+      `释放冻结资金：${totalReleased.toFixed(2)} USD\n` +
+      `用户实得盈亏：${totalUserProfit.toFixed(2)} USD\n` +
+      `总到账金额：${totalAmount.toFixed(2)} USD`
+    );
 
     fetchStocks();
   } catch (error) {
@@ -271,7 +287,6 @@ export default function StockManagement() {
     alert("结算失败: " + error.message);
   }
 };
-
 
 
   const handleDeleteStock = async (id) => {
