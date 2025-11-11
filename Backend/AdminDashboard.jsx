@@ -4,7 +4,7 @@ import {
   Users, DollarSign, CreditCard, Settings, UserCheck,
   Copy, TrendingUp, Menu, X, LogOut, Search, Bell, ChevronDown,
 } from "lucide-react";
-import "./admin.css"; // 已导入
+// import "./admin.css"; // 已导入
 
 const menuItems = [
   { label: "用户信息", path: "/admin/users", icon: <Users className="w-5 h-5" /> },
