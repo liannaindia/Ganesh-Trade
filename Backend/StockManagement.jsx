@@ -187,11 +187,12 @@ export default function StockManagement() {
 
       // 计算每单位资产的盈利
       const clientAssetAmount = amount / parseFloat(stock.buy_price); // 客户购买的资产数量
-      const totalProfit = priceDiff * clientAssetAmount; // 盈利
+      const totalProfit = priceDiff * clientAssetAmount; // 总利润
       const userProfit = totalProfit * (1 - commissionRate); // 扣除佣金后的盈利
 
       const finalAmount = amount + userProfit; // 用户最终到账金额（包括盈利部分）
 
+      // 更新跟单记录中的盈利
       detailUpdates.push({
         id: detail.id,
         order_profit_amount: userProfit, // 更新跟单的盈利部分
@@ -219,7 +220,7 @@ export default function StockManagement() {
     const detailFailed = detailResults.find(r => r.error);
     if (detailFailed) throw detailFailed.error;
 
-    // 更新用户余额和有效余额
+    // 更新用户的余额和有效余额
     const userBalancePromises = Object.entries(userUpdates).map(async ([uid, change]) => {
       const { data: user, error: fetchError } = await supabase
         .from("users")
@@ -270,6 +271,7 @@ export default function StockManagement() {
     alert("结算失败: " + error.message);
   }
 };
+
 
 
   const handleDeleteStock = async (id) => {
