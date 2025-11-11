@@ -29,12 +29,23 @@ export default function Register({ setTab, setIsLoggedIn, setUserId }) {
     setError("");
 
     try {
-      // 生成唯一的7位邀请码，默认邀请码为 Ganesh
-      const newReferralCode = referralCode || "Ganesh"; // 如果没有填写邀请码，则默认使用 "Ganesh"
+      // 检查手机号是否已存在
+      const { data: existingUser, error: phoneError } = await supabase
+        .from("users")
+        .select("id")
+        .eq("phone_number", phoneNumber)
+        .single();
 
-      // 如果填写了有效的邀请码，则验证其有效性
+      if (phoneError) throw phoneError;
+
+      if (existingUser) {
+        setError("This phone number is already registered.");
+        setLoading(false);
+        return;
+      }
+
+      // 验证邀请码，如果填写了邀请码，则获取上级ID
       let invitedById = null;
-
       if (referralCode) {
         const { data, error: referralError } = await supabase
           .from("users")
@@ -55,15 +66,18 @@ export default function Register({ setTab, setIsLoggedIn, setUserId }) {
         }
       }
 
+      // 为用户生成唯一的7位邀请码
+      const newReferralCode = generateReferralCode();
+
       // 插入用户信息到数据库
       const { data, error } = await supabase
         .from("users")
         .insert([
           {
             phone_number: phoneNumber,
-            password_hash: password, // 您可以添加密码加密逻辑
-            referral_code: newReferralCode, // 保存生成的邀请码
-            invited_by: invitedById, // 如果有填写邀请码，则关联邀请人
+            password_hash: password, // 密码哈希（应加密处理）
+            referral_code: newReferralCode, // 保存用户生成的唯一邀请码
+            invited_by: invitedById, // 如果填写了邀请码，则关联邀请人
             created_at: new Date(),
           },
         ]);
