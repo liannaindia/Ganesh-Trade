@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../supabaseClient";
 
-export default function Trade({ setTab, balance, userId, isLoggedIn }) {
+export default function Trade({ setTab, balance,available_balance, userId, isLoggedIn }) {
   const [query, setQuery] = useState("");
   const [mentors, setMentors] = useState([]);
   const [isFollowing, setIsFollowing] = useState(false);
@@ -38,6 +38,21 @@ export default function Trade({ setTab, balance, userId, isLoggedIn }) {
       console.error("Failed to load phone number:", error);
     }
   };
+
+  const fetchUserBalance = async () => {
+  try {
+    const { data, error } = await supabase
+      .from("users")
+      .select("available_balance")
+      .eq("id", userId)
+      .single();
+    if (error) throw error;
+    setAvailableBalance(data?.available_balance || 0);
+  } catch (error) {
+    console.error("Failed to load available balance:", error);
+  }
+};
+
 
   const filtered = mentors.filter((m) =>
     m.name.toLowerCase().includes(query.toLowerCase())
@@ -149,7 +164,7 @@ export default function Trade({ setTab, balance, userId, isLoggedIn }) {
             <span style={{ fontSize: "14px", color: "#374151" }}>
               Available Balance:{" "}
               <span style={{ fontWeight: "bold", color: "#FFD700" }}>
-                {balance.toFixed(2)} USDT
+                {available_balance.toFixed(2)} USDT
               </span>
             </span>
             <button
