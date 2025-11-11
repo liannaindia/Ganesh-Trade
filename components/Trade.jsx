@@ -98,7 +98,7 @@ export default function Trade({ setTab, balance, userId, isLoggedIn }) {
         padding: "0 16px 96px 16px",
         maxWidth: "448px",
         margin: "0 auto",
-        background: "linear-gradient(to bottom, #fff8f0, #fff0e6)",
+      //  background: "linear-gradient(to bottom, #fff8f0, #fff0e6)",
         minHeight: "100vh",
         position: "relative",
         overflow: "hidden",
