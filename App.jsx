@@ -9,6 +9,7 @@ import WithdrawPage from "./components/Withdraw.jsx";
 import InvitePage from "./components/Invite.jsx";
 import LoginPage from "./components/Login.jsx";
 import RegisterPage from "./components/Register.jsx";
+import FollowOrderPage from "./components/FollowOrder.jsx";
 import BottomNav from "./BottomNav";
 import TransactionsPage from "./components/Transactions.jsx";
 import { supabase } from "./supabaseClient";
@@ -151,6 +152,8 @@ export default function App() {
         return <MePage setTab={setTab} balance={balance} availableBalance={availableBalance} isLoggedIn={isLoggedIn} userId={userId} />;
       case "transactions":
         return <TransactionsPage setTab={setTab} userId={userId} isLoggedIn={isLoggedIn} />;
+      case "followorder":
+        return <FollowOrderPage setTab={setTab} userId={userId} isLoggedIn={isLoggedIn} />;
       case "recharge":
         return <RechargePage setTab={setTab} balance={balance} isLoggedIn={isLoggedIn} userId={userId} />;
       case "withdraw":
