@@ -8,11 +8,13 @@ export default function Trade({ setTab, balance, userId, isLoggedIn }) {
   const [followingAmount, setFollowingAmount] = useState("");
   const [selectedMentor, setSelectedMentor] = useState(null);
   const [userPhoneNumber, setUserPhoneNumber] = useState("");
+  const [availableBalance, setAvailableBalance] = useState(0); // 新增可用余额
 
   useEffect(() => {
     if (!isLoggedIn || !userId) return;
     fetchMentors();
     fetchUserPhoneNumber();
+    fetchUserBalance(); // 获取可用余额
   }, [isLoggedIn, userId]);
 
   const fetchMentors = async () => {
@@ -39,6 +41,20 @@ export default function Trade({ setTab, balance, userId, isLoggedIn }) {
     }
   };
 
+  const fetchUserBalance = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("users")
+        .select("available_balance") // 获取可用余额
+        .eq("id", userId)
+        .single();
+      if (error) throw error;
+      setAvailableBalance(data?.available_balance || 0); // 设置可用余额
+    } catch (error) {
+      console.error("Failed to load available balance:", error);
+    }
+  };
+
   const filtered = mentors.filter((m) =>
     m.name.toLowerCase().includes(query.toLowerCase())
   );
@@ -49,39 +65,39 @@ export default function Trade({ setTab, balance, userId, isLoggedIn }) {
   };
 
   const handleFollow = async () => {
-  if (!followingAmount || parseFloat(followingAmount) <= 0) {
-    alert("Please enter a valid amount");
-    return;
-  }
-  if (parseFloat(followingAmount) > balance) {
-    alert("Insufficient balance");
-    return;
-  }
-  if (!selectedMentor) {
-    alert("Please select a mentor");
-    return;
-  }
+    if (!followingAmount || parseFloat(followingAmount) <= 0) {
+      alert("Please enter a valid amount");
+      return;
+    }
+    if (parseFloat(followingAmount) > balance) {
+      alert("Insufficient balance");
+      return;
+    }
+    if (!selectedMentor) {
+      alert("Please select a mentor");
+      return;
+    }
 
-  try {
-    const { error } = await supabase.from("copytrades").insert([{
-      user_id: userId,
-      mentor_id: selectedMentor.id,
-      amount: parseFloat(followingAmount),
-      status: "pending",
-      mentor_commission: selectedMentor.commission,
-    }]);
+    try {
+      const { error } = await supabase.from("copytrades").insert([{
+        user_id: userId,
+        mentor_id: selectedMentor.id,
+        amount: parseFloat(followingAmount),
+        status: "pending",
+        mentor_commission: selectedMentor.commission,
+      }]);
 
-    if (error) throw error;
+      if (error) throw error;
 
-    alert("Follow request submitted, awaiting approval");
-    setIsFollowing(false);
-    setFollowingAmount("");
-    setSelectedMentor(null);
-  } catch (error) {
-    console.error("Follow request failed:", error);
-    alert("Request failed, please try again");
-  }
-};
+      alert("Follow request submitted, awaiting approval");
+      setIsFollowing(false);
+      setFollowingAmount("");
+      setSelectedMentor(null);
+    } catch (error) {
+      console.error("Follow request failed:", error);
+      alert("Request failed, please try again");
+    }
+  };
 
   const handleBack = () => {
     setIsFollowing(false);
@@ -98,7 +114,6 @@ export default function Trade({ setTab, balance, userId, isLoggedIn }) {
         padding: "0 16px 96px 16px",
         maxWidth: "448px",
         margin: "0 auto",
-      //  background: "linear-gradient(to bottom, #fff8f0, #fff0e6)",
         minHeight: "100vh",
         position: "relative",
         overflow: "hidden",
@@ -147,9 +162,15 @@ export default function Trade({ setTab, balance, userId, isLoggedIn }) {
             }}
           >
             <span style={{ fontSize: "14px", color: "#374151" }}>
-              Available Balance:{" "}
+              Balance:{" "}
               <span style={{ fontWeight: "bold", color: "#FFD700" }}>
                 {balance.toFixed(2)} USDT
+              </span>
+            </span>
+            <span style={{ fontSize: "14px", color: "#374151" }}>
+              Available Balance:{" "}
+              <span style={{ fontWeight: "bold", color: "#FFD700" }}>
+                {availableBalance.toFixed(2)} USDT
               </span>
             </span>
             <button
@@ -198,57 +219,6 @@ export default function Trade({ setTab, balance, userId, isLoggedIn }) {
               onChange={(e) => setFollowingAmount(e.target.value)}
             />
           </div>
-
-          <label
-            style={{
-              display: "flex",
-              alignItems: "center",
-              fontSize: "12px",
-              color: "#6B7280",
-              marginBottom: "16px",
-            }}
-          >
-            <input
-              type="checkbox"
-              style={{
-                marginRight: "8px",
-                width: "20px",
-                height: "20px",
-                accentColor: "#FFD700",
-              }}
-            />
-            I have read and agree to{" "}
-            <a
-              href="#"
-              style={{
-                color: "#FF6B35",
-                textDecoration: "underline",
-                marginLeft: "4px",
-              }}
-            >
-              Service Agreement
-            </a>
-          </label>
-
-          <button
-            onClick={handleBack}
-            style={{
-              width: "100%",
-              padding: "12px",
-              background: "#6B7280",
-              color: "#FFFFFF",
-              fontWeight: "bold",
-              borderRadius: "12px",
-              border: "none",
-              marginBottom: "12px",
-              cursor: "pointer",
-              transition: "background 0.3s",
-            }}
-            onMouseEnter={(e) => (e.target.style.background = "#4B5563")}
-            onMouseLeave={(e) => (e.target.style.background = "#6B7280")}
-          >
-            Back
-          </button>
 
           <button
             onClick={handleFollow}
