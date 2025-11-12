@@ -12,6 +12,18 @@ export default function Invite({ setTab, userId, isLoggedIn }) {
   const [modalLoading, setModalLoading] = useState(false);
   const [showRewards, setShowRewards] = useState(false);
 
+  // New stats
+  const [totalCount, setTotalCount] = useState(0);
+  const [level1Count, setLevel1Count] = useState(0);
+  const [level2Count, setLevel2Count] = useState(0);
+  const [level3Count, setLevel3Count] = useState(0);
+  const [effectiveCount, setEffectiveCount] = useState(0);
+  const [downlineByLevel, setDownlineByLevel] = useState({
+    level1: [],
+    level2: [],
+    level3: [],
+  });
+
   // Copy invitation code
   const copyCode = () => {
     navigator.clipboard.writeText(referralCode);
@@ -24,62 +36,83 @@ export default function Invite({ setTab, userId, isLoggedIn }) {
     return phone.slice(0, 3) + "****" + phone.slice(-4);
   };
 
-  // Initial load: code + count + list
+  // Load all data (code + 3-level tree + stats)
+  const loadAllData = async () => {
+    if (!userId) return;
+
+    try {
+      setLoading(true);
+
+      // 1. Get own referral code
+      const { data: userData, error: userErr } = await supabase
+        .from("users")
+        .select("referral_code")
+        .eq("id", userId)
+        .single();
+
+      if (userErr) throw userErr;
+      setReferralCode(userData.referral_code || "N/A");
+
+      // 2. Get 3-level tree with recharge total
+      const { data: treeData, error: treeErr } = await supabase
+        .rpc("get_referral_tree", { p_user_id: userId });
+
+      if (treeErr) throw treeErr;
+
+      // 3. Calculate stats
+      let l1 = 0,
+        l2 = 0,
+        l3 = 0,
+        effective = 0;
+      const dl1 = [],
+        dl2 = [],
+        dl3 = [];
+
+      treeData?.forEach((u) => {
+        if (u.level === 1) {
+          l1++;
+          dl1.push(u);
+        } else if (u.level === 2) {
+          l2++;
+          dl2.push(u);
+        } else if (u.level === 3) {
+          l3++;
+          dl3.push(u);
+        }
+        if (Number(u.total_recharge) >= 115) effective++;
+      });
+
+      const total = l1 + l2 + l3;
+
+      setTotalCount(total);
+      setLevel1Count(l1);
+      setLevel2Count(l2);
+      setLevel3Count(l3);
+      setEffectiveCount(effective);
+
+      setDownlineByLevel({ level1: dl1, level2: dl2, level3: dl3 });
+
+      // Keep old downlineCount & downlineUsers for backward compatibility
+      setDownlineCount(l1);
+      setDownlineUsers(dl1.map((u) => ({ phone_number: u.phone_number, created_at: u.created_at })));
+    } catch (err) {
+      console.error("Load data error:", err);
+      setReferralCode("Error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Initial load
   useEffect(() => {
     if (!isLoggedIn || !userId) {
       setLoading(false);
       return;
     }
-
-    const fetchInitialData = async () => {
-      try {
-        setLoading(true);
-
-        const { data: userData, error: userErr } = await supabase
-          .from("users")
-          .select("referral_code")
-          .eq("id", userId)
-          .single();
-
-        if (userErr) throw userErr;
-        setReferralCode(userData.referral_code || "N/A");
-
-        await fetchDownline();
-      } catch (err) {
-        console.error("Initial load error:", err);
-        setReferralCode("Error");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchInitialData();
+    loadAllData();
   }, [userId, isLoggedIn]);
 
-  // Fetch downline data
-  const fetchDownline = async () => {
-    try {
-      const { count } = await supabase
-        .from("users")
-        .select("*", { count: "exact", head: true })
-        .eq("invited_by", userId);
-
-      setDownlineCount(count || 0);
-
-      const { data, error } = await supabase
-        .from("users")
-        .select("phone_number, created_at")
-        .eq("invited_by", userId)
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-      setDownlineUsers(data || []);
-    } catch (err) {
-      console.error("Fetch downline error:", err);
-    }
-  };
-
-  // Realtime subscription
+  // Realtime: new user registered under me (level 1 only)
   useEffect(() => {
     if (!isLoggedIn || !userId) return;
 
@@ -95,6 +128,8 @@ export default function Invite({ setTab, userId, isLoggedIn }) {
         },
         (payload) => {
           const newUser = payload.new;
+          setLevel1Count((prev) => prev + 1);
+          setTotalCount((prev) => prev + 1);
           setDownlineCount((prev) => prev + 1);
           setDownlineUsers((prev) => [
             {
@@ -103,6 +138,17 @@ export default function Invite({ setTab, userId, isLoggedIn }) {
             },
             ...prev,
           ]);
+          setDownlineByLevel((prev) => ({
+            ...prev,
+            level1: [
+              {
+                phone_number: newUser.phone_number,
+                created_at: newUser.created_at,
+                total_recharge: 0,
+              },
+              ...prev.level1,
+            ],
+          }));
         }
       )
       .subscribe();
@@ -112,12 +158,12 @@ export default function Invite({ setTab, userId, isLoggedIn }) {
     };
   }, [userId, isLoggedIn]);
 
-  // Show downline modal
+  // Show modal with 3-level details
   const handleShowDownline = async () => {
-    if (!userId || downlineCount === 0) return;
+    if (!userId || totalCount === 0) return;
     setModalLoading(true);
     setShowModal(true);
-    await fetchDownline();
+    await loadAllData(); // Refresh latest data
     setModalLoading(false);
   };
 
@@ -132,22 +178,39 @@ export default function Invite({ setTab, userId, isLoggedIn }) {
         <h2 className="font-semibold text-slate-800 text-lg">Invite</h2>
       </div>
 
-      {/* Downline Stats */}
+      {/* Stats Grid */}
       <div className="grid grid-cols-2 gap-3 mb-5">
+        {/* Total */}
+        <div className="bg-gradient-to-br from-purple-500 to-pink-500 text-white p-4 rounded-xl shadow-sm">
+          <div className="text-xs opacity-90">Total Users</div>
+          <div className="text-2xl font-bold">{loading ? "..." : totalCount}</div>
+        </div>
+
+        {/* Level 1 */}
+        <div className="bg-gradient-to-br from-orange-400 to-red-500 text-white p-4 rounded-xl shadow-sm">
+          <div className="text-xs opacity-90">Level 1</div>
+          <div className="text-2xl font-bold">{loading ? "..." : level1Count}</div>
+        </div>
+
+        {/* Level 2 */}
+        <div className="bg-gradient-to-br from-yellow-400 to-amber-500 text-white p-4 rounded-xl shadow-sm">
+          <div className="text-xs opacity-90">Level 2</div>
+          <div className="text-2xl font-bold">{loading ? "..." : level2Count}</div>
+        </div>
+
+        {/* Level 3 */}
+        <div className="bg-gradient-to-br from-green-400 to-emerald-500 text-white p-4 rounded-xl shadow-sm">
+          <div className="text-xs opacity-90">Level 3</div>
+          <div className="text-2xl font-bold">{loading ? "..." : level3Count}</div>
+        </div>
+
+        {/* Effective Users (full width) */}
         <div
-          className="bg-white border border-slate-200 rounded-xl p-4 text-center shadow-sm cursor-pointer hover:bg-slate-50 transition"
+          className="col-span-2 bg-gradient-to-br from-cyan-500 to-blue-600 text-white p-4 rounded-xl shadow-sm cursor-pointer"
           onClick={handleShowDownline}
         >
-          <div className="text-sm text-slate-600">Downline Users</div>
-          <div className="text-2xl font-bold text-yellow-500">
-            {loading ? "..." : downlineCount}
-          </div>
-        </div>
-        <div className="bg-white border border-slate-200 rounded-xl p-4 text-center shadow-sm">
-          <div className="text-sm text-slate-600">Effective Users</div>
-          <div className="text-2xl font-bold text-yellow-500">
-            {loading ? "..." : downlineCount}
-          </div>
+          <div className="text-sm opacity-90 text-center">Effective Users (greater than or equal to 115 USDT)</div>
+          <div className="text-3xl font-bold text-center">{loading ? "..." : effectiveCount}</div>
         </div>
       </div>
 
@@ -184,7 +247,7 @@ export default function Invite({ setTab, userId, isLoggedIn }) {
         {showRewards && (
           <div className="bg-white p-4 max-h-96 overflow-y-auto">
             <div className="text-xs text-slate-500 mb-3 text-center">
-              Minimum recharge ₹10,000 (≈113 USDT) · Direct referral reward per person · Team size unlocks base reward
+              Minimum recharge ₹10,000 (approximately 113 USDT) · Direct referral reward per person · Team size unlocks base reward
             </div>
             <table className="w-full text-xs">
               <thead>
@@ -222,7 +285,6 @@ export default function Invite({ setTab, userId, isLoggedIn }) {
                 ))}
               </tbody>
             </table>
-      
           </div>
         )}
       </div>
@@ -238,7 +300,7 @@ export default function Invite({ setTab, userId, isLoggedIn }) {
           <div className="bg-white rounded-2xl w-full max-w-sm max-h-[80vh] overflow-hidden shadow-xl">
             <div className="flex items-center justify-between p-4 border-b border-slate-200">
               <h3 className="font-semibold text-slate-800">
-                Downline Users ({downlineCount})
+                Downline Users ({totalCount})
               </h3>
               <button
                 onClick={() => setShowModal(false)}
@@ -251,23 +313,46 @@ export default function Invite({ setTab, userId, isLoggedIn }) {
             <div className="p-4 max-h-[60vh] overflow-y-auto">
               {modalLoading ? (
                 <div className="text-center py-8 text-slate-500">Loading...</div>
-              ) : downlineUsers.length === 0 ? (
+              ) : totalCount === 0 ? (
                 <div className="text-center py-8 text-slate-500">No downline users</div>
               ) : (
-                <div className="space-y-3">
-                  {downlineUsers.map((user, i) => (
-                    <div
-                      key={i}
-                      className="flex justify-between items-center p-3 bg-slate-50 rounded-lg"
-                    >
-                      <span className="font-mono text-slate-700">
-                        {maskPhone(user.phone_number)}
-                      </span>
-                      <span className="text-xs text-slate-500">
-                        {new Date(user.created_at).toLocaleDateString("en-GB")}
-                      </span>
-                    </div>
-                  ))}
+                <div className="space-y-4">
+                  {["Level 1", "Level 2", "Level 3"].map((label, idx) => {
+                    const level = idx + 1;
+                    const users = downlineByLevel[`level${level}`];
+                    if (!users || users.length === 0) return null;
+
+                    return (
+                      <div key={level}>
+                        <div className="font-semibold text-slate-700 mb-2">
+                          {label} ({users.length} users)
+                        </div>
+                        <div className="space-y-2">
+                          {users.map((user, i) => (
+                            <div
+                              key={i}
+                              className={`flex justify-between items-center p-3 rounded-lg ${
+                                Number(user.total_recharge) >= 115 ? "bg-green-50 border border-green-300" : "bg-slate-50"
+                              }`}
+                            >
+                              <div>
+                                <div className="font-mono text-slate-700">
+                                  {maskPhone(user.phone_number)}
+                                  {Number(user.total_recharge) >= 115 && " (Effective)"}
+                                </div>
+                                <div className="text-xs text-slate-500">
+                                  Recharge: ${Number(user.total_recharge).toFixed(2)}
+                                </div>
+                              </div>
+                              <div className="text-xs text-slate-500">
+                                {new Date(user.created_at).toLocaleDateString("en-GB")}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>
