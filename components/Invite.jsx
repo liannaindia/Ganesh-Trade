@@ -36,37 +36,47 @@ export default function Invite({ setTab, userId, isLoggedIn }) {
     return phone.slice(0, 3) + "****" + phone.slice(-4);
   };
 
-  // Load all data (code + 3-level tree + stats)
-  const loadAllData = async () => {
+  // === 单独加载自己的邀请码（只执行一次）===
+  useEffect(() => {
+    if (!isLoggedIn || !userId) {
+      setReferralCode("N/A");
+      return;
+    }
+
+    const loadReferralCode = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("users")
+          .select("referral_code")
+          .eq("id", userId)
+          .single();
+
+        if (error) throw error;
+        setReferralCode(data.referral_code || "N/A");
+      } catch (err) {
+        console.error("Load referral code error:", err);
+        setReferralCode("Error");
+      }
+    };
+
+    loadReferralCode();
+  }, [userId, isLoggedIn]);
+
+  // === 加载下线树数据（不包含 referral_code 查询）===
+  const loadTreeData = async () => {
     if (!userId) return;
 
     try {
       setLoading(true);
 
-      // 1. Get own referral code
-      const { data: userData, error: userErr } = await supabase
-        .from("users")
-        .select("referral_code")
-        .eq("id", userId)
-        .single();
-
-      if (userErr) throw userErr;
-      setReferralCode(userData.referral_code || "N/A");
-
-      // 2. Get 3-level tree with recharge total
       const { data: treeData, error: treeErr } = await supabase
         .rpc("get_referral_tree", { p_user_id: userId });
 
       if (treeErr) throw treeErr;
 
-      // 3. Calculate stats
-      let l1 = 0,
-        l2 = 0,
-        l3 = 0,
-        effective = 0;
-      const dl1 = [],
-        dl2 = [],
-        dl3 = [];
+      // Calculate stats
+      let l1 = 0, l2 = 0, l3 = 0, effective = 0;
+      const dl1 = [], dl2 = [], dl3 = [];
 
       treeData?.forEach((u) => {
         if (u.level === 1) {
@@ -89,27 +99,25 @@ export default function Invite({ setTab, userId, isLoggedIn }) {
       setLevel2Count(l2);
       setLevel3Count(l3);
       setEffectiveCount(effective);
-
       setDownlineByLevel({ level1: dl1, level2: dl2, level3: dl3 });
 
-      // Keep old downlineCount & downlineUsers for backward compatibility
+      // Keep backward compatibility
       setDownlineCount(l1);
       setDownlineUsers(dl1.map((u) => ({ phone_number: u.phone_number, created_at: u.created_at })));
     } catch (err) {
-      console.error("Load data error:", err);
-      setReferralCode("Error");
+      console.error("Load tree data error:", err);
     } finally {
       setLoading(false);
     }
   };
 
-  // Initial load
+  // Initial load tree data
   useEffect(() => {
-    if (!isLoggedIn || !userId) {
+    if (isLoggedIn && userId) {
+      loadTreeData();
+    } else {
       setLoading(false);
-      return;
     }
-    loadAllData();
   }, [userId, isLoggedIn]);
 
   // Realtime: new user registered under me (level 1 only)
@@ -158,12 +166,12 @@ export default function Invite({ setTab, userId, isLoggedIn }) {
     };
   }, [userId, isLoggedIn]);
 
-  // Show modal with 3-level details
+  // Show modal with refreshed data
   const handleShowDownline = async () => {
     if (!userId || totalCount === 0) return;
     setModalLoading(true);
     setShowModal(true);
-    await loadAllData(); // Refresh latest data
+    await loadTreeData(); // 只刷新下线数据
     setModalLoading(false);
   };
 
@@ -219,12 +227,12 @@ export default function Invite({ setTab, userId, isLoggedIn }) {
         <div className="text-sm text-slate-600 mb-1">My Invitation Code</div>
         <div className="flex items-center justify-between border border-slate-100 rounded-lg px-3 py-2">
           <span className="text-lg font-mono text-slate-700 tracking-wider">
-            {loading ? "Loading..." : referralCode}
+            {referralCode || "Loading..."}
           </span>
           <button
             onClick={copyCode}
-            disabled={loading || !referralCode || referralCode === "N/A"}
-            className="text-slate-400 hover:text-slate-600 transition"
+            disabled={!referralCode || referralCode === "N/A" || referralCode === "Error"}
+            className="text-slate-400 hover:text-slate-600 transition disabled:opacity-50"
           >
             <Copy className="h-4 w-4" />
           </button>
