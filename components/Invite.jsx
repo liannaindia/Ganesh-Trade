@@ -1,6 +1,6 @@
 // components/Invite.jsx
 import React, { useState, useEffect } from "react";
-import { ArrowLeft, Copy, X } from "lucide-react";
+import { ArrowLeft, Copy, X, ChevronDown, ChevronUp, Trophy } from "lucide-react";
 import { supabase } from "../supabaseClient";
 
 export default function Invite({ setTab, userId, isLoggedIn }) {
@@ -10,20 +10,21 @@ export default function Invite({ setTab, userId, isLoggedIn }) {
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [modalLoading, setModalLoading] = useState(false);
+  const [showRewards, setShowRewards] = useState(false);
 
-  // 复制邀请码
+  // Copy invitation code
   const copyCode = () => {
     navigator.clipboard.writeText(referralCode);
     alert("Invitation code copied!");
   };
 
-  // 脱敏手机号：138****5678
+  // Mask phone: 138****5678
   const maskPhone = (phone) => {
     if (!phone || phone.length < 8) return phone;
     return phone.slice(0, 3) + "****" + phone.slice(-4);
   };
 
-  // 初次加载：邀请码 + 人数 + 下级列表
+  // Initial load: code + count + list
   useEffect(() => {
     if (!isLoggedIn || !userId) {
       setLoading(false);
@@ -34,7 +35,6 @@ export default function Invite({ setTab, userId, isLoggedIn }) {
       try {
         setLoading(true);
 
-        // 1. 获取我的邀请码
         const { data: userData, error: userErr } = await supabase
           .from("users")
           .select("referral_code")
@@ -44,7 +44,6 @@ export default function Invite({ setTab, userId, isLoggedIn }) {
         if (userErr) throw userErr;
         setReferralCode(userData.referral_code || "N/A");
 
-        // 2. 获取下级人数 + 列表
         await fetchDownline();
       } catch (err) {
         console.error("Initial load error:", err);
@@ -57,10 +56,9 @@ export default function Invite({ setTab, userId, isLoggedIn }) {
     fetchInitialData();
   }, [userId, isLoggedIn]);
 
-  // 提取下级数据加载逻辑（供初次 + 实时更新使用）
+  // Fetch downline data
   const fetchDownline = async () => {
     try {
-      // 获取人数
       const { count } = await supabase
         .from("users")
         .select("*", { count: "exact", head: true })
@@ -68,7 +66,6 @@ export default function Invite({ setTab, userId, isLoggedIn }) {
 
       setDownlineCount(count || 0);
 
-      // 获取详细列表
       const { data, error } = await supabase
         .from("users")
         .select("phone_number, created_at")
@@ -82,7 +79,7 @@ export default function Invite({ setTab, userId, isLoggedIn }) {
     }
   };
 
-  // 实时订阅：有人通过你的邀请码注册
+  // Realtime subscription
   useEffect(() => {
     if (!isLoggedIn || !userId) return;
 
@@ -115,13 +112,12 @@ export default function Invite({ setTab, userId, isLoggedIn }) {
     };
   }, [userId, isLoggedIn]);
 
-  // 点击人数 → 显示 Modal + 加载最新列表
+  // Show downline modal
   const handleShowDownline = async () => {
     if (!userId || downlineCount === 0) return;
-
     setModalLoading(true);
     setShowModal(true);
-    await fetchDownline(); // 确保最新数据
+    await fetchDownline();
     setModalLoading(false);
   };
 
@@ -136,7 +132,7 @@ export default function Invite({ setTab, userId, isLoggedIn }) {
         <h2 className="font-semibold text-slate-800 text-lg">Invite</h2>
       </div>
 
-      {/* 下级人数统计 */}
+      {/* Downline Stats */}
       <div className="grid grid-cols-2 gap-3 mb-5">
         <div
           className="bg-white border border-slate-200 rounded-xl p-4 text-center shadow-sm cursor-pointer hover:bg-slate-50 transition"
@@ -155,7 +151,7 @@ export default function Invite({ setTab, userId, isLoggedIn }) {
         </div>
       </div>
 
-      {/* 我的邀请码 */}
+      {/* My Invitation Code */}
       <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
         <div className="text-sm text-slate-600 mb-1">My Invitation Code</div>
         <div className="flex items-center justify-between border border-slate-100 rounded-lg px-3 py-2">
@@ -172,12 +168,73 @@ export default function Invite({ setTab, userId, isLoggedIn }) {
         </div>
       </div>
 
-      {/* 提示文字 */}
+      {/* === Team Level Reward Model (Collapsible) === */}
+      <div className="mt-5 bg-gradient-to-r from-orange-500 to-yellow-500 rounded-xl shadow-lg overflow-hidden">
+        <button
+          onClick={() => setShowRewards(!showRewards)}
+          className="w-full p-4 flex items-center justify-between text-white font-semibold"
+        >
+          <div className="flex items-center gap-2">
+            <Trophy className="h-5 w-5" />
+            <span>Team Level Reward Model (₹10,000 Start)</span>
+          </div>
+          {showRewards ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+        </button>
+
+        {showRewards && (
+          <div className="bg-white p-4 max-h-96 overflow-y-auto">
+            <div className="text-xs text-slate-500 mb-3 text-center">
+              Minimum recharge ₹10,000 (≈113 USDT) · Direct referral reward per person · Team size unlocks base reward
+            </div>
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="border-b border-slate-200">
+                  <th className="py-2 text-left font-bold text-orange-600">Rank</th>
+                  <th className="py-2 text-center font-bold text-orange-600">Condition</th>
+                  <th className="py-2 text-center font-bold text-green-600">Base Reward</th>
+                  <th className="py-2 text-center font-bold text-blue-600">Direct Reward</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  { rank: "Jawan (जवान)", cond: "Direct 3", base: "30", inr: "2,650", direct: "10" },
+                  { rank: "Naik (नायक)", cond: "Direct 4 + Team 9", base: "90", inr: "7,950", direct: "20" },
+                  { rank: "Havildar (हविलदार)", cond: "Direct 5 + Team 27", base: "160", inr: "14,130", direct: "30" },
+                  { rank: "Naib-Subedar", cond: "Direct 8 + Team 81", base: "350", inr: "30,900", direct: "40" },
+                  { rank: "Subedar (सुबेदार)", cond: "Direct 12 + Team 243", base: "700", inr: "61,800", direct: "50" },
+                  { rank: "Jemadar (जमादार)", cond: "Direct 20 + Team 729", base: "1,500", inr: "132,420", direct: "70" },
+                  { rank: "Rissaldar (रिसालदार)", cond: "Direct 30 + Team 2,187", base: "3,000", inr: "264,840", direct: "90" },
+                  { rank: "Subedar-Major", cond: "Direct 40 + Team 6,561", base: "6,000", inr: "529,680", direct: "120" },
+                  { rank: "Commandant (कमांडेंट)", cond: "Direct 50 + Team 19,683", base: "12,000", inr: "1,059,360", direct: "150", highlight: true },
+                ].map((item, i) => (
+                  <tr key={i} className={`border-b border-slate-100 ${item.highlight ? "bg-yellow-50" : ""}`}>
+                    <td className="py-2 font-medium">
+                      <div className="font-bold text-orange-700">{item.rank.split(" ")[0]}</div>
+                      <div className="text-xs text-slate-500">{item.rank.includes("(") ? item.rank.split("(")[1].slice(0, -1) : ""}</div>
+                    </td>
+                    <td className="py-2 text-center text-slate-600">{item.cond}</td>
+                    <td className="py-2 text-center">
+                      <div className="font-bold text-green-600">{item.base} USDT</div>
+                      <div className="text-xs text-slate-500">₹{item.inr}</div>
+                    </td>
+                    <td className="py-2 text-center font-medium text-blue-600">{item.direct} USDT</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <div className="mt-3 text-center text-xs text-red-600 font-medium">
+              Warning: For educational purposes only. Pyramid schemes are illegal (India Prize Chits Act, 1978)
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Share Prompt */}
       <div className="mt-6 text-center text-xs text-slate-500">
         Share your code to invite friends and earn rewards!
       </div>
 
-      {/* === 下级用户 Modal === */}
+      {/* === Downline Users Modal === */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl w-full max-w-sm max-h-[80vh] overflow-hidden shadow-xl">
