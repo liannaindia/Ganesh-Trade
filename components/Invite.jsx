@@ -222,9 +222,7 @@ export default function Invite({ setTab, userId, isLoggedIn }) {
                 ))}
               </tbody>
             </table>
-            <div className="mt-3 text-center text-xs text-red-600 font-medium">
-              Warning: For educational purposes only. Pyramid schemes are illegal (India Prize Chits Act, 1978)
-            </div>
+      
           </div>
         )}
       </div>
