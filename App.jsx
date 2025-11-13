@@ -1,3 +1,4 @@
+// App.jsx（完整修改后版本，仅添加 LanguageProvider 包裹）
 import React, { useState, useEffect } from "react";
 import HomePage from "./components/Home.jsx";
 import MarketsPage from "./components/Markets.jsx";
@@ -13,6 +14,7 @@ import FollowOrderPage from "./components/FollowOrder.jsx";
 import BottomNav from "./BottomNav";
 import TransactionsPage from "./components/Transactions.jsx";
 import { supabase } from "./supabaseClient";
+import { LanguageProvider } from "./context/LanguageContext"; // 新增
 
 export default function App() {
   const [tab, setTab] = useState("home");
@@ -166,14 +168,16 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-100 text-slate-900">
-      <div className="max-w-md mx-auto bg-[#f5f7fb] pb-24 min-h-screen text-slate-900">
-        {renderPage()}
-      </div>
+    <LanguageProvider>
+      <div className="min-h-screen bg-slate-100 text-slate-900">
+        <div className="max-w-md mx-auto bg-[#f5f7fb] pb-24 min-h-screen text-slate-900">
+          {renderPage()}
+        </div>
 
-      <div className="max-w-md mx-auto w-full fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 shadow-none">
-        <BottomNav tab={tab} setTab={setTab} />
+        <div className="max-w-md mx-auto w-full fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 shadow-none">
+          <BottomNav tab={tab} setTab={setTab} />
+        </div>
       </div>
-    </div>
+    </LanguageProvider>
   );
 }
