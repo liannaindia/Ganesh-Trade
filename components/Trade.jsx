@@ -215,7 +215,7 @@ export default function Trade({ setTab, balance, userId, isLoggedIn }) {
           zIndex: 10,
         }}
       >
-        <div style={{ fontSize: "14px", fontWeight: "600" }}>{t trade.availableBalance")}</div>
+        <div style={{ fontSize: "14px", fontWeight: "600" }}>{t("trade.availableBalance")}</div>
         <div style={{ fontSize: "28px", fontWeight: "bold", margin: "8px 0" }}>
           {availableBalance.toFixed(2)} USDT
         </div>
