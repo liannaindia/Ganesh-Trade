@@ -1,11 +1,21 @@
 {
+  "loading": "Loading...",
+  
+  "bottomnav": {
+    "home": "Home",
+    "markets": "Markets",
+    "trade": "Trade",
+    "positions": "Positions",
+    "me": "Me"
+  },
+
   "home": {
-    "searchPlaceholder": "Search for digital assets...",
-    "welcome": "Welcome To Explore The World of Digital Ganesh.",
+    "searchPlaceholder": "Search for a coin",
+    "welcome": "Welcome to Ganesh Trade",
     "loginRegister": "Login / Register",
-    "totalAssets": "Total Balance",
-    "pnlToday": "Today's PnL",
-    "goTrade": "Go Trade",
+    "totalAssets": "Total Assets",
+    "pnlToday": "Today's PnL: {amount} USDT",
+    "goTrade": "Trade Now",
     "recharge": "Recharge",
     "withdraw": "Withdraw",
     "invite": "Invite",
@@ -16,91 +26,173 @@
     "losers": "Losers",
     "name": "Name",
     "lastPrice": "Last Price",
-    "24chg": "24chg%",
-    "loading": "Loading..."
+    "24chg": "24h Change"
   },
 
-  "markets": "Markets",
-  "trade": "Trade",
-  "positions": "Positions",
-  "me": "Me",
-  "login": "Login",
-  "register": "Register",
-  "recharge": "Recharge",
-  "withdraw": "Withdraw",
-  "transactions": "Transactions",
-  "invite": "Invite",
-  "follow_orders": "Follow Orders",
-
-  "recharges": "Recharges",
-  "withdraws": "Withdraws",
-  "no_records": "No {type} records found.",
-  "refreshing": "Refreshing...",
-  "register_success": "Registration successful!",
-  "share_code": "Share this code to invite friends",
-  "copy": "Copy",
-  "logout": "Logout",
-  "agent_center": "Agent Center",
-  "notification": "Notification",
-  "download_app": "Download APP",
-  "invite_title": "Invite Friends & Earn Rewards",
-  "your_code": "Your Invitation Code",
-  "total_downline": "Total Downline",
-  "level1": "Level 1",
-  "level2": "Level 2",
-  "level3": "Level 3",
-  "effective_users": "Effective Users",
-  "view_downline": "View Downline",
-  "reward_rules": "Reward Rules",
-  "rule1": "• Invite 1 effective user → Get 10 USDT",
-  "rule2": "• Level 1: 10% of their recharge",
-  "rule3": "• Level 2: 5% of their recharge",
-  "rule4": "• Level 3: 3% of their recharge",
-  "effective_hint": "Effective user: Total recharge ≥ 115 USDT",
-  "no_downline": "No downline users",
-  "loading_downline": "Loading downline...",
-
-  "transactions": {
-    "title": "Transactions",
-    "tabs": {
-      "recharges": "Recharges",
-      "withdraws": "Withdraws"
-    },
-    "status": {
-      "pending": "PENDING",
-      "approved": "APPROVED",
-      "rejected": "REJECTED"
-    },
-    "types": {
-      "recharge": "recharge",
-      "withdraw": "withdraw"
-    },
-    "loading": "Loading...",
-    "refreshing": "Refreshing...",
-    "empty": "No {type} records found."
+  "markets": {
+    "search": "Search for a coin",
+    "name": "Name",
+    "lastPrice": "Last Price",
+    "24chg": "24h Change",
+    "loading": "Fetching market data..."
   },
 
   "trade": {
-    "title": "Trade",
-    "subtitle": "Choose a trader to follow and start earning",
-    "availableBalance": "Available Balance",
-    "recharge": "Recharge",
-    "searchPlaceholder": "Search for Traders",
-    "experience": "Investment Experience {years} years",
-    "cumulativeAssets": "Cumulative Assets",
-    "commissionRate": "Commission Rate",
-    "selectMentor": "Select Mentor",
-    "amountPlaceholder": "Enter follow amount",
-    "available": "Available",
-    "back": "Back",
+    "title": "Mentors",
     "follow": "Follow",
-    "noResults": "No traders found",
-    "success": "Follow request submitted, awaiting approval",
+    "balance": "Balance",
+    "available": "Available",
+    "enterAmount": "Enter amount",
+    "followSuccess": "Follow order successful",
     "errors": {
-      "invalidAmount": "Please enter a valid amount",
-      "insufficientBalance": "Insufficient available balance",
-      "selectMentor": "Please select a mentor",
-      "submitFailed": "Request failed, please try again"
+      "notLoggedIn": "Please login first",
+      "amountInvalid": "Please enter a valid amount",
+      "insufficientBalance": "Insufficient balance",
+      "network": "Network error, try again later"
+    }
+  },
+
+  "positions": {
+    "title": "Positions",
+    "tabs": {
+      "pending": "Pending",
+      "completed": "Completed"
+    },
+    "name": "Name",
+    "amount": "Amount",
+    "profit": "Profit",
+    "status": {
+      "pending": "Pending",
+      "approved": "Approved",
+      "settled": "Settled",
+      "rejected": "Rejected"
+    },
+    "empty": "No orders yet"
+  },
+
+  "transactions": {
+    "title": "Transactions",
+    "recharge": "Recharge",
+    "withdraw": "Withdraw",
+    "amount": "Amount",
+    "status": "Status",
+    "createdAt": "Created At",
+    "empty": "No transactions found"
+  },
+
+  "recharge": {
+    "title": "Recharge",
+    "amount": "Recharge Amount",
+    "orderId": "Order ID",
+    "network": "Network",
+    "copy": "Copy",
+    "goPay": "I have paid",
+    "success": "Recharge submitted",
+    "errors": {
+      "invalidAmount": "Invalid amount",
+      "networkError": "Network error"
+    }
+  },
+
+  "withdraw": {
+    "title": "Withdraw",
+    "available": "Available Balance",
+    "receivingAddress": "Receiving Address",
+    "noAddressSet": "No address set",
+    "amountPlaceholder": "Enter withdrawal amount",
+    "amountRange": "Range: 100 - 9999 USDT",
+    "tabs": {
+      "request": "Withdraw",
+      "address": "Address"
+    },
+    "continue": "Continue",
+    "submitting": "Submitting...",
+    "addressSaved": "Address saved",
+    "errors": {
+      "loadAddress": "Failed to load address",
+      "noAddress": "Please bind a TRC20 address",
+      "invalidSavedAddress": "Saved TRC20 address is invalid",
+      "invalidTRC20": "TRC20 address must start with T and be 34 characters",
+      "amountRange": "Amount must be between 100 and 9999",
+      "insufficientBalance": "Insufficient balance",
+      "submitFailed": "Withdraw request failed",
+      "enterAddress": "Please enter an address",
+      "saveFailed": "Failed to save address",
+      "saveError": "Unexpected error",
+      "networkError": "Network error"
+    },
+    "success": "Withdrawal submitted successfully"
+  },
+
+  "login": {
+    "title": "Login",
+    "labels": {
+      "phone": "Phone Number",
+      "password": "Password"
+    },
+    "placeholders": {
+      "phone": "Enter your phone number",
+      "password": "Enter your password"
+    },
+    "buttons": {
+      "login": "Login",
+      "loggingIn": "Logging in..."
+    },
+    "errors": {
+      "phoneLength": "Phone number must be 10 digits",
+      "userNotFound": "User not found",
+      "incorrectPassword": "Incorrect password",
+      "generic": "An error occurred"
+    },
+    "noAccount": "Don't have an account?",
+    "createAccount": "Register Now"
+  },
+
+  "register": {
+    "title": "Register",
+    "phone": "Phone Number",
+    "password": "Password",
+    "confirm": "Confirm Password",
+    "button": "Register",
+    "success": "Registration successful",
+    "errors": {
+      "phone": "Invalid phone number",
+      "passwordShort": "Password too short",
+      "passwordMismatch": "Passwords do not match",
+      "exists": "User already exists",
+      "network": "Network error"
+    }
+  },
+
+  "invite": {
+    "title": "Invite",
+    "myCode": "My Invitation Code",
+    "copied": "Copied",
+    "stats": {
+      "totalUsers": "Total Team",
+      "level1": "Level 1",
+      "level2": "Level 2",
+      "level3": "Level 3",
+      "effectiveUsers": "Effective Users"
+    },
+    "rewardModel": {
+      "title": "Reward Model",
+      "subtitle": "Complete tasks to unlock rewards",
+      "rank": "Rank",
+      "condition": "Requirement",
+      "baseReward": "Base Reward",
+      "directReward": "Direct Reward"
+    },
+    "sharePrompt": "Share your invite code to earn rewards!",
+    "downline": {
+      "title": "Downline List ({count})",
+      "loading": "Loading...",
+      "empty": "No users found",
+      "level1": "Level 1 ({count})",
+      "level2": "Level 2 ({count})",
+      "level3": "Level 3 ({count})",
+      "recharge": "Recharge: {amount} USDT",
+      "effective": "Effective"
     }
   },
 
@@ -110,12 +202,12 @@
       "active": "Active",
       "completed": "Completed"
     },
+    "loading": "Loading...",
+    "empty": "No {type} orders found",
     "types": {
       "active": "active",
       "completed": "completed"
     },
-    "loading": "Loading...",
-    "empty": "No {type} orders.",
     "orderId": "Order ID",
     "mentor": "Mentor",
     "unknownMentor": "Unknown",
@@ -126,12 +218,24 @@
     "commission": "Commission",
     "created": "Created",
     "updated": "Updated",
-    "noStockInfo": "No stock info linked.",
+    "noStockInfo": "No stock info",
     "status": {
-      "pending": "PENDING",
-      "approved": "APPROVED",
-      "settled": "SETTLED",
-      "rejected": "REJECTED"
+      "pending": "Pending",
+      "approved": "Approved",
+      "settled": "Settled",
+      "rejected": "Rejected"
     }
+  },
+
+  "me": {
+    "title": "My Account",
+    "balance": "Balance",
+    "available": "Available",
+    "recharge": "Recharge",
+    "withdraw": "Withdraw",
+    "copytrade": "Copy Trade",
+    "transactions": "Transactions",
+    "inviteFriends": "Invite Friends",
+    "logout": "Logout"
   }
 }
