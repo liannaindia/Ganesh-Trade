@@ -1,5 +1,26 @@
 {
-  "home": "Home",
+  "home": {
+    "home": "Home",
+    "searchPlaceholder": "Search for digital assets...",
+    "welcome": "Welcome To Explore The World of Digital Ganesh.",
+    "loginRegister": "Login / Register",
+    "totalAssets": "Total Balance",
+    "pnlToday": "Today's PnL",
+    "goTrade": "Go Trade",
+    "recharge": "Recharge",
+    "withdraw": "Withdraw",
+    "invite": "Invite",
+    "support": "Support",
+    "favorites": "Favorites",
+    "hot": "Hot",
+    "gainers": "Gainers",
+    "losers": "Losers",
+    "name": "Name",
+    "lastPrice": "Last Price",
+    "24chg": "24chg%",
+    "loading": "Loading..."
+  },
+
   "markets": "Markets",
   "trade": "Trade",
   "positions": "Positions",
@@ -12,17 +33,10 @@
   "invite": "Invite",
   "follow_orders": "Follow Orders",
 
-  "welcome": "Welcome To Explore The World of Digital Ganesh.",
-  "login_register": "Login / Register",
-  "total_balance": "Total Balance",
-  "available_balance": "Available Balance",
-  "today_pnl": "Today's PnL",
-  "search_assets": "Search for digital assets...",
   "recharges": "Recharges",
   "withdraws": "Withdraws",
   "no_records": "No {type} records found.",
   "refreshing": "Refreshing...",
-  "loading": "Loading...",
   "register_success": "Registration successful!",
   "share_code": "Share this code to invite friends",
   "copy": "Copy",
@@ -30,13 +44,6 @@
   "agent_center": "Agent Center",
   "notification": "Notification",
   "download_app": "Download APP",
-  "favorites": "Favorites",
-  "hot": "Hot",
-  "gainers": "Gainers",
-  "losers": "Losers",
-  "name": "Name",
-  "last_price": "Last Price",
-  "24h_change": "24chg%",
   "invite_title": "Invite Friends & Earn Rewards",
   "your_code": "Your Invitation Code",
   "total_downline": "Total Downline",
@@ -53,7 +60,6 @@
   "effective_hint": "Effective user: Total recharge ≥ 115 USDT",
   "no_downline": "No downline users",
   "loading_downline": "Loading downline...",
-  "support": "Support",
 
   "login": {
     "title": "Login",
@@ -75,193 +81,7 @@
       "phoneLength": "Phone number must be at least 10 digits",
       "userNotFound": "User not found",
       "incorrectPassword": "Incorrect password",
-      "generic": "An error occurred during login"
-    }
-  },
-
-  "register": {
-    "title": "Register",
-    "labels": {
-      "phone": "Phone Number",
-      "password": "Password",
-      "confirmPassword": "Confirm Password",
-      "referralCode": "Referral Code"
-    },
-    "placeholders": {
-      "phone": "Enter your phone number",
-      "password": "Enter your password",
-      "confirmPassword": "Confirm your password",
-      "referralCode": "Enter referral code"
-    },
-    "optional": "optional",
-    "registering": "Registering...",
-    "register": "Register",
-    "success": "Registration successful!",
-    "sharePrompt": "Share this code to invite friends",
-    "haveAccount": "Already have an account?",
-    "login": "Login",
-    "copied": "Referral code copied!",
-    "errors": {
-      "passwordMismatch": "Passwords do not match",
-      "phoneLength": "Phone number must be at least 10 digits",
-      "codeGeneration": "Unable to generate unique referral code",
-      "invalidReferral": "Invalid referral code",
-      "noUserReturned": "Registration failed: no user data returned",
-      "generic": "Registration failed"
-    }
-  },
-
-  "me": {
-    "title": "Me",
-    "assets": {
-      "total": "Total Assets (USDT)",
-      "available": "Available Balance",
-      "pnlToday": "PnL Today"
-    },
-    "actions": {
-      "recharge": "Recharge",
-      "withdraw": "Withdraw",
-      "logout": "Logout"
-    },
-    "menu": {
-      "followOrder": "Follow Order",
-      "transactions": "Transactions",
-      "agentCenter": "Agent Center",
-      "notification": "Notification",
-      "downloadApp": "Download APP"
-    }
-  },
-
-  "positions": {
-    "title": "Positions",
-    "assets": {
-      "total": "Total Assets (USDT)",
-      "floatingPL": "Floating P/L",
-      "available": "Available Balance"
-    },
-    "tabs": {
-      "inProgress": "In Progress",
-      "completed": "Completed"
-    },
-    "type": {
-      "following": "Following",
-      "completed": "Completed"
-    },
-    "status": {
-      "inProgress": "In Progress",
-      "settled": "Settled",
-      "rejected": "Rejected"
-    },
-    "mentor": {
-      "experience": "Experience {years} years"
-    },
-    "order": {
-      "investment": "Investment Amount",
-      "earnings": "Order Earnings",
-      "appliedAt": "Applied at",
-      "status": "Status"
-    },
-    "unknownMentor": "Unknown Mentor",
-    "empty": {
-      "inProgress": "No active follow orders",
-      "completed": "No completed orders"
-    }
-  },
-
-  "invite": {
-    "title": "Invite",
-    "stats": {
-      "totalUsers": "Total Users",
-      "level1": "Level 1",
-      "level2": "Level 2",
-      "level3": "Level 3",
-      "effectiveUsers": "Effective Users (≥115 USDT)"
-    },
-    "myCode": "My Invitation Code",
-    "loading": "Loading...",
-    "copied": "Invitation code copied!",
-    "rewardModel": {
-      "title": "Team Level Reward Model (₹10,000 Start)",
-      "subtitle": "Minimum recharge ₹10,000 (≈113 USDT) · Direct referral reward per person · Team size unlocks base reward",
-      "rank": "Rank",
-      "condition": "Condition",
-      "baseReward": "Base Reward",
-      "directReward": "Direct Reward"
-    },
-    "sharePrompt": "Share your code to invite friends and earn rewards!",
-    "downline": {
-      "title": "Downline Users ({count})",
-      "loading": "Loading...",
-      "empty": "No downline users",
-      "level1": "Level 1 ({count} users)",
-      "level2": "Level 2 ({count} users)",
-      "level3": "Level 3 ({count} users)",
-      "effective": "Effective",
-      "recharge": "Recharge: ${amount}"
-    }
-  },
-
-  "recharge": {
-    "title": "Recharge USDT",
-    "trust": {
-      "safe": "100% Safe",
-      "instant": "Instant Arrival"
-    },
-    "selectNetwork": "Select Network",
-    "loading": "Loading...",
-    "noChannels": "No active channels",
-    "quickAmount": "Quick Amount",
-    "enterAmount": "Enter Amount",
-    "minAmount": "Min: {min} USDT",
-    "txIdLabel": "Transaction Hash (tx_id)",
-    "txIdPlaceholder": "Paste transaction hash here",
-    "txIdHint": "After payment, copy the transaction hash from your wallet and paste it here.",
-    "notLoggedIn": "Please log in to recharge",
-    "copied": "Copied to clipboard!",
-    "success": "Recharge request submitted successfully! Awaiting confirmation.",
-    "submitting": "Submitting...",
-    "submit": "Submit Recharge",
-    "reminder": {
-      "title": "Important:",
-      "content": "After payment, funds arrive in <strong>30 seconds</strong>. If delayed, refresh or contact support."
-    },
-    "errors": {
-      "notLoggedIn": "Please log in first.",
-      "selectNetwork": "Please select a network.",
-      "minAmount": "Minimum recharge is 1 USDT.",
-      "enterTxId": "Please enter the transaction hash (tx_id).",
-      "loadChannels": "Failed to load payment channels.",
-      "submitFailed": "Submission failed. Please check and try again."
-    }
-  },
-
-  "withdraw": {
-    "title": "Withdraw",
-    "tabs": {
-      "request": "Withdraw Request",
-      "address": "Receiving Address"
-    },
-    "available": "Available Balance",
-    "amountPlaceholder": "Enter amount (100–9999)",
-    "amountRange": "Range: 100–9999 USDT",
-    "receivingAddress": "Receiving Address",
-    "noAddressSet": "No address set. Please go to 'Receiving Address' to set.",
-    "currentAddress": "Current Receiving Address",
-    "noAddress": "No address saved yet",
-    "newAddressPlaceholder": "Enter new USDT TRC20 address (starts with T)",
-    "submitting": "Submitting...",
-    "continue": "Continue",
-    "saving": "Saving...",
-    "saveAddress": "Save Address",
-    "success": "Withdraw request submitted successfully!",
-    "addressSaved": "Wallet address saved successfully!",
-    "errors": {
-      "loadAddress": "Failed to load wallet address.",
-      "noAddress": "No wallet address saved. Please set it in 'Receiving Address'.",
-      "invalidSavedAddress": "Saved wallet address is invalid (must be TRC20).",
-      "amountRange": "Amount must be 100–9999 USDT.",
-      "insufficientBalance": "Insufficient available balance.",
-      "submitFailed": "Failed to submit request. Please try again.",
+      "generic": "An error occurred. Please try again.",
       "networkError": "Network error. Please check your connection.",
       "enterAddress": "Please enter a wallet address.",
       "invalidTRC20": "Invalid TRC-20 address. Must start with 'T' and be 34 characters.",
