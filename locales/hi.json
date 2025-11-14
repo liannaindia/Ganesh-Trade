@@ -14,41 +14,42 @@
     "welcome": "Ganesh Trade में आपका स्वागत है",
     "loginRegister": "लॉगिन / रजिस्टर",
     "totalAssets": "कुल संपत्ति",
-    "pnlToday": "आज का लाभ: {amount} USDT",
-    "goTrade": "ट्रेड शुरू करें",
+    "pnlToday": "आज का PnL: {amount} USDT",
+    "goTrade": "अभी ट्रेड करें",
     "recharge": "रिचार्ज",
-    "withdraw": "निकासी",
-    "invite": "आमंत्रित करें",
+    "withdraw": "विथड्रॉ",
+    "invite": "इनवाइट",
     "support": "सपोर्ट",
-    "favorites": "पसंदीदा",
-    "hot": "लोकप्रिय",
-    "gainers": "गैनर्स",
+    "favorites": "फेवरेट",
+    "hot": "हॉट",
+    "gainers": "गेनर्स",
     "losers": "लूज़र्स",
     "name": "नाम",
-    "lastPrice": "अंतिम कीमत",
-    "24chg": "24h बदलाव"
+    "lastPrice": "आखिरी कीमत",
+    "24chg": "24H बदलाव"
   },
 
   "markets": {
     "search": "कॉइन खोजें",
     "name": "नाम",
-    "lastPrice": "अंतिम कीमत",
-    "24chg": "24h बदलाव",
-    "loading": "मार्केट डेटा प्राप्त किया जा रहा है..."
+    "lastPrice": "आखिरी कीमत",
+    "24chg": "24H बदलाव",
+    "loading": "मार्केट डेटा प्राप्त हो रहा है..."
   },
 
   "trade": {
     "title": "ट्रेडर",
-    "follow": "फॉलो करें",
-    "balance": "बैलेंस",
+    "follow": "फॉलो",
+    "balance": "बालेंस",
     "available": "उपलब्ध",
     "enterAmount": "राशि दर्ज करें",
     "followSuccess": "फॉलो ऑर्डर सफल",
+
     "errors": {
       "notLoggedIn": "कृपया पहले लॉगिन करें",
-      "amountInvalid": "कृपया मान्य राशि दर्ज करें",
+      "amountInvalid": "कृपया वैध राशि दर्ज करें",
       "insufficientBalance": "पर्याप्त बैलेंस नहीं",
-      "network": "नेटवर्क त्रुटि"
+      "network": "नेटवर्क त्रुटि, बाद में पुनः प्रयास करें"
     }
   },
 
@@ -61,181 +62,240 @@
     "name": "नाम",
     "amount": "राशि",
     "profit": "लाभ",
+
     "status": {
       "pending": "लंबित",
       "approved": "स्वीकृत",
-      "settled": "निपटाया हुआ",
+      "settled": "सेटल",
       "rejected": "अस्वीकृत"
     },
-    "empty": "कोई ऑर्डर नहीं"
-  },
 
+    "empty": "कोई ऑर्डर नहीं मिला"
+  },
   "transactions": {
     "title": "लेनदेन",
     "recharge": "रिचार्ज",
-    "withdraw": "निकासी",
+    "withdraw": "विथड्रॉ",
     "amount": "राशि",
     "status": "स्थिति",
-    "createdAt": "समय",
-    "empty": "कोई लेनदेन नहीं"
+    "createdAt": "निर्माण समय",
+    "empty": "कोई लेनदेन नहीं मिला"
   },
 
   "recharge": {
     "title": "रिचार्ज",
-    "amount": "राशि",
-    "orderId": "ऑर्डर आईडी",
+
+    "trust": {
+      "safe": "सुरक्षित और प्रमाणित",
+      "instant": "तुरंत प्रोसेसिंग"
+    },
+
+    "selectNetwork": "नेटवर्क चुनें",
+    "loading": "चैनल लोड हो रहे हैं...",
+    "noChannels": "कोई चैनल उपलब्ध नहीं",
+
+    "quickAmount": "त्वरित राशि",
+    "enterAmount": "राशि दर्ज करें",
+    "minAmount": "न्यूनतम राशि {amount} USDT है",
+
+    "amount": "रिचार्ज राशि",
+    "orderId": "ऑर्डर ID",
     "network": "नेटवर्क",
-    "copy": "कॉपी करें",
-    "goPay": "मैंने भुगतान कर दिया",
+    "copy": "कॉपी",
+    "copied": "कॉपी किया गया",
+    "goPay": "मैंने भुगतान कर दिया है",
+
+    "txIdLabel": "लेनदेन हैश (TxID)",
+    "txIdPlaceholder": "TxID / Hash दर्ज करें",
+    "txIdHint": "अपने ब्लॉकचेन लेनदेन का हैश जमा करें।",
+
+    "submit": "जमा करें",
+    "submitting": "जमा किया जा रहा है...",
+
     "success": "रिचार्ज सबमिट हो गया",
+
     "errors": {
       "invalidAmount": "अमान्य राशि",
-      "networkError": "नेटवर्क त्रुटि"
+      "networkError": "नेटवर्क त्रुटि",
+      "noChannels": "चैनल लोड करने में विफल",
+      "selectNetwork": "कृपया नेटवर्क चुनें",
+      "minAmount": "राशि न्यूनतम सीमा से कम है",
+      "enterTxId": "कृपया TxID दर्ज करें",
+      "submitFailed": "रिचार्ज सबमिट असफल",
+      "notLoggedIn": "कृपया पहले लॉगिन करें"
+    },
+
+    "reminder": {
+      "title": "महत्वपूर्ण याद दिलाना",
+      "content": "यदि राशि लंबे समय तक नहीं आती है, तो कृपया पेज रिफ्रेश करें या सपोर्ट से संपर्क करें।"
     }
   },
 
   "withdraw": {
-    "title": "निकासी",
+    "title": "विथड्रॉ",
     "available": "उपलब्ध बैलेंस",
-    "receivingAddress": "प्राप्ति पता",
-    "noAddressSet": "पता सेट नहीं",
-    "amountPlaceholder": "निकासी राशि दर्ज करें",
+    "receivingAddress": "प्राप्त करने का पता",
+    "currentAddress": "वर्तमान पता",
+    "newAddressPlaceholder": "नया TRC20 पता दर्ज करें",
+
+    "noAddressSet": "कोई पता सेट नहीं",
+    "noAddress": "कोई पता बंधा नहीं",
+
+    "amountPlaceholder": "विथड्रॉ राशि दर्ज करें",
     "amountRange": "सीमा: 100 - 9999 USDT",
+
     "tabs": {
-      "request": "निकासी",
+      "request": "विथड्रॉ",
       "address": "पता"
     },
+
     "continue": "जारी रखें",
-    "submitting": "सबमिट किया जा रहा है...",
+    "submitting": "जमा किया जा रहा है...",
     "addressSaved": "पता सहेजा गया",
+
+    "success": "विथड्रॉ सफलतापूर्वक सबमिट हुआ",
+
     "errors": {
       "loadAddress": "पता लोड करने में विफल",
-      "noAddress": "कृपया TRC20 पता जोड़ें",
+      "noAddress": "कृपया TRC20 पता बाइंड करें",
       "invalidSavedAddress": "सहेजा गया पता अमान्य है",
-      "invalidTRC20": "TRC20 पता T से शुरू होना चाहिए और 34 वर्ण का होना चाहिए",
-      "amountRange": "राशि 100 से 9999 के बीच होनी चाहिए",
+      "invalidTRC20": "पता 'T' से शुरू होना चाहिए और 34 वर्णों का होना चाहिए",
+      "amountRange": "राशि 100 और 9999 के बीच होनी चाहिए",
       "insufficientBalance": "पर्याप्त बैलेंस नहीं",
-      "submitFailed": "निकासी असफल",
+      "submitFailed": "विथड्रॉ अनुरोध विफल",
       "enterAddress": "कृपया पता दर्ज करें",
       "saveFailed": "पता सहेजने में विफल",
       "saveError": "अज्ञात त्रुटि",
       "networkError": "नेटवर्क त्रुटि"
-    },
-    "success": "निकासी सफलतापूर्वक सबमिट"
+    }
   },
-
   "login": {
     "title": "लॉगिन",
+
     "labels": {
-      "phone": "फ़ोन नंबर",
+      "phone": "फोन नंबर",
       "password": "पासवर्ड"
     },
+
     "placeholders": {
-      "phone": "फ़ोन नंबर दर्ज करें",
-      "password": "पासवर्ड दर्ज करें"
+      "phone": "अपना फोन नंबर दर्ज करें",
+      "password": "अपना पासवर्ड दर्ज करें"
     },
+
     "buttons": {
       "login": "लॉगिन",
       "loggingIn": "लॉगिन किया जा रहा है..."
     },
+
     "errors": {
-      "phoneLength": "फ़ोन नंबर 10 अंकों का होना चाहिए",
-      "userNotFound": "उपयोगकर्ता नहीं मिला",
+      "phoneLength": "फोन नंबर 10 अंकों का होना चाहिए",
+      "userNotFound": "यूज़र नहीं मिला",
       "incorrectPassword": "गलत पासवर्ड",
-      "generic": "त्रुटि उत्पन्न हुई"
+      "generic": "एक त्रुटि हुई"
     },
-    "noAccount": "कोई खाता नहीं?",
-    "createAccount": "रजिस्टर करें"
+
+    "noAccount": "अकाउंट नहीं है?",
+    "createAccount": "अभी रजिस्टर करें"
   },
 
   "register": {
-    "title": "रजिस्टर करें",
-    "phone": "फ़ोन नंबर",
+    "title": "रजिस्टर",
+    "phone": "फोन नंबर",
     "password": "पासवर्ड",
-    "confirm": "पासवर्ड की पुष्टि करें",
+    "confirm": "पासवर्ड पुष्टि करें",
     "button": "रजिस्टर",
-    "success": "पंजीकरण सफल",
+    "success": "रजिस्ट्रेशन सफल",
+
     "errors": {
-      "phone": "अमान्य फ़ोन नंबर",
+      "phone": "अमान्य फोन नंबर",
       "passwordShort": "पासवर्ड बहुत छोटा है",
       "passwordMismatch": "पासवर्ड मेल नहीं खाते",
-      "exists": "उपयोगकर्ता पहले से मौजूद है",
+      "exists": "यूज़र पहले से मौजूद है",
       "network": "नेटवर्क त्रुटि"
     }
   },
 
   "invite": {
-    "title": "आमंत्रण",
-    "myCode": "मेरा आमंत्रण कोड",
+    "title": "इनवाइट",
+    "myCode": "मेरा इनवाइट कोड",
     "copied": "कॉपी किया गया",
+
     "stats": {
       "totalUsers": "कुल टीम",
       "level1": "लेवल 1",
       "level2": "लेवल 2",
       "level3": "लेवल 3",
-      "effectiveUsers": "प्रभावी उपयोगकर्ता"
+      "effectiveUsers": "सक्रिय यूज़र"
     },
+
     "rewardModel": {
-      "title": "पुरस्कार मॉडल",
-      "subtitle": "कार्य पूर्ण करने पर पुरस्कार",
-      "rank": "पद",
+      "title": "रिवार्ड मॉडल",
+      "subtitle": "रिवार्ड अनलॉक करने के लिए कार्य पूर्ण करें",
+      "rank": "रैंक",
       "condition": "शर्त",
       "baseReward": "बेस रिवार्ड",
       "directReward": "डायरेक्ट रिवार्ड"
     },
-    "sharePrompt": "इनाम कमाने के लिए अपना कोड साझा करें!",
+
+    "sharePrompt": "इनवाइट कोड शेयर करें और रिवार्ड कमाएँ!",
+
     "downline": {
       "title": "डाउनलाइन सूची ({count})",
       "loading": "लोड हो रहा है...",
-      "empty": "कोई उपयोगकर्ता नहीं",
+      "empty": "कोई यूज़र नहीं मिला",
       "level1": "लेवल 1 ({count})",
       "level2": "लेवल 2 ({count})",
       "level3": "लेवल 3 ({count})",
       "recharge": "रिचार्ज: {amount} USDT",
-      "effective": "प्रभावी"
+      "effective": "सक्रिय"
     }
   },
 
   "followorder": {
     "title": "फॉलो ऑर्डर",
+
     "tabs": {
       "active": "सक्रिय",
       "completed": "पूर्ण"
     },
+
     "loading": "लोड हो रहा है...",
-    "empty": "{type} ऑर्डर नहीं मिला",
+    "empty": "कोई {type} ऑर्डर नहीं मिला",
+
     "types": {
       "active": "सक्रिय",
       "completed": "पूर्ण"
     },
-    "orderId": "ऑर्डर आईडी",
-    "mentor": "मेन्टर",
+
+    "orderId": "ऑर्डर ID",
+    "mentor": "मेंटर",
     "unknownMentor": "अज्ञात",
     "coin": "कॉइन",
     "amount": "राशि",
     "buyPrice": "खरीद मूल्य",
-    "sellPrice": "विक्रय मूल्य",
-    "commission": "कमीशन",
-    "created": "बनाया गया",
-    "updated": "अपडेट किया गया",
-    "noStockInfo": "स्टॉक जानकारी नहीं",
+    "sellPrice": "बिक्री मूल्य",
+    "commission": "कमिशन",
+    "created": "निर्माण समय",
+    "updated": "अपडेट समय",
+    "noStockInfo": "स्टॉक जानकारी उपलब्ध नहीं",
+
     "status": {
       "pending": "लंबित",
       "approved": "स्वीकृत",
-      "settled": "निपटाया गया",
+      "settled": "सेटल",
       "rejected": "अस्वीकृत"
     }
   },
 
   "me": {
-    "title": "मेरा प्रोफ़ाइल",
+    "title": "मेरा अकाउंट",
     "balance": "बैलेंस",
     "available": "उपलब्ध",
     "recharge": "रिचार्ज",
-    "withdraw": "निकासी",
+    "withdraw": "विथड्रॉ",
     "copytrade": "कॉपी ट्रेड",
     "transactions": "लेनदेन",
-    "inviteFriends": "मित्रों को आमंत्रित करें",
-    "logout": "लॉगआउट"
+    "inviteFriends": "दोस्तों को आमंत्रित करें",
+    "logout": "लॉग आउट"
   }
 }
