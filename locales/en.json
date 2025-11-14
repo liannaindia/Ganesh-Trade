@@ -1,6 +1,6 @@
 {
   "loading": "Loading...",
-  
+
   "bottomnav": {
     "home": "Home",
     "markets": "Markets",
@@ -69,8 +69,7 @@
     },
     "empty": "No orders yet"
   },
-
-  "transactions": {
+    "transactions": {
     "title": "Transactions",
     "recharge": "Recharge",
     "withdraw": "Withdraw",
@@ -82,15 +81,50 @@
 
   "recharge": {
     "title": "Recharge",
+
+    "trust": {
+      "safe": "Secure & Verified",
+      "instant": "Instant Processing"
+    },
+
+    "selectNetwork": "Select Network",
+    "loading": "Loading channels...",
+    "noChannels": "No channels available",
+
+    "quickAmount": "Quick Amount",
+    "enterAmount": "Enter amount",
+    "minAmount": "Minimum amount is {amount} USDT",
+
     "amount": "Recharge Amount",
     "orderId": "Order ID",
     "network": "Network",
     "copy": "Copy",
+    "copied": "Copied",
     "goPay": "I have paid",
+
+    "txIdLabel": "Transaction Hash (TxID)",
+    "txIdPlaceholder": "Enter TxID / Hash",
+    "txIdHint": "Submit the hash of your blockchain transfer.",
+
+    "submit": "Submit",
+    "submitting": "Submitting...",
+
     "success": "Recharge submitted",
+
     "errors": {
       "invalidAmount": "Invalid amount",
-      "networkError": "Network error"
+      "networkError": "Network error",
+      "noChannels": "Failed to load channels",
+      "selectNetwork": "Please select a network",
+      "minAmount": "Amount is below minimum",
+      "enterTxId": "Please enter TxID",
+      "submitFailed": "Failed to submit recharge",
+      "notLoggedIn": "Please log in first"
+    },
+
+    "reminder": {
+      "title": "Important Reminder",
+      "content": "If funds do not arrive for a long time, please refresh or contact support."
     }
   },
 
@@ -98,21 +132,31 @@
     "title": "Withdraw",
     "available": "Available Balance",
     "receivingAddress": "Receiving Address",
+    "currentAddress": "Current Address",
+    "newAddressPlaceholder": "Enter new TRC20 address",
+
     "noAddressSet": "No address set",
+    "noAddress": "No address bound",
+
     "amountPlaceholder": "Enter withdrawal amount",
     "amountRange": "Range: 100 - 9999 USDT",
+
     "tabs": {
       "request": "Withdraw",
       "address": "Address"
     },
+
     "continue": "Continue",
     "submitting": "Submitting...",
     "addressSaved": "Address saved",
+
+    "success": "Withdrawal submitted successfully",
+
     "errors": {
       "loadAddress": "Failed to load address",
       "noAddress": "Please bind a TRC20 address",
-      "invalidSavedAddress": "Saved TRC20 address is invalid",
-      "invalidTRC20": "TRC20 address must start with T and be 34 characters",
+      "invalidSavedAddress": "Saved address is invalid",
+      "invalidTRC20": "Address must start with T and be 34 characters",
       "amountRange": "Amount must be between 100 and 9999",
       "insufficientBalance": "Insufficient balance",
       "submitFailed": "Withdraw request failed",
@@ -120,30 +164,33 @@
       "saveFailed": "Failed to save address",
       "saveError": "Unexpected error",
       "networkError": "Network error"
-    },
-    "success": "Withdrawal submitted successfully"
+    }
   },
-
   "login": {
     "title": "Login",
+
     "labels": {
       "phone": "Phone Number",
       "password": "Password"
     },
+
     "placeholders": {
       "phone": "Enter your phone number",
       "password": "Enter your password"
     },
+
     "buttons": {
       "login": "Login",
       "loggingIn": "Logging in..."
     },
+
     "errors": {
       "phoneLength": "Phone number must be 10 digits",
       "userNotFound": "User not found",
       "incorrectPassword": "Incorrect password",
       "generic": "An error occurred"
     },
+
     "noAccount": "Don't have an account?",
     "createAccount": "Register Now"
   },
@@ -155,6 +202,7 @@
     "confirm": "Confirm Password",
     "button": "Register",
     "success": "Registration successful",
+
     "errors": {
       "phone": "Invalid phone number",
       "passwordShort": "Password too short",
@@ -168,6 +216,7 @@
     "title": "Invite",
     "myCode": "My Invitation Code",
     "copied": "Copied",
+
     "stats": {
       "totalUsers": "Total Team",
       "level1": "Level 1",
@@ -175,6 +224,7 @@
       "level3": "Level 3",
       "effectiveUsers": "Effective Users"
     },
+
     "rewardModel": {
       "title": "Reward Model",
       "subtitle": "Complete tasks to unlock rewards",
@@ -183,7 +233,9 @@
       "baseReward": "Base Reward",
       "directReward": "Direct Reward"
     },
+
     "sharePrompt": "Share your invite code to earn rewards!",
+
     "downline": {
       "title": "Downline List ({count})",
       "loading": "Loading...",
@@ -198,16 +250,20 @@
 
   "followorder": {
     "title": "Follow Orders",
+
     "tabs": {
       "active": "Active",
       "completed": "Completed"
     },
+
     "loading": "Loading...",
     "empty": "No {type} orders found",
+
     "types": {
       "active": "active",
       "completed": "completed"
     },
+
     "orderId": "Order ID",
     "mentor": "Mentor",
     "unknownMentor": "Unknown",
@@ -219,6 +275,7 @@
     "created": "Created",
     "updated": "Updated",
     "noStockInfo": "No stock info",
+
     "status": {
       "pending": "Pending",
       "approved": "Approved",
@@ -239,3 +296,4 @@
     "logout": "Logout"
   }
 }
+
