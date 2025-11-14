@@ -8,7 +8,6 @@ export default function Positions({
   balance,
   availableBalance,
   userId,
-  setTab, // 可选：用于跳转
 }) {
   const { t } = useLanguage(); // 新增
 
