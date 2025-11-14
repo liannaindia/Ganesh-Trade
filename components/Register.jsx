@@ -2,15 +2,18 @@
 import React, { useState } from "react";
 import { supabase } from "../supabaseClient";
 import { ArrowLeft, Copy } from "lucide-react";
+import { useLanguage } from "../context/LanguageContext"; // 新增
 
 export default function Register({ setTab, setIsLoggedIn, setUserId }) {
+  const { t } = useLanguage(); // 新增
+
   const [phoneNumber, setPhoneNumber] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [referralInput, setReferralInput] = useState("");   // 新增：用户填写的邀请码
+  const [referralInput, setReferralInput] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [generatedCode, setGeneratedCode] = useState("");   // 注册成功后显示自己的邀请码
+  const [generatedCode, setGeneratedCode] = useState("");
 
   /** 生成 7 位唯一邀请码 */
   const generateReferralCode = async () => {
@@ -35,7 +38,7 @@ export default function Register({ setTab, setIsLoggedIn, setUserId }) {
       attempts++;
     }
 
-    if (exists) throw new Error("Unable to generate unique referral code");
+    if (exists) throw new Error(t("register.errors.codeGeneration"));
     return code;
   };
 
@@ -49,7 +52,7 @@ export default function Register({ setTab, setIsLoggedIn, setUserId }) {
       .single();
 
     if (error || !data) {
-      throw new Error("Invalid referral code");
+      throw new Error(t("register.errors.invalidReferral"));
     }
     return data.id;
   };
@@ -60,14 +63,14 @@ export default function Register({ setTab, setIsLoggedIn, setUserId }) {
     setError("");
     setGeneratedCode("");
 
-    // ---------- 基础校验 ----------
+    // 基础校验
     if (password !== confirmPassword) {
-      setError("Passwords do not match");
+      setError(t("register.errors.passwordMismatch"));
       setIsLoading(false);
       return;
     }
     if (phoneNumber.length < 10) {
-      setError("Phone number must be at least 10 digits");
+      setError(t("register.errors.phoneLength"));
       setIsLoading(false);
       return;
     }
@@ -88,30 +91,30 @@ export default function Register({ setTab, setIsLoggedIn, setUserId }) {
         .insert([
           {
             phone_number: phoneNumber,
-            password_hash: password,          // 实际项目请先哈希
+            password_hash: password,
             balance: 0.0,
             available_balance: 0.0,
             referral_code: myReferralCode,
-            invited_by: invitedBy,            // 关键：写入邀请人 id
+            invited_by: invitedBy,
           },
         ])
         .select()
         .single();
 
       if (insertError) throw insertError;
-      if (!data) throw new Error("No user returned after insert");
+      if (!data) throw new Error(t("register.errors.noUserReturned"));
 
       // 4. 登录状态 & 本地存储
       localStorage.setItem("phone_number", phoneNumber);
       localStorage.setItem("user_id", data.id);
 
-      setGeneratedCode(myReferralCode);   // 成功后展示自己的邀请码
+      setGeneratedCode(myReferralCode);
       setIsLoggedIn(true);
       setUserId(data.id);
       setTab("home");
     } catch (err) {
       console.error(err);
-      setError(err.message || "Registration failed");
+      setError(err.message || t("register.errors.generic"));
     } finally {
       setIsLoading(false);
     }
@@ -120,27 +123,27 @@ export default function Register({ setTab, setIsLoggedIn, setUserId }) {
   // 复制自己的邀请码
   const copyCode = () => {
     navigator.clipboard.writeText(generatedCode);
-    alert("Referral code copied!");
+    alert(t("register.copied"));
   };
 
   return (
     <div className="max-w-md mx-auto bg-[#f5f7fb] pb-24 min-h-screen text-slate-900">
-      <div className="flex items-center gap-3 py-3">
+      <div className="flex items-center gap-3 py-3 px-4">
         <ArrowLeft
           className="h-5 w-5 text-slate-700 cursor-pointer"
           onClick={() => setTab("home")}
         />
-        <h2 className="font-semibold text-slate-800 text-lg">Register</h2>
+        <h2 className="font-semibold text-slate-800 text-lg">{t("register.title")}</h2>
       </div>
 
       <div className="px-4 mt-8 space-y-4">
         {/* 手机号 */}
         <div>
-          <label className="text-sm text-slate-500">Phone Number</label>
+          <label className="text-sm text-slate-500">{t("register.labels.phone")}</label>
           <input
             type="text"
-            className="w-full py-2 px-3 text-sm text-slate-700 rounded-lg border focus:ring-2 focus:ring-yellow-400"
-            placeholder="Enter your phone number"
+            className="w-full py-2 px-3 text-sm text-slate-700 rounded-lg border focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 outline-none"
+            placeholder={t("register.placeholders.phone")}
             value={phoneNumber}
             onChange={(e) => setPhoneNumber(e.target.value)}
             disabled={isLoading}
@@ -149,11 +152,11 @@ export default function Register({ setTab, setIsLoggedIn, setUserId }) {
 
         {/* 密码 */}
         <div>
-          <label className="text-sm text-slate-500">Password</label>
+          <label className="text-sm text-slate-500">{t("register.labels.password")}</label>
           <input
             type="password"
-            className="w-full py-2 px-3 text-sm text-slate-700 rounded-lg border focus:ring-2 focus:ring-yellow-400"
-            placeholder="Enter your password"
+            className="w-full py-2 px-3 text-sm text-slate-700 rounded-lg border focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 outline-none"
+            placeholder={t("register.placeholders.password")}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             disabled={isLoading}
@@ -162,11 +165,11 @@ export default function Register({ setTab, setIsLoggedIn, setUserId }) {
 
         {/* 确认密码 */}
         <div>
-          <label className="text-sm text-slate-500">Confirm Password</label>
+          <label className="text-sm text-slate-500">{t("register.labels.confirmPassword")}</label>
           <input
             type="password"
-            className="w-full py-2 px-3 text-sm text-slate-700 rounded-lg border focus:ring-2 focus:ring-yellow-400"
-            placeholder="Confirm your password"
+            className="w-full py-2 px-3 text-sm text-slate-700 rounded-lg border focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 outline-none"
+            placeholder={t("register.placeholders.confirmPassword")}
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             disabled={isLoading}
@@ -176,12 +179,13 @@ export default function Register({ setTab, setIsLoggedIn, setUserId }) {
         {/* 邀请码（可选） */}
         <div>
           <label className="text-sm text-slate-500">
-            Referral Code <span className="text-xs text-slate-400">(optional)</span>
+            {t("register.labels.referralCode")}{" "}
+            <span className="text-xs text-slate-400">({t("register.optional")})</span>
           </label>
           <input
             type="text"
-            className="w-full py-2 px-3 text-sm text-slate-700 rounded-lg border focus:ring-2 focus:ring-yellow-400"
-            placeholder="Enter referral code"
+            className="w-full py-2 px-3 text-sm text-slate-700 rounded-lg border focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 outline-none uppercase"
+            placeholder={t("register.placeholders.referralCode")}
             value={referralInput}
             onChange={(e) => setReferralInput(e.target.value.toUpperCase())}
             disabled={isLoading}
@@ -191,46 +195,48 @@ export default function Register({ setTab, setIsLoggedIn, setUserId }) {
 
         {/* 错误提示 */}
         {error && (
-          <div className="text-red-500 text-sm mt-2 p-2 bg-red-50 rounded">{error}</div>
+          <div className="text-red-500 text-sm mt-2 p-3 bg-red-50 rounded-lg border border-red-200">
+            {error}
+          </div>
         )}
 
         {/* 注册按钮 */}
         <button
           onClick={handleRegister}
           disabled={isLoading}
-          className={`w-full text-slate-900 font-semibold py-3 rounded-xl mt-4 transition ${
-            isLoading ? "bg-yellow-300 cursor-not-allowed" : "bg-yellow-400 hover:bg-yellow-500"
+          className={`w-full text-slate-900 font-semibold py-3 rounded-xl mt-4 transition duration-200 ${
+            isLoading 
+              ? "bg-yellow-300 cursor-not-allowed opacity-80" 
+              : "bg-yellow-400 hover:bg-yellow-500 active:scale-95"
           }`}
         >
-          {isLoading ? "Registering..." : "Register"}
+          {isLoading ? t("register.registering") : t("register.register")}
         </button>
 
         {/* 注册成功后显示自己的邀请码 */}
         {generatedCode && (
           <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg text-center">
-            <p className="text-sm text-green-800 mb-2">Registration successful!</p>
+            <p className="text-sm text-green-800 mb-2">{t("register.success")}</p>
             <div className="flex items-center justify-center gap-2">
               <code className="font-mono text-lg text-green-900">{generatedCode}</code>
-              <button onClick={copyCode} className="text-green-600">
+              <button onClick={copyCode} className="text-green-600 hover:text-green-700">
                 <Copy className="h-5 w-5" />
               </button>
             </div>
-            <p className="text-xs text-green-700 mt-1">Share this code to invite friends</p>
+            <p className="text-xs text-green-700 mt-1">{t("register.sharePrompt")}</p>
           </div>
         )}
 
         {/* 去登录 */}
         <div className="mt-6 text-center text-sm text-slate-500">
-          <span>
-            Already have an account?{" "}
-            <button
-              onClick={() => setTab("login")}
-              className="text-yellow-500 font-semibold"
-              disabled={isLoading}
-            >
-              Login
-            </button>
-          </span>
+          {t("register.haveAccount")}{" "}
+          <button
+            onClick={() => setTab("login")}
+            className="text-yellow-500 font-semibold hover:underline"
+            disabled={isLoading}
+          >
+            {t("register.login")}
+          </button>
         </div>
       </div>
     </div>
