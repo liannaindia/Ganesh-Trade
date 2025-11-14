@@ -1,7 +1,7 @@
 // components/BottomNav.jsx
 import React from "react";
 import { Home, BarChart2, PlusCircle, ClipboardList, User } from "lucide-react";
-import { useLanguage } from "../context/LanguageContext"; // ⭐ 新增
+import { useLanguage } from "./context/LanguageContext"; // ⭐ 新增
 
 const BottomNav = ({ tab, setTab }) => {
   const { t } = useLanguage(); // ⭐ 新增
