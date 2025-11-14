@@ -1,6 +1,7 @@
 // src/context/LanguageContext.jsx
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { locales } from "../locales";
+// src/context/LanguageContext.jsx
+import { locales } from "../locales/language";  // 正确！指向 language.js 文件
 
 const LanguageContext = createContext();
 
