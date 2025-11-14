@@ -1,137 +1,241 @@
 {
+  "loading": "लोड हो रहा है...",
+
+  "bottomnav": {
+    "home": "होम",
+    "markets": "मार्केट",
+    "trade": "ट्रेड",
+    "positions": "पोज़ीशन",
+    "me": "मेरा"
+  },
+
   "home": {
-    "searchPlaceholder": "डिजिटल एसेट्स खोजें...",
-    "welcome": "डिजिटल गणेश की दुनिया का अन्वेषण करने के लिए स्वागत है।",
+    "searchPlaceholder": "कॉइन खोजें",
+    "welcome": "Ganesh Trade में आपका स्वागत है",
     "loginRegister": "लॉगिन / रजिस्टर",
-    "totalAssets": "कुल बैलेंस",
-    "pnlToday": "आज का PnL",
-    "goTrade": "ट्रेड करें",
+    "totalAssets": "कुल संपत्ति",
+    "pnlToday": "आज का लाभ: {amount} USDT",
+    "goTrade": "ट्रेड शुरू करें",
     "recharge": "रिचार्ज",
     "withdraw": "निकासी",
     "invite": "आमंत्रित करें",
-    "support": "सहायता",
+    "support": "सपोर्ट",
     "favorites": "पसंदीदा",
-    "hot": "हॉट",
+    "hot": "लोकप्रिय",
     "gainers": "गैनर्स",
-    "losers": "लूजर्स",
+    "losers": "लूज़र्स",
     "name": "नाम",
-    "lastPrice": "अंतिम मूल्य",
-    "24chg": "24घं %",
-    "loading": "लोड हो रहा है..."
+    "lastPrice": "अंतिम कीमत",
+    "24chg": "24h बदलाव"
   },
 
-  "markets": "मार्केट्स",
-  "trade": "ट्रेड",
-  "positions": "पोजीशंस",
-  "me": "मेरा",
-  "login": "लॉगिन",
-  "register": "रजिस्टर",
-  "recharge": "रिचार्ज",
-  "withdraw": "निकासी",
-  "transactions": "लेनदेन",
-  "invite": "आमंत्रित करें",
-  "follow_orders": "फॉलो ऑर्डर्स",
-
-  "recharges": "रिचार्ज",
-  "withdraws": "निकासी",
-  "no_records": "{type} का कोई रिकॉर्ड नहीं मिला।",
-  "refreshing": "रिफ्रेश हो रहा है...",
-  "register_success": "रजिस्ट्रेशन सफल रहा!",
-  "share_code": "दोस्तों को आमंत्रित करने के लिए इस कोड को शेयर करें",
-  "copy": "कॉपी",
-  "logout": "लॉगआउट",
-  "agent_center": "एजेंट सेंटर",
-  "notification": "सूचना",
-  "download_app": "ऐप डाउनलोड करें",
-  "invite_title": "दोस्तों को आमंत्रित करें और पुरस्कार कमाएं",
-  "your_code": "आपका आमंत्रण कोड",
-  "total_downline": "कुल डाउनलाइन",
-  "level1": "लेवल 1",
-  "level2": "लेवल 2",
-  "level3": "लेवल 3",
-  "effective_users": "प्रभावी उपयोगकर्ता",
-  "view_downline": "डाउनलाइन देखें",
-  "reward_rules": "पुरस्कार नियम",
-  "rule1": "• 1 प्रभावी उपयोगकर्ता आमंत्रित करें → 10 USDT प्राप्त करें",
-  "rule2": "• लेवल 1: उनकी रिचार्ज का 10%",
-  "rule3": "• लेवल 2: उनकी रिचार्ज का 5%",
-  "rule4": "• लेवल 3: उनकी रिचार्ज का 3%",
-  "effective_hint": "प्रभावी उपयोगकर्ता: कुल रिचार्ज ≥ 115 USDT",
-  "no_downline": "कोई डाउनलाइन उपयोगकर्ता नहीं",
-  "loading_downline": "डाउनलाइन लोड हो रहा है...",
-
-  "transactions": {
-    "title": "लेनदेन",
-    "tabs": {
-      "recharges": "रिचार्ज",
-      "withdraws": "निकासी"
-    },
-    "status": {
-      "pending": "लंबित",
-      "approved": "स्वीकृत",
-      "rejected": "अस्वीकृत"
-    },
-    "types": {
-      "recharge": "रिचार्ज",
-      "withdraw": "निकासी"
-    },
-    "loading": "लोड हो रहा है...",
-    "refreshing": "रिफ्रेश हो रहा है...",
-    "empty": "{type} का कोई रिकॉर्ड नहीं मिला।"
+  "markets": {
+    "search": "कॉइन खोजें",
+    "name": "नाम",
+    "lastPrice": "अंतिम कीमत",
+    "24chg": "24h बदलाव",
+    "loading": "मार्केट डेटा प्राप्त किया जा रहा है..."
   },
 
   "trade": {
-    "title": "ट्रेड",
-    "subtitle": "एक ट्रेडर चुनें और कमाई शुरू करें",
-    "availableBalance": "उपलब्ध बैलेंस",
-    "recharge": "रिचार्ज",
-    "searchPlaceholder": "ट्रेडर्स खोजें",
-    "experience": "निवेश अनुभव {years} वर्ष",
-    "cumulativeAssets": "कुल संपत्ति",
-    "commissionRate": "कमीशन दर",
-    "selectMentor": "मेंटर चुनें",
-    "amountPlaceholder": "फॉलो राशि डालें",
-    "available": "उपलब्ध",
-    "back": "वापस",
+    "title": "ट्रेडर",
     "follow": "फॉलो करें",
-    "noResults": "कोई ट्रेडर नहीं मिला",
-    "success": "फॉलो अनुरोध सबमिट किया गया, स्वीकृति की प्रतीक्षा में",
+    "balance": "बैलेंस",
+    "available": "उपलब्ध",
+    "enterAmount": "राशि दर्ज करें",
+    "followSuccess": "फॉलो ऑर्डर सफल",
     "errors": {
-      "invalidAmount": "कृपया वैध राशि डालें",
-      "insufficientBalance": "उपलब्ध बैलेंस अपर्युक्त",
-      "selectMentor": "कृपया एक मेंटर चुनें",
-      "submitFailed": "अनुरोध विफल, कृपया पुनः प्रयास करें"
+      "notLoggedIn": "कृपया पहले लॉगिन करें",
+      "amountInvalid": "कृपया मान्य राशि दर्ज करें",
+      "insufficientBalance": "पर्याप्त बैलेंस नहीं",
+      "network": "नेटवर्क त्रुटि"
+    }
+  },
+
+  "positions": {
+    "title": "पोज़ीशन",
+    "tabs": {
+      "pending": "लंबित",
+      "completed": "पूर्ण"
+    },
+    "name": "नाम",
+    "amount": "राशि",
+    "profit": "लाभ",
+    "status": {
+      "pending": "लंबित",
+      "approved": "स्वीकृत",
+      "settled": "निपटाया हुआ",
+      "rejected": "अस्वीकृत"
+    },
+    "empty": "कोई ऑर्डर नहीं"
+  },
+
+  "transactions": {
+    "title": "लेनदेन",
+    "recharge": "रिचार्ज",
+    "withdraw": "निकासी",
+    "amount": "राशि",
+    "status": "स्थिति",
+    "createdAt": "समय",
+    "empty": "कोई लेनदेन नहीं"
+  },
+
+  "recharge": {
+    "title": "रिचार्ज",
+    "amount": "राशि",
+    "orderId": "ऑर्डर आईडी",
+    "network": "नेटवर्क",
+    "copy": "कॉपी करें",
+    "goPay": "मैंने भुगतान कर दिया",
+    "success": "रिचार्ज सबमिट हो गया",
+    "errors": {
+      "invalidAmount": "अमान्य राशि",
+      "networkError": "नेटवर्क त्रुटि"
+    }
+  },
+
+  "withdraw": {
+    "title": "निकासी",
+    "available": "उपलब्ध बैलेंस",
+    "receivingAddress": "प्राप्ति पता",
+    "noAddressSet": "पता सेट नहीं",
+    "amountPlaceholder": "निकासी राशि दर्ज करें",
+    "amountRange": "सीमा: 100 - 9999 USDT",
+    "tabs": {
+      "request": "निकासी",
+      "address": "पता"
+    },
+    "continue": "जारी रखें",
+    "submitting": "सबमिट किया जा रहा है...",
+    "addressSaved": "पता सहेजा गया",
+    "errors": {
+      "loadAddress": "पता लोड करने में विफल",
+      "noAddress": "कृपया TRC20 पता जोड़ें",
+      "invalidSavedAddress": "सहेजा गया पता अमान्य है",
+      "invalidTRC20": "TRC20 पता T से शुरू होना चाहिए और 34 वर्ण का होना चाहिए",
+      "amountRange": "राशि 100 से 9999 के बीच होनी चाहिए",
+      "insufficientBalance": "पर्याप्त बैलेंस नहीं",
+      "submitFailed": "निकासी असफल",
+      "enterAddress": "कृपया पता दर्ज करें",
+      "saveFailed": "पता सहेजने में विफल",
+      "saveError": "अज्ञात त्रुटि",
+      "networkError": "नेटवर्क त्रुटि"
+    },
+    "success": "निकासी सफलतापूर्वक सबमिट"
+  },
+
+  "login": {
+    "title": "लॉगिन",
+    "labels": {
+      "phone": "फ़ोन नंबर",
+      "password": "पासवर्ड"
+    },
+    "placeholders": {
+      "phone": "फ़ोन नंबर दर्ज करें",
+      "password": "पासवर्ड दर्ज करें"
+    },
+    "buttons": {
+      "login": "लॉगिन",
+      "loggingIn": "लॉगिन किया जा रहा है..."
+    },
+    "errors": {
+      "phoneLength": "फ़ोन नंबर 10 अंकों का होना चाहिए",
+      "userNotFound": "उपयोगकर्ता नहीं मिला",
+      "incorrectPassword": "गलत पासवर्ड",
+      "generic": "त्रुटि उत्पन्न हुई"
+    },
+    "noAccount": "कोई खाता नहीं?",
+    "createAccount": "रजिस्टर करें"
+  },
+
+  "register": {
+    "title": "रजिस्टर करें",
+    "phone": "फ़ोन नंबर",
+    "password": "पासवर्ड",
+    "confirm": "पासवर्ड की पुष्टि करें",
+    "button": "रजिस्टर",
+    "success": "पंजीकरण सफल",
+    "errors": {
+      "phone": "अमान्य फ़ोन नंबर",
+      "passwordShort": "पासवर्ड बहुत छोटा है",
+      "passwordMismatch": "पासवर्ड मेल नहीं खाते",
+      "exists": "उपयोगकर्ता पहले से मौजूद है",
+      "network": "नेटवर्क त्रुटि"
+    }
+  },
+
+  "invite": {
+    "title": "आमंत्रण",
+    "myCode": "मेरा आमंत्रण कोड",
+    "copied": "कॉपी किया गया",
+    "stats": {
+      "totalUsers": "कुल टीम",
+      "level1": "लेवल 1",
+      "level2": "लेवल 2",
+      "level3": "लेवल 3",
+      "effectiveUsers": "प्रभावी उपयोगकर्ता"
+    },
+    "rewardModel": {
+      "title": "पुरस्कार मॉडल",
+      "subtitle": "कार्य पूर्ण करने पर पुरस्कार",
+      "rank": "पद",
+      "condition": "शर्त",
+      "baseReward": "बेस रिवार्ड",
+      "directReward": "डायरेक्ट रिवार्ड"
+    },
+    "sharePrompt": "इनाम कमाने के लिए अपना कोड साझा करें!",
+    "downline": {
+      "title": "डाउनलाइन सूची ({count})",
+      "loading": "लोड हो रहा है...",
+      "empty": "कोई उपयोगकर्ता नहीं",
+      "level1": "लेवल 1 ({count})",
+      "level2": "लेवल 2 ({count})",
+      "level3": "लेवल 3 ({count})",
+      "recharge": "रिचार्ज: {amount} USDT",
+      "effective": "प्रभावी"
     }
   },
 
   "followorder": {
-    "title": "फॉलो ऑर्डर्स",
+    "title": "फॉलो ऑर्डर",
     "tabs": {
       "active": "सक्रिय",
       "completed": "पूर्ण"
     },
+    "loading": "लोड हो रहा है...",
+    "empty": "{type} ऑर्डर नहीं मिला",
     "types": {
       "active": "सक्रिय",
       "completed": "पूर्ण"
     },
-    "loading": "लोड हो रहा है...",
-    "empty": "कोई {type} ऑर्डर नहीं।",
-    "orderId": "ऑर्डर ID",
-    "mentor": "मेंटर",
+    "orderId": "ऑर्डर आईडी",
+    "mentor": "मेन्टर",
     "unknownMentor": "अज्ञात",
     "coin": "कॉइन",
     "amount": "राशि",
     "buyPrice": "खरीद मूल्य",
-    "sellPrice": "बिक्री मूल्य",
+    "sellPrice": "विक्रय मूल्य",
     "commission": "कमीशन",
     "created": "बनाया गया",
     "updated": "अपडेट किया गया",
-    "noStockInfo": "कोई स्टॉक जानकारी लिंक नहीं।",
+    "noStockInfo": "स्टॉक जानकारी नहीं",
     "status": {
       "pending": "लंबित",
       "approved": "स्वीकृत",
-      "settled": "निपटारा",
+      "settled": "निपटाया गया",
       "rejected": "अस्वीकृत"
     }
+  },
+
+  "me": {
+    "title": "मेरा प्रोफ़ाइल",
+    "balance": "बैलेंस",
+    "available": "उपलब्ध",
+    "recharge": "रिचार्ज",
+    "withdraw": "निकासी",
+    "copytrade": "कॉपी ट्रेड",
+    "transactions": "लेनदेन",
+    "inviteFriends": "मित्रों को आमंत्रित करें",
+    "logout": "लॉगआउट"
   }
 }
