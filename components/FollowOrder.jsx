@@ -1,8 +1,12 @@
+// components/FollowOrder.jsx
 import React, { useEffect, useState, useMemo } from "react";
 import { supabase } from "../supabaseClient";
 import { ArrowLeft, RefreshCw } from "lucide-react";
+import { useLanguage } from "../context/LanguageContext"; // 新增
 
 export default function FollowOrder({ setTab, userId, isLoggedIn }) {
+  const { t } = useLanguage(); // 新增
+
   const [activeTab, setActiveTab] = useState("completed");
   const [activeOrders, setActiveOrders] = useState([]);
   const [completedOrders, setCompletedOrders] = useState([]);
@@ -14,7 +18,6 @@ export default function FollowOrder({ setTab, userId, isLoggedIn }) {
     if (!isLoggedIn || !userId) return;
     fetchAll();
 
-    // ✅ 实时订阅 copytrade_details 表
     const sub = supabase
       .channel(`follow-orders-${userId}`)
       .on(
@@ -46,8 +49,7 @@ export default function FollowOrder({ setTab, userId, isLoggedIn }) {
           .select(`
             id, amount, mentor_id, mentor_commission, order_profit_amount,
             status, created_at, updated_at,
-            stock_id,
-            stocks(crypto_name, buy_price, sell_price)
+            stock_id, stocks(crypto_name, buy_price, sell_price)
           `)
           .eq("user_id", userId)
           .in("status", ["pending", "approved"])
@@ -57,8 +59,7 @@ export default function FollowOrder({ setTab, userId, isLoggedIn }) {
           .select(`
             id, amount, mentor_id, mentor_commission, order_profit_amount,
             status, created_at, updated_at,
-            stock_id,
-            stocks(crypto_name, buy_price, sell_price)
+            stock_id, stocks(crypto_name, buy_price, sell_price)
           `)
           .eq("user_id", userId)
           .in("status", ["settled", "rejected"])
@@ -110,7 +111,9 @@ export default function FollowOrder({ setTab, userId, isLoggedIn }) {
       {/* Header */}
       <div className="flex items-center mt-4 mb-3 relative">
         <ArrowLeft className="h-5 w-5 text-slate-600 cursor-pointer" onClick={() => setTab("me")} />
-        <h2 className="flex-1 text-center text-lg font-bold text-slate-800">Follow Orders</h2>
+        <h2 className="flex-1 text-center text-lg font-bold text-slate-800">
+          {t("followorder.title")}
+        </h2>
         <RefreshCw
           className={`h-5 w-5 absolute right-0 cursor-pointer ${
             refreshing ? "animate-spin text-blue-500" : "text-slate-600"
@@ -123,28 +126,36 @@ export default function FollowOrder({ setTab, userId, isLoggedIn }) {
       <div className="grid grid-cols-2 mb-4">
         <button
           className={`py-2 text-sm font-semibold border rounded-l-xl ${
-            activeTab === "active" ? "bg-blue-600 text-white border-blue-600" : "bg-white text-slate-600 border-slate-300"
+            activeTab === "active" 
+              ? "bg-blue-600 text-white border-blue-600" 
+              : "bg-white text-slate-600 border-slate-300"
           }`}
           onClick={() => setActiveTab("active")}
         >
-          Active
+          {t("followorder.tabs.active")}
         </button>
         <button
           className={`py-2 text-sm font-semibold border rounded-r-xl ${
-            activeTab === "completed" ? "bg-blue-600 text-white border-blue-600" : "bg-white text-slate-600 border-slate-300"
+            activeTab === "completed" 
+              ? "bg-blue-600 text-white border-blue-600" 
+              : "bg-white text-slate-600 border-slate-300"
           }`}
           onClick={() => setActiveTab("completed")}
         >
-          Completed
+          {t("followorder.tabs.completed")}
         </button>
       </div>
 
       {/* Orders */}
       {loading ? (
-        <div className="text-center text-slate-500 mt-10 animate-pulse">Loading...</div>
+        <div className="text-center text-slate-500 mt-10 animate-pulse">
+          {t("followorder.loading")}
+        </div>
       ) : rows.length === 0 ? (
         <div className="text-center text-slate-400 text-sm mt-10">
-          No {activeTab === "active" ? "active" : "completed"} orders.
+          {t("followorder.empty", { 
+            type: t(`followorder.types.${activeTab}`) 
+          })}
         </div>
       ) : (
         <div className="space-y-3">
@@ -152,7 +163,9 @@ export default function FollowOrder({ setTab, userId, isLoggedIn }) {
             <div key={o.id} className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
               {/* Header */}
               <div className="flex justify-between items-center mb-1">
-                <span className="text-xs text-slate-500">Order ID: {o.id}</span>
+                <span className="text-xs text-slate-500">
+                  {t("followorder.orderId")}: {o.id}
+                </span>
                 {o.status === "settled" && (
                   <span
                     className={`text-sm font-bold ${
@@ -168,28 +181,46 @@ export default function FollowOrder({ setTab, userId, isLoggedIn }) {
               {/* Mentor + Status */}
               <div className="flex justify-between items-center">
                 <div className="text-sm font-semibold text-slate-800">
-                  Mentor: {mentorsMap[o.mentor_id] || "Unknown"}
+                  {t("followorder.mentor")}: {mentorsMap[o.mentor_id] || t("followorder.unknownMentor")}
                 </div>
-                <span className={statusPill(o.status)}>{o.status.toUpperCase()}</span>
+                <span className={statusPill(o.status)}>
+                  {t(`followorder.status.${o.status}`)}
+                </span>
               </div>
 
               {/* Stock Info */}
               {o.stocks ? (
                 <div className="grid grid-cols-2 gap-2 text-sm mt-3 text-slate-700">
-                  <div>Coin: <span className="font-semibold">{o.stocks.crypto_name}</span></div>
-                  <div>Amount: <span className="font-semibold">{Number(o.amount).toFixed(2)} USDT</span></div>
-                  <div>Buy Price: <span className="font-semibold">{Number(o.stocks.buy_price).toFixed(2)}</span></div>
-                  <div>Sell Price: <span className="font-semibold">{Number(o.stocks.sell_price).toFixed(2)}</span></div>
+                  <div>
+                    {t("followorder.coin")}: <span className="font-semibold">{o.stocks.crypto_name}</span>
+                  </div>
+                  <div>
+                    {t("followorder.amount")}: <span className="font-semibold">{Number(o.amount).toFixed(2)} USDT</span>
+                  </div>
+                  <div>
+                    {t("followorder.buyPrice")}: <span className="font-semibold">{Number(o.stocks.buy_price).toFixed(2)}</span>
+                  </div>
+                  <div>
+                    {t("followorder.sellPrice")}: <span className="font-semibold">{Number(o.stocks.sell_price).toFixed(2)}</span>
+                  </div>
                 </div>
               ) : (
-                <div className="text-sm text-slate-400 mt-3">No stock info linked.</div>
+                <div className="text-sm text-slate-400 mt-3">
+                  {t("followorder.noStockInfo")}
+                </div>
               )}
 
               {/* Extra Info */}
               <div className="grid grid-cols-2 gap-2 text-sm mt-3 text-slate-700">
-                <div>Commission: {o.mentor_commission}%</div>
-                <div>Created: {formatDate(o.created_at)}</div>
-                <div>Updated: {formatDate(o.updated_at)}</div>
+                <div>
+                  {t("followorder.commission")}: {o.mentor_commission}%
+                </div>
+                <div>
+                  {t("followorder.created")}: {formatDate(o.created_at)}
+                </div>
+                <div>
+                  {t("followorder.updated")}: {formatDate(o.updated_at)}
+                </div>
               </div>
             </div>
           ))}
