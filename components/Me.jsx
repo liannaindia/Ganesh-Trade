@@ -259,7 +259,7 @@ export default function Me({ setTab, userId, isLoggedIn, setIsLoggedIn, setUserI
         {[
           {
             icon: <FileText className="h-5 w-5 text-slate-600" />,
- R           label: t("me.menu.followOrder"),
+             label: t("me.menu.followOrder"),
             tab: "followorder",
           },
           {
