@@ -1,6 +1,5 @@
 {
   "home": {
-    "home": "Home",
     "searchPlaceholder": "Search for digital assets...",
     "welcome": "Welcome To Explore The World of Digital Ganesh.",
     "loginRegister": "Login / Register",
@@ -60,35 +59,6 @@
   "effective_hint": "Effective user: Total recharge ≥ 115 USDT",
   "no_downline": "No downline users",
   "loading_downline": "Loading downline...",
-
-  "login": {
-    "title": "Login",
-    "labels": {
-      "phone": "Phone Number",
-      "password": "Password"
-    },
-    "placeholders": {
-      "phone": "Enter your phone number",
-      "password": "Enter your password"
-    },
-    "buttons": {
-      "login": "Login",
-      "loggingIn": "Logging in..."
-    },
-    "noAccount": "Don't have an account?",
-    "createAccount": "Create an account",
-    "errors": {
-      "phoneLength": "Phone number must be at least 10 digits",
-      "userNotFound": "User not found",
-      "incorrectPassword": "Incorrect password",
-      "generic": "An error occurred. Please try again.",
-      "networkError": "Network error. Please check your connection.",
-      "enterAddress": "Please enter a wallet address.",
-      "invalidTRC20": "Invalid TRC-20 address. Must start with 'T' and be 34 characters.",
-      "saveFailed": "Failed to save address. Please try again.",
-      "saveError": "An error occurred while saving."
-    }
-  },
 
   "transactions": {
     "title": "Transactions",
