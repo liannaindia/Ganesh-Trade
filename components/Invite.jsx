@@ -2,8 +2,11 @@
 import React, { useState, useEffect } from "react";
 import { ArrowLeft, Copy, X, ChevronDown, ChevronUp, Trophy } from "lucide-react";
 import { supabase } from "../supabaseClient";
+import { useLanguage } from "../context/LanguageContext"; // 新增
 
 export default function Invite({ setTab, userId, isLoggedIn }) {
+  const { t } = useLanguage(); // 新增
+
   const [referralCode, setReferralCode] = useState("");
   const [downlineCount, setDownlineCount] = useState(0);
   const [downlineUsers, setDownlineUsers] = useState([]);
@@ -27,7 +30,7 @@ export default function Invite({ setTab, userId, isLoggedIn }) {
   // Copy code
   const copyCode = () => {
     navigator.clipboard.writeText(referralCode);
-    alert("Invitation code copied!");
+    alert(t("invite.copied"));
   };
 
   // Mask phone
@@ -60,29 +63,27 @@ export default function Invite({ setTab, userId, isLoggedIn }) {
   }, [userId, isLoggedIn]);
 
   // === 加载下线树数据（关键修复）===
- const loadTreeData = async () => {
-  if (!userId || isNaN(userId) || Number(userId) <= 0) {
-    console.warn("Invalid userId:", userId);
-    setLoading(false);
-    return;
-  }
-
-  const uid = parseInt(userId, 10);
-  
-  console.log("Calling RPC with:", { p_user_id: uid }); // 调试必加！
-
-  try {
-    setLoading(true);
-
-    const { data: treeData, error: treeErr } = await supabase
-      .rpc("get_referral_tree", { p_user_id: uid }); // 必须是 p_user_id
-
-    if (treeErr) {
-      console.error("RPC Error:", treeErr);
-      throw treeErr;
+  const loadTreeData = async () => {
+    if (!userId || isNaN(userId) || Number(userId) <= 0) {
+      console.warn("Invalid userId:", userId);
+      setLoading(false);
+      return;
     }
 
-  
+    const uid = parseInt(userId, 10);
+    
+    console.log("Calling RPC with:", { p_user_id: uid });
+
+    try {
+      setLoading(true);
+
+      const { data: treeData, error: treeErr } = await supabase
+        .rpc("get_referral_tree", { p_user_id: uid });
+
+      if (treeErr) {
+        console.error("RPC Error:", treeErr);
+        throw treeErr;
+      }
 
       // 统计
       let l1 = 0, l2 = 0, l3 = 0, effective = 0;
@@ -188,42 +189,42 @@ export default function Invite({ setTab, userId, isLoggedIn }) {
           className="h-5 w-5 text-slate-700 cursor-pointer"
           onClick={() => setTab("home")}
         />
-        <h2 className="font-semibold text-slate-800 text-lg">Invite</h2>
+        <h2 className="font-semibold text-slate-800 text-lg">{t("invite.title")}</h2>
       </div>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 gap-3 mb-5">
         <div className="bg-gradient-to-br from-purple-500 to-pink-500 text-white p-4 rounded-xl shadow-sm">
-          <div className="text-xs opacity-90">Total Users</div>
+          <div className="text-xs opacity-90">{t("invite.stats.totalUsers")}</div>
           <div className="text-2xl font-bold">{loading ? "..." : totalCount}</div>
         </div>
         <div className="bg-gradient-to-br from-orange-400 to-red-500 text-white p-4 rounded-xl shadow-sm">
-          <div className="text-xs opacity-90">Level 1</div>
+          <div className="text-xs opacity-90">{t("invite.stats.level1")}</div>
           <div className="text-2xl font-bold">{loading ? "..." : level1Count}</div>
         </div>
         <div className="bg-gradient-to-br from-yellow-400 to-amber-500 text-white p-4 rounded-xl shadow-sm">
-          <div className="text-xs opacity-90">Level 2</div>
+          <div className="text-xs opacity-90">{t("invite.stats.level2")}</div>
           <div className="text-2xl font-bold">{loading ? "..." : level2Count}</div>
         </div>
         <div className="bg-gradient-to-br from-green-400 to-emerald-500 text-white p-4 rounded-xl shadow-sm">
-          <div className="text-xs opacity-90">Level 3</div>
+          <div className="text-xs opacity-90">{t("invite.stats.level3")}</div>
           <div className="text-2xl font-bold">{loading ? "..." : level3Count}</div>
         </div>
         <div
           className="col-span-2 bg-gradient-to-br from-cyan-500 to-blue-600 text-white p-4 rounded-xl shadow-sm cursor-pointer"
           onClick={handleShowDownline}
         >
-          <div className="text-sm opacity-90 text-center">Effective Users (greater than or equal to 115 USDT)</div>
+          <div className="text-sm opacity-90 text-center">{t("invite.stats.effectiveUsers")}</div>
           <div className="text-3xl font-bold text-center">{loading ? "..." : effectiveCount}</div>
         </div>
       </div>
 
       {/* Invitation Code */}
       <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
-        <div className="text-sm text-slate-600 mb-1">My Invitation Code</div>
+        <div className="text-sm text-slate-600 mb-1">{t("invite.myCode")}</div>
         <div className="flex items-center justify-between border border-slate-100 rounded-lg px-3 py-2">
           <span className="text-lg font-mono text-slate-700 tracking-wider">
-            {referralCode || "Loading..."}
+            {referralCode || t("invite.loading")}
           </span>
           <button
             onClick={copyCode}
@@ -243,22 +244,22 @@ export default function Invite({ setTab, userId, isLoggedIn }) {
         >
           <div className="flex items-center gap-2">
             <Trophy className="h-5 w-5" />
-            <span>Team Level Reward Model (₹10,000 Start)</span>
+            <span>{t("invite.rewardModel.title")}</span>
           </div>
           {showRewards ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
         </button>
         {showRewards && (
           <div className="bg-white p-4 max-h-96 overflow-y-auto">
             <div className="text-xs text-slate-500 mb-3 text-center">
-              Minimum recharge ₹10,000 (approximately 113 USDT) · Direct referral reward per person · Team size unlocks base reward
+              {t("invite.rewardModel.subtitle")}
             </div>
             <table className="w-full text-xs">
               <thead>
                 <tr className="border-b border-slate-200">
-                  <th className="py-2 text-left font-bold text-orange-600">Rank</th>
-                  <th className="py-2 text-center font-bold text-orange-600">Condition</th>
-                  <th className="py-2 text-center font-bold text-green-600">Base Reward</th>
-                  <th className="py-2 text-center font-bold text-blue-600">Direct Reward</th>
+                  <th className="py-2 text-left font-bold text-orange-600">{t("invite.rewardModel.rank")}</th>
+                  <th className="py-2 text-center font-bold text-orange-600">{t("invite.rewardModel.condition")}</th>
+                  <th className="py-2 text-center font-bold text-green-600">{t("invite.rewardModel.baseReward")}</th>
+                  <th className="py-2 text-center font-bold text-blue-600">{t("invite.rewardModel.directReward")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -270,7 +271,7 @@ export default function Invite({ setTab, userId, isLoggedIn }) {
                   { rank: "Subedar (सुबेदार)", cond: "Direct 12 + Team 243", base: "700", inr: "61,800", direct: "50" },
                   { rank: "Jemadar (जमादार)", cond: "Direct 20 + Team 729", base: "1,500", inr: "132,420", direct: "70" },
                   { rank: "Rissaldar (रिसालदार)", cond: "Direct 30 + Team 2,187", base: "3,000", inr: "264,840", direct: "90" },
-                  { rank: "Subedar-Major", cond: "Direct 40 + Team 6,561", base: "6,000", inr: "529,680", direct: "120" },
+                  { rank: "Supedar-Major", cond: "Direct 40 + Team 6,561", base: "6,000", inr: "529,680", direct: "120" },
                   { rank: "Commandant (कमांडेंट)", cond: "Direct 50 + Team 19,683", base: "12,000", inr: "1,059,360", direct: "150", highlight: true },
                 ].map((item, i) => (
                   <tr key={i} className={`border-b border-slate-100 ${item.highlight ? "bg-yellow-50" : ""}`}>
@@ -294,7 +295,7 @@ export default function Invite({ setTab, userId, isLoggedIn }) {
 
       {/* Share Prompt */}
       <div className="mt-6 text-center text-xs text-slate-500">
-        Share your code to invite friends and earn rewards!
+        {t("invite.sharePrompt")}
       </div>
 
       {/* Downline Modal */}
@@ -303,7 +304,7 @@ export default function Invite({ setTab, userId, isLoggedIn }) {
           <div className="bg-white rounded-2xl w-full max-w-sm max-h-[80vh] overflow-hidden shadow-xl">
             <div className="flex items-center justify-between p-4 border-b border-slate-200">
               <h3 className="font-semibold text-slate-800">
-                Downline Users ({totalCount})
+                {t("invite.downline.title", { count: totalCount })}
               </h3>
               <button onClick={() => setShowModal(false)} className="text-slate-400 hover:text-slate-600">
                 <X className="h-5 w-5" />
@@ -311,9 +312,9 @@ export default function Invite({ setTab, userId, isLoggedIn }) {
             </div>
             <div className="p-4 max-h-[60vh] overflow-y-auto">
               {modalLoading ? (
-                <div className="text-center py-8 text-slate-500">Loading...</div>
+                <div className="text-center py-8 text-slate-500">{t("invite.downline.loading")}</div>
               ) : totalCount === 0 ? (
-                <div className="text-center py-8 text-slate-500">No downline users</div>
+                <div className="text-center py-8 text-slate-500">{t("invite.downline.empty")}</div>
               ) : (
                 <div className="space-y-4">
                   {["Level 1", "Level 2", "Level 3"].map((label, idx) => {
@@ -323,7 +324,7 @@ export default function Invite({ setTab, userId, isLoggedIn }) {
                     return (
                       <div key={level}>
                         <div className="font-semibold text-slate-700 mb-2">
-                          {label} ({users.length} users)
+                          {t(`invite.downline.level${level}`, { count: users.length })}
                         </div>
                         <div className="space-y-2">
                           {users.map((user, i) => (
@@ -336,10 +337,10 @@ export default function Invite({ setTab, userId, isLoggedIn }) {
                               <div>
                                 <div className="font-mono text-slate-700">
                                   {maskPhone(user.phone_number)}
-                                  {user.total_recharge >= 115 && " (Effective)"}
+                                  {user.total_recharge >= 115 && ` (${t("invite.downline.effective")})`}
                                 </div>
                                 <div className="text-xs text-slate-500">
-                                  Recharge: ${Number(user.total_recharge).toFixed(2)}
+                                  {t("invite.downline.recharge", { amount: Number(user.total_recharge).toFixed(2) })}
                                 </div>
                               </div>
                               <div className="text-xs text-slate-500">
