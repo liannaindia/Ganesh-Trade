@@ -2,10 +2,13 @@
 import React, { useState, useEffect } from "react";
 import { supabase } from "../supabaseClient";
 import { ArrowLeft, Shield, Zap, CheckCircle, Copy, AlertCircle } from "lucide-react";
+import { useLanguage } from "../context/LanguageContext"; // 新增
 
 export default function Recharge({ setTab, isLoggedIn, userId }) {
+  const { t } = useLanguage(); // 新增
+
   const [amount, setAmount] = useState("");
-  const [txId, setTxId] = useState(""); // 交易哈希
+  const [txId, setTxId] = useState("");
   const [selectedChannel, setSelectedChannel] = useState(null);
   const [channels, setChannels] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -29,46 +32,42 @@ export default function Recharge({ setTab, isLoggedIn, userId }) {
         setChannels(data ?? []);
       } catch (err) {
         console.error("Load channels error:", err);
-        setError("Failed to load payment channels.");
+        setError(t("recharge.errors.loadChannels"));
       } finally {
         setFetching(false);
       }
     };
     fetchChannels();
-  }, []);
+  }, [t]);
 
   // 复制到剪贴板
   const copyToClipboard = (text) => {
     navigator.clipboard.writeText(text).then(() => {
-      alert("Copied to clipboard!");
+      alert(t("recharge.copied"));
     });
   };
 
   // 提交充值请求
   const handleSubmit = async () => {
-    // 登录校验
     if (!isLoggedIn || !userId) {
-      alert("Please log in first.");
+      alert(t("recharge.errors.notLoggedIn"));
       setTab("login");
       return;
     }
 
-    // 通道校验
     if (!selectedChannel) {
-      setError("Please select a network.");
+      setError(t("recharge.errors.selectNetwork"));
       return;
     }
 
-    // 金额校验
     const num = parseFloat(amount);
     if (!amount || isNaN(num) || num < 1) {
-      setError("Minimum recharge is 1 USDT.");
+      setError(t("recharge.errors.minAmount"));
       return;
     }
 
-    // tx_id 非空校验（不校验格式）
     if (!txId || txId.trim() === "") {
-      setError("Please enter the transaction hash (tx_id).");
+      setError(t("recharge.errors.enterTxId"));
       return;
     }
 
@@ -81,19 +80,18 @@ export default function Recharge({ setTab, isLoggedIn, userId }) {
         channel_id: selectedChannel.id,
         amount: num,
         status: "pending",
-        tx_id: txId.trim(), // 写入 tx_id
+        tx_id: txId.trim(),
       });
 
       if (error) throw error;
 
-      alert("Recharge request submitted successfully! Awaiting confirmation.");
-      // 重置表单
+      alert(t("recharge.success"));
       setAmount("");
       setTxId("");
       setSelectedChannel(null);
     } catch (err) {
       console.error("Recharge submit error:", err);
-      setError("Submission failed. Please check and try again.");
+      setError(t("recharge.errors.submitFailed"));
     } finally {
       setLoading(false);
     }
@@ -112,7 +110,7 @@ export default function Recharge({ setTab, isLoggedIn, userId }) {
             fontSize: "14px",
           }}
         >
-          Please log in to recharge
+          {t("recharge.notLoggedIn")}
         </div>
       </div>
     );
@@ -150,30 +148,34 @@ export default function Recharge({ setTab, isLoggedIn, userId }) {
           onClick={() => setTab("home")}
         />
         <h2 style={{ fontSize: "20px", fontWeight: "bold", color: "#7c2d12" }}>
-          Recharge USDT
+          {t("recharge.title")}
         </h2>
       </div>
 
       {/* Trust Badges */}
       <div style={{ display: "flex", justifyContent: "center", gap: "16px", margin: "16px 0" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "4px", color: "#16a34a", fontSize: "12px", fontWeight: "500" }}>
-          <Shield style={{ width: "16px", height: "16px" }} /> 100% Safe
+          <Shield style={{ width: "16px", height: "16px" }} /> {t("recharge.trust.safe")}
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: "4px", color: "#16a34a", fontSize: "12px", fontWeight: "500" }}>
-          <Zap style={{ width: "16px", height: "16px" }} /> Instant Arrival
+          <Zap style={{ width: "16px", height: "16px" }} /> {t("recharge.trust.instant")}
         </div>
       </div>
 
       {/* Channels */}
       <div style={{ marginTop: "12px" }}>
         <h3 style={{ fontSize: "14px", fontWeight: "600", color: "#374151" }}>
-          <span style={{ color: "#ea580c" }}>Select Network</span>
+          <span style={{ color: "#ea580c" }}>{t("recharge.selectNetwork")}</span>
         </h3>
 
         {fetching ? (
-          <div style={{ textAlign: "center", padding: "24px 0", color: "#6b7280" }}>Loading...</div>
+          <div style={{ textAlign: "center", padding: "24px 0", color: "#6b7280" }}>
+            {t("recharge.loading")}
+          </div>
         ) : channels.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "24px 0", color: "#6b7280" }}>No active channels</div>
+          <div style={{ textAlign: "center", padding: "24px 0", color: "#6b7280" }}>
+            {t("recharge.noChannels")}
+          </div>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginTop: "8px" }}>
             {channels.map((ch) => (
@@ -211,7 +213,9 @@ export default function Recharge({ setTab, isLoggedIn, userId }) {
                       {ch.currency_name.includes("TRC20") ? "T" : "E"}
                     </div>
                     <div>
-                      <div style={{ fontWeight: "bold", color: "#1f2937" }}>{ch.currency_name}</div>
+                      <div style={{ fontWeight: "600", color: "#1f2937" }}>
+                        {ch.currency_name}
+                      </div>
                       <div
                         style={{
                           fontSize: "12px",
@@ -245,7 +249,7 @@ export default function Recharge({ setTab, isLoggedIn, userId }) {
       {/* Quick Amounts */}
       <div style={{ marginTop: "24px" }}>
         <h3 style={{ fontSize: "14px", fontWeight: "600", color: "#374151", marginBottom: "8px" }}>
-          Quick Amount
+          {t("recharge.quickAmount")}
         </h3>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "8px" }}>
           {quickAmounts.map((amt) => (
@@ -281,7 +285,9 @@ export default function Recharge({ setTab, isLoggedIn, userId }) {
           border: "1px solid #e5e7eb",
         }}
       >
-        <div style={{ fontSize: "14px", color: "#4b5563", marginBottom: "8px" }}>Enter Amount</div>
+        <div style={{ fontSize: "14px", color: "#4b5563", marginBottom: "8px" }}>
+          {t("recharge.enterAmount")}
+        </div>
         <div style={{ position: "relative" }}>
           <input
             type="number"
@@ -316,7 +322,7 @@ export default function Recharge({ setTab, isLoggedIn, userId }) {
           </div>
         </div>
         <div style={{ fontSize: "12px", color: "#6b7280", marginTop: "4px", textAlign: "right" }}>
-          Min: 1 USDT
+          {t("recharge.minAmount", { min: 1 })}
         </div>
       </div>
 
@@ -333,13 +339,13 @@ export default function Recharge({ setTab, isLoggedIn, userId }) {
       >
         <div style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "14px", color: "#4b5563", marginBottom: "8px" }}>
           <AlertCircle style={{ width: "16px", height: "16px", color: "#ea580c" }} />
-          Transaction Hash (tx_id)
+          {t("recharge.txIdLabel")}
         </div>
         <input
           type="text"
           value={txId}
           onChange={(e) => setTxId(e.target.value)}
-          placeholder="Paste transaction hash here"
+          placeholder={t("recharge.txIdPlaceholder")}
           style={{
             width: "100%",
             padding: "12px",
@@ -351,7 +357,7 @@ export default function Recharge({ setTab, isLoggedIn, userId }) {
           }}
         />
         <div style={{ fontSize: "12px", color: "#6b7280", marginTop: "4px" }}>
-          After payment, copy the transaction hash from your wallet and paste it here.
+          {t("recharge.txIdHint")}
         </div>
       </div>
 
@@ -383,9 +389,9 @@ export default function Recharge({ setTab, isLoggedIn, userId }) {
           fontSize: "12px",
         }}
       >
-        <strong style={{ color: "#166534" }}>Important:</strong>
+        <strong style={{ color: "#166534" }}>{t("recharge.reminder.title")}</strong>
         <br />
-        After payment, funds arrive in <strong>30 seconds</strong>. If delayed, refresh or contact support.
+        {t("recharge.reminder.content")}
       </div>
 
       {/* Submit Button */}
@@ -416,7 +422,7 @@ export default function Recharge({ setTab, isLoggedIn, userId }) {
         }}
         onMouseLeave={(e) => (e.target.style.transform = "scale(1)")}
       >
-        {loading ? "Submitting..." : "Submit Recharge"}
+        {loading ? t("recharge.submitting") : t("recharge.submit")}
       </button>
     </div>
   );
