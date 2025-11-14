@@ -1,21 +1,24 @@
+// components/Transactions.jsx
 import React, { useState, useEffect } from "react";
 import { supabase } from "../supabaseClient";
 import { ArrowLeft, RefreshCw } from "lucide-react";
+import { useLanguage } from "../context/LanguageContext"; // 新增
 
 export default function Transactions({ setTab, userId, isLoggedIn }) {
-  const [activeTab, setActiveTab] = useState("recharges"); // recharges / withdraws
+  const { t } = useLanguage(); // 新增
+
+  const [activeTab, setActiveTab] = useState("recharges");
   const [recharges, setRecharges] = useState([]);
   const [withdraws, setWithdraws] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  // ✅ 初始化加载 + 实时订阅
+  // 初始化加载 + 实时订阅
   useEffect(() => {
     if (!isLoggedIn || !userId) return;
 
     fetchTransactions();
 
-    // ✅ 实时订阅 Recharges
     const rechargeSub = supabase
       .channel(`recharges-updates-${userId}`)
       .on(
@@ -26,13 +29,10 @@ export default function Transactions({ setTab, userId, isLoggedIn }) {
           table: "recharges",
           filter: `user_id=eq.${userId}`,
         },
-        (payload) => {
-          fetchTransactions(); // 数据变化后自动刷新
-        }
+        () => fetchTransactions()
       )
       .subscribe();
 
-    // ✅ 实时订阅 Withdraws
     const withdrawSub = supabase
       .channel(`withdraws-updates-${userId}`)
       .on(
@@ -43,9 +43,7 @@ export default function Transactions({ setTab, userId, isLoggedIn }) {
           table: "withdraws",
           filter: `user_id=eq.${userId}`,
         },
-        (payload) => {
-          fetchTransactions();
-        }
+        () => fetchTransactions()
       )
       .subscribe();
 
@@ -55,11 +53,14 @@ export default function Transactions({ setTab, userId, isLoggedIn }) {
     };
   }, [isLoggedIn, userId]);
 
-  // ✅ 获取充值与提款数据
+  // 获取充值与提款数据
   const fetchTransactions = async () => {
     setLoading(true);
     try {
-      const [{ data: rechargeData, error: rechargeErr }, { data: withdrawData, error: withdrawErr }] = await Promise.all([
+      const [
+        { data: rechargeData, error: rechargeErr },
+        { data: withdrawData, error: withdrawErr },
+      ] = await Promise.all([
         supabase
           .from("recharges")
           .select("amount, status, created_at")
@@ -85,7 +86,7 @@ export default function Transactions({ setTab, userId, isLoggedIn }) {
     }
   };
 
-  // ✅ 手动刷新
+  // 手动刷新
   const handleRefresh = async () => {
     setRefreshing(true);
     await fetchTransactions();
@@ -122,7 +123,7 @@ export default function Transactions({ setTab, userId, isLoggedIn }) {
       <div>
         <div className="text-sm text-slate-600">{formatDate(item.created_at)}</div>
         <div className={`text-xs font-medium ${getStatusColor(item.status)}`}>
-          {item.status.toUpperCase()}
+          {t(`transactions.status.${item.status}`)}
         </div>
       </div>
       <div
@@ -137,17 +138,18 @@ export default function Transactions({ setTab, userId, isLoggedIn }) {
   );
 
   const currentList = activeTab === "recharges" ? recharges : withdraws;
+  const typeLabel = activeTab === "recharges" ? "recharge" : "withdraw";
 
   return (
     <div className="px-4 pb-24 max-w-md mx-auto">
-      {/* ===== Header ===== */}
+      {/* Header */}
       <div className="flex items-center mt-4 mb-3 relative">
         <ArrowLeft
           className="h-5 w-5 text-slate-600 cursor-pointer"
           onClick={() => setTab("me")}
         />
         <h2 className="flex-1 text-center text-lg font-bold text-slate-800">
-          Transactions
+          {t("transactions.title")}
         </h2>
         <RefreshCw
           className={`h-5 w-5 absolute right-0 cursor-pointer ${
@@ -157,7 +159,7 @@ export default function Transactions({ setTab, userId, isLoggedIn }) {
         />
       </div>
 
-      {/* ===== Toggle Tabs ===== */}
+      {/* Toggle Tabs */}
       <div className="flex justify-center mb-5">
         <button
           className={`flex-1 py-2 rounded-l-xl text-sm font-semibold border ${
@@ -167,7 +169,7 @@ export default function Transactions({ setTab, userId, isLoggedIn }) {
           }`}
           onClick={() => setActiveTab("recharges")}
         >
-          Recharges
+          {t("transactions.tabs.recharges")}
         </button>
         <button
           className={`flex-1 py-2 rounded-r-xl text-sm font-semibold border ${
@@ -177,18 +179,18 @@ export default function Transactions({ setTab, userId, isLoggedIn }) {
           }`}
           onClick={() => setActiveTab("withdraws")}
         >
-          Withdraws
+          {t("transactions.tabs.withdraws")}
         </button>
       </div>
 
-      {/* ===== List ===== */}
+      {/* List */}
       {loading ? (
         <div className="text-center text-slate-500 mt-10 animate-pulse">
-          Loading...
+          {t("transactions.loading")}
         </div>
       ) : currentList.length === 0 ? (
         <div className="text-center text-slate-400 text-sm mt-10">
-          No {activeTab === "recharges" ? "recharge" : "withdraw"} records found.
+          {t("transactions.empty", { type: t(`transactions.types.${typeLabel}`) })}
         </div>
       ) : (
         <div className="space-y-2">
@@ -198,10 +200,10 @@ export default function Transactions({ setTab, userId, isLoggedIn }) {
         </div>
       )}
 
-      {/* ===== 手动刷新提示 ===== */}
+      {/* 刷新提示 */}
       {refreshing && (
         <div className="text-center text-blue-500 text-sm mt-3 animate-pulse">
-          Refreshing...
+          {t("transactions.refreshing")}
         </div>
       )}
     </div>
