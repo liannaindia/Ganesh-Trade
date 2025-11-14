@@ -1,3 +1,4 @@
+// components/Me.jsx
 import React, { useState, useEffect } from "react";
 import {
   RefreshCw,
@@ -11,15 +12,18 @@ import {
   Download,
 } from "lucide-react";
 import { supabase } from "../supabaseClient";
+import { useLanguage } from "../context/LanguageContext"; // 新增
 
 export default function Me({ setTab, userId, isLoggedIn, setIsLoggedIn, setUserId }) {
+  const { t } = useLanguage(); // 新增
+
   const [balance, setBalance] = useState(0);
   const [availableBalance, setAvailableBalance] = useState(0);
   const [loading, setLoading] = useState(true);
   const [showBalance, setShowBalance] = useState(true);
-  const [pnlToday, setPnlToday] = useState(0); // ✅ 新增：当天利润
+  const [pnlToday, setPnlToday] = useState(0);
 
-  // ✅ 计算当天利润（印度时区）
+  // 计算当天利润（印度时区）
   const calculateTodayPnL = async (uid) => {
     try {
       const indiaTime = new Date().toLocaleString("en-US", {
@@ -31,16 +35,16 @@ export default function Me({ setTab, userId, isLoggedIn, setIsLoggedIn, setUserI
       const endOfDay = new Date(indiaDate);
       endOfDay.setHours(23, 59, 59, 999);
 
-      const startUTC = new Date(startOfDay.toISOString());
-      const endUTC = new Date(endOfDay.toISOString());
+      const startUTC = startOfDay.toISOString();
+      const endUTC = endOfDay.toISOString();
 
       const { data, error } = await supabase
         .from("copytrade_details")
         .select("order_profit_amount")
         .eq("user_id", uid)
         .eq("status", "settled")
-        .gte("created_at", startUTC.toISOString())
-        .lte("created_at", endUTC.toISOString());
+        .gte("created_at", startUTC)
+        .lte("created_at", endUTC);
 
       if (error) {
         console.error("Error fetching today's PnL:", error);
@@ -57,7 +61,7 @@ export default function Me({ setTab, userId, isLoggedIn, setIsLoggedIn, setUserI
     }
   };
 
-  // ✅ 实时获取用户余额 + PnL
+  // 实时获取用户余额 + PnL
   useEffect(() => {
     if (!isLoggedIn || !userId) {
       setLoading(false);
@@ -89,7 +93,7 @@ export default function Me({ setTab, userId, isLoggedIn, setIsLoggedIn, setUserI
 
     fetchBalance();
 
-    // ✅ 实时订阅用户余额变化
+    // 实时订阅用户余额变化
     const balanceSub = supabase
       .channel(`user-balance-${userId}`)
       .on(
@@ -107,7 +111,7 @@ export default function Me({ setTab, userId, isLoggedIn, setIsLoggedIn, setUserI
       )
       .subscribe();
 
-    // ✅ 实时订阅 copytrade_details 表，当状态为 settled 时更新 PnL
+    // 实时订阅 copytrade_details 表，当状态为 settled 时更新 PnL
     const pnlSub = supabase
       .channel(`pnl-today-${userId}`)
       .on(
@@ -153,11 +157,8 @@ export default function Me({ setTab, userId, isLoggedIn, setIsLoggedIn, setUserI
   };
 
   const handleLogout = () => {
-    // 清除 localStorage 中的用户信息
     localStorage.removeItem("phone_number");
     localStorage.removeItem("user_id");
-
-    // 更新状态
     setIsLoggedIn(false);
     setUserId(null);
     setTab("home");
@@ -172,9 +173,9 @@ export default function Me({ setTab, userId, isLoggedIn, setIsLoggedIn, setUserI
 
   return (
     <div className="px-4 pb-24 max-w-md mx-auto">
-      {/* ===== Header ===== */}
+      {/* Header */}
       <div className="flex justify-center items-center mt-4 mb-3 relative">
-        <h2 className="text-lg font-bold text-slate-800 text-center">Me</h2>
+        <h2 className="text-lg font-bold text-slate-800 text-center">{t("me.title")}</h2>
         <div className="absolute right-0 flex items-center gap-3 text-slate-500">
           <RefreshCw
             className="h-5 w-5 cursor-pointer hover:text-slate-700 transition"
@@ -184,10 +185,10 @@ export default function Me({ setTab, userId, isLoggedIn, setIsLoggedIn, setUserI
         </div>
       </div>
 
-      {/* ===== Assets Card ===== */}
+      {/* Assets Card */}
       <div className="rounded-2xl bg-gradient-to-r from-slate-50 to-slate-100 border border-slate-200 shadow-sm p-4 mb-5">
         <div className="flex items-center justify-between text-sm text-slate-500 mb-1">
-          <span>Total Assets (USDT)</span>
+          <span>{t("me.assets.total")}</span>
           <Eye
             className={`h-4 w-4 cursor-pointer transition ${
               showBalance ? "text-slate-600" : "text-slate-400"
@@ -208,13 +209,13 @@ export default function Me({ setTab, userId, isLoggedIn, setIsLoggedIn, setUserI
 
         <div className="flex justify-between mt-3 text-[13px] text-slate-600">
           <div>
-            <div>Available Balance</div>
+            <div>{t("me.assets.available")}</div>
             <div className="font-bold text-slate-800">
               {loading ? "..." : showBalance ? formatNumber(availableBalance) : "••••••"}
             </div>
           </div>
           <div className="text-right">
-            <div>PnL Today</div>
+            <div>{t("me.assets.pnlToday")}</div>
             <div
               className={`font-bold ${
                 pnlToday > 0
@@ -234,16 +235,14 @@ export default function Me({ setTab, userId, isLoggedIn, setIsLoggedIn, setUserI
         </div>
       </div>
 
-    
-
-      {/* ===== Recharge / Withdraw Buttons ===== */}
+      {/* Recharge / Withdraw Buttons */}
       <div className="grid grid-cols-2 gap-3 mb-5">
         <button
           onClick={() => setTab("recharge")}
           className="flex flex-col items-center justify-center rounded-2xl bg-white border border-slate-200 py-4 shadow-sm hover:bg-slate-50 transition"
         >
           <Wallet className="h-6 w-6 text-blue-500 mb-1" />
-          <span className="text-sm font-semibold text-slate-800">Recharge</span>
+          <span className="text-sm font-semibold text-slate-800">{t("me.actions.recharge")}</span>
         </button>
 
         <button
@@ -251,36 +250,36 @@ export default function Me({ setTab, userId, isLoggedIn, setIsLoggedIn, setUserI
           className="flex flex-col items-center justify-center rounded-2xl bg-white border border-slate-200 py-4 shadow-sm hover:bg-slate-50 transition"
         >
           <ArrowDownCircle className="h-6 w-6 text-orange-500 mb-1" />
-          <span className="text-sm font-semibold text-slate-800">Withdraw</span>
+          <span className="text-sm font-semibold text-slate-800">{t("me.actions.withdraw")}</span>
         </button>
       </div>
 
-      {/* ===== Menu List ===== */}
+      {/* Menu List */}
       <div className="space-y-2">
         {[
           {
             icon: <FileText className="h-5 w-5 text-slate-600" />,
-            label: "Follow Order",
+ R           label: t("me.menu.followOrder"),
             tab: "followorder",
           },
           {
             icon: <FileText className="h-5 w-5 text-slate-600" />,
-            label: "Transactions",
+            label: t("me.menu.transactions"),
             tab: "transactions",
           },
           {
             icon: <UserCheck className="h-5 w-5 text-yellow-600" />,
-            label: "Agent Center",
+            label: t("me.menu.agentCenter"),
             tab: "invite",
           },
           {
             icon: <Bell className="h-5 w-5 text-slate-600" />,
-            label: "Notification",
+            label: t("me.menu.notification"),
             tab: null,
           },
           {
             icon: <Download className="h-5 w-5 text-slate-600" />,
-            label: "Download APP",
+            label: t("me.menu.downloadApp"),
             tab: null,
           },
         ].map((item, i) => (
@@ -298,13 +297,14 @@ export default function Me({ setTab, userId, isLoggedIn, setIsLoggedIn, setUserI
             <span className="text-slate-400">{">"}</span>
           </div>
         ))}
-          {/* ===== Logout Button ===== */}
-      <button
-        onClick={handleLogout}
-        className="w-full text-slate-900 font-semibold py-3 rounded-xl bg-red-500 hover:bg-red-600 text-white"
-      >
-        Logout
-      </button>
+
+        {/* Logout Button */}
+        <button
+          onClick={handleLogout}
+          className="w-full text-white font-semibold py-3 rounded-xl bg-red-500 hover:bg-red-600 transition mt-4"
+        >
+          {t("me.actions.logout")}
+        </button>
       </div>
     </div>
   );
