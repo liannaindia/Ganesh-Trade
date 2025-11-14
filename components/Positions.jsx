@@ -1,12 +1,17 @@
+// components/Positions.jsx
 import React, { useState, useEffect } from "react";
 import { supabase } from "../supabaseClient";
+import { useLanguage } from "../context/LanguageContext"; // 新增
 
 export default function Positions({
   isLoggedIn,
   balance,
   availableBalance,
   userId,
+  setTab, // 可选：用于跳转
 }) {
+  const { t } = useLanguage(); // 新增
+
   const [tab, setTab] = useState("pending");
   const [totalAssets, setTotalAssets] = useState(0);
   const [floatingPL, setFloatingPL] = useState(0);
@@ -56,13 +61,13 @@ export default function Positions({
         if (d.status === "approved") {
           pend.push({
             id: d.id,
-            name: mentor.name || "Unknown Mentor",
+            name: mentor.name || t("positions.unknownMentor"),
             years: mentor.years || 0,
-            type: "Following",
+            type: t("positions.type.following"),
             amount,
             earnings: "---",
             time,
-            status: "In Progress",
+            status: t("positions.status.inProgress"),
             img:
               mentor.img ||
               "https://randomuser.me/api/portraits/women/65.jpg",
@@ -73,29 +78,28 @@ export default function Positions({
             profit >= 0 ? `+${profit.toFixed(2)}` : profit.toFixed(2);
           comp.push({
             id: d.id,
-            name: mentor.name || "Unknown Mentor",
+            name: mentor.name || t("positions.unknownMentor"),
             years: mentor.years || 0,
-            type: "Completed",
+            type: t("positions.type.completed"),
             amount,
             earnings,
             time,
-            status: "Settled",
+            status: t("positions.status.settled"),
             img:
               mentor.img ||
               "https://randomuser.me/api/portraits/men/51.jpg",
           });
         } else if (d.status === "cancelled") {
-          // ✅ 被拒绝订单
           const earnings = "---";
           comp.push({
             id: d.id,
-            name: mentor.name || "Unknown Mentor",
+            name: mentor.name || t("positions.unknownMentor"),
             years: mentor.years || 0,
-            type: "Completed",
+            type: t("positions.type.completed"),
             amount,
             earnings,
             time,
-            status: "Rejected",
+            status: t("positions.status.rejected"),
             img:
               mentor.img ||
               "https://randomuser.me/api/portraits/men/52.jpg",
@@ -109,7 +113,7 @@ export default function Positions({
     };
 
     fetchDetails();
-  }, [isLoggedIn, userId, balance, availableBalance]);
+  }, [isLoggedIn, userId, balance, availableBalance, t]);
 
   const list = tab === "pending" ? pendingOrders : completedOrders;
 
@@ -118,14 +122,14 @@ export default function Positions({
       {/* Title */}
       <div className="mt-3 mb-3 text-center">
         <h2 className="text-lg font-bold text-slate-800 border-b-2 border-yellow-400 inline-block pb-1">
-          Positions
+          {t("positions.title")}
         </h2>
       </div>
 
       {/* Asset Card */}
       <div className="rounded-2xl bg-white border border-slate-200 shadow-sm p-4 mb-4">
         <div className="flex items-center justify-between text-sm text-slate-500 mb-1">
-          <span>Total Assets (USDT)</span>
+          <span>{t("positions.assets.total")}</span>
         </div>
         <div className="text-3xl font-extrabold tracking-tight text-slate-900">
           {totalAssets.toLocaleString()}
@@ -133,13 +137,13 @@ export default function Positions({
 
         <div className="grid grid-cols-2 gap-4 text-[13px] text-slate-600 mt-3">
           <div>
-            <div>Floating P/L</div>
+            <div>{t("positions.assets.floatingPL")}</div>
             <div className="font-bold text-slate-800">
               {floatingPL.toFixed(2)}
             </div>
           </div>
           <div>
-            <div>Available Balance</div>
+            <div>{t("positions.assets.available")}</div>
             <div className="font-bold text-slate-800">{available.toFixed(2)}</div>
           </div>
         </div>
@@ -155,7 +159,7 @@ export default function Positions({
               : "text-slate-500 border-transparent"
           }`}
         >
-          In Progress
+          {t("positions.tabs.inProgress")}
         </button>
         <button
           onClick={() => setTab("completed")}
@@ -165,7 +169,7 @@ export default function Positions({
               : "text-slate-500 border-transparent"
           }`}
         >
-          Completed
+          {t("positions.tabs.completed")}
         </button>
       </div>
 
@@ -174,8 +178,8 @@ export default function Positions({
         {list.length === 0 ? (
           <p className="text-center text-slate-500 py-8">
             {tab === "pending"
-              ? "No active follow orders"
-              : "No completed orders"}
+              ? t("positions.empty.inProgress")
+              : t("positions.empty.completed")}
           </p>
         ) : (
           list.map((o) => (
@@ -195,7 +199,7 @@ export default function Positions({
                       {o.name}
                     </div>
                     <div className="text-[12px] text-slate-500">
-                      Experience {o.years} years
+                      {t("positions.mentor.experience", { years: o.years })}
                     </div>
                   </div>
                 </div>
@@ -206,14 +210,14 @@ export default function Positions({
 
               <div className="grid grid-cols-2 mt-2 text-[12px] text-slate-500">
                 <div>
-                  <div>Investment Amount</div>
+                  <div>{t("positions.order.investment")}</div>
                   <div className="font-semibold text-slate-800">
                     {o.amount.toLocaleString()}{" "}
                     <span className="text-[11px]">USDT</span>
                   </div>
                 </div>
                 <div className="text-right">
-                  <div>Order Earnings</div>
+                  <div>{t("positions.order.earnings")}</div>
                   <div
                     className={`font-semibold ${
                       o.earnings.startsWith("+")
@@ -228,16 +232,16 @@ export default function Positions({
                 </div>
                 <div className="col-span-2 flex justify-between mt-2 text-[12px]">
                   <div>
-                    Applied at <br />
+                    {t("positions.order.appliedAt")} <br />
                     <span className="text-slate-700">{o.time}</span>
                   </div>
                   <div className="text-right">
-                    Status <br />
+                    {t("positions.order.status")} <br />
                     <span
                       className={`font-semibold ${
-                        o.status === "In Progress"
+                        o.status === t("positions.status.inProgress")
                           ? "text-yellow-500"
-                          : o.status === "Rejected"
+                          : o.status === t("positions.status.rejected")
                           ? "text-rose-600"
                           : "text-emerald-600"
                       }`}
