@@ -98,7 +98,7 @@ export default function Trade({ setTab, balance, userId, isLoggedIn }) {
 
   const fetchUserPhoneNumber = async () => {
     try {
-      const { data, error } | await supabase
+      const { data, error } = await supabase
         .from("users")
         .select("phone_number")
         .eq("id", userId)
