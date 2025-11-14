@@ -6,7 +6,7 @@ import banner2 from '../image/2.png';
 import { useNavigate } from "react-router-dom";
 import { Search, Wallet, Send, Headphones, Gift } from "lucide-react";
 
-// 正确路径引入
+// 国际化
 import { useLanguage } from "../context/LanguageContext";
 import LanguageSwitcher from "./LanguageSwitcher";
 
@@ -100,7 +100,7 @@ const BalanceSection = ({ isLoggedIn, balance, handleLoginRedirect, setTab, pnlT
 };
 
 export default function Home({ setTab, isLoggedIn: propIsLoggedIn }) {
-  const { t } = useLanguage();
+  const { t } = useLanguage(); // 全局 t 函数
   const [coins, setCoins] = useState([]);
   const [activeTab, setActiveTab] = useState("favorites");
   const [bannerIndex, setBannerIndex] = useState(0);
@@ -113,12 +113,14 @@ export default function Home({ setTab, isLoggedIn: propIsLoggedIn }) {
 
   const banners = [banner1, banner2];
 
-  // 【其余业务逻辑完全不变】
+  // ============= 实时余额 & PnL =============
   useEffect(() => {
     let realtimeSubscription = null;
+
     const fetchSession = async () => {
       const phoneNumber = localStorage.getItem('phone_number');
       if (!phoneNumber) return;
+
       setLocalIsLoggedIn(true);
 
       const { data, error } = await supabase
@@ -136,43 +138,75 @@ export default function Home({ setTab, isLoggedIn: propIsLoggedIn }) {
       const userId = data?.id;
       calculateTodayPnL(userId);
 
-      const pnlSub = supabase.channel('pnl-today-sub').on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'copytrade_details', filter: `user_id=eq.${userId}` },
-        async (payload) => {
-          if (payload.new?.status === 'settled') await calculateTodayPnL(userId);
-        }
-      ).subscribe();
+      // PnL 实时监听
+      const pnlSub = supabase
+        .channel('pnl-today-sub')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'copytrade_details',
+            filter: `user_id=eq.${userId}`,
+          },
+          async (payload) => {
+            if (payload.new?.status === 'settled') {
+              await calculateTodayPnL(userId);
+            }
+          }
+        )
+        .subscribe();
+
       realtimeSubscription = pnlSub;
 
-      const balanceSub = supabase.channel('user-balance-updates').on(
-        'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'users', filter: `phone_number=eq.${phoneNumber}` },
-        (payload) => setLocalBalance(payload.new.balance || 0)
-      ).subscribe();
+      // 余额实时监听
+      const balanceSub = supabase
+        .channel('user-balance-updates')
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'users',
+            filter: `phone_number=eq.${phoneNumber}`,
+          },
+          (payload) => {
+            setLocalBalance(payload.new.balance || 0);
+          }
+        )
+        .subscribe();
+
       realtimeSubscription = balanceSub;
     };
 
     fetchSession();
-    return () => { if (realtimeSubscription) supabase.removeChannel(realtimeSubscription); };
+
+    return () => {
+      if (realtimeSubscription) supabase.removeChannel(realtimeSubscription);
+    };
   }, []);
 
   const calculateTodayPnL = async (userId) => {
     try {
       const indiaTime = new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
       const indiaDate = new Date(indiaTime);
-      const startOfDay = new Date(indiaDate); startOfDay.setHours(0,0,0,0);
-      const endOfDay = new Date(indiaDate); endOfDay.setHours(23,59,59,999);
+      const startOfDay = new Date(indiaDate);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(indiaDate);
+      endOfDay.setHours(23, 59, 59, 999);
+
       const startUTC = startOfDay.toISOString();
       const endUTC = endOfDay.toISOString();
 
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("copytrade_details")
         .select("order_profit_amount")
         .eq("user_id", userId)
         .eq("status", "settled")
         .gte("created_at", startUTC)
         .lte("created_at", endUTC);
+
+      if (error) throw error;
 
       const totalProfit = data.reduce((sum, row) => sum + (parseFloat(row.order_profit_amount) || 0), 0);
       setPnlToday(totalProfit);
@@ -181,27 +215,31 @@ export default function Home({ setTab, isLoggedIn: propIsLoggedIn }) {
     }
   };
 
+  // ============= Banner 轮播 =============
   useEffect(() => {
     const timer = setInterval(() => setBannerIndex((prev) => (prev + 1) % banners.length), 4000);
     return () => clearInterval(timer);
   }, [banners.length]);
 
+  // ============= Binance 行情 =============
   useEffect(() => {
     const fetchTopCoins = async () => {
       try {
         const res = await fetch("https://api.binance.com/api/v3/ticker/24hr");
         const data = await res.json();
         const all = data
-          .filter(i => i.symbol.endsWith("USDT"))
+          .filter((i) => i.symbol.endsWith("USDT"))
           .sort((a, b) => parseFloat(b.quoteVolume) - parseFloat(a.quoteVolume))
           .slice(0, 50)
-          .map(i => ({
+          .map((i) => ({
             symbol: i.symbol.replace("USDT", ""),
             price: parseFloat(i.lastPrice).toFixed(2),
             change: parseFloat(i.priceChangePercent).toFixed(2),
           }));
         setCoins(all);
-      } catch (e) { console.error("Binance API Error:", e); }
+      } catch (e) {
+        console.error("Binance API Error:", e);
+      }
     };
     fetchTopCoins();
     const timer = setInterval(fetchTopCoins, 15000);
@@ -211,10 +249,10 @@ export default function Home({ setTab, isLoggedIn: propIsLoggedIn }) {
   const getFilteredCoins = () => {
     switch (activeTab) {
       case "favorites": return coins.slice(0, 10);
-      case "hot": return coins.slice().sort((a, b) => b.price - a.price).slice(0, 10);
-      case "gainers": return coins.slice().sort((a, b) => b.change - a.change).slice(0, 10);
-      case "losers": return coins.slice().sort((a, b) => a.change - b.change).slice(0, 10);
-      default: return coins.slice(0, 10);
+      case "hot":       return coins.slice().sort((a, b) => b.price - a.price).slice(0, 10);
+      case "gainers":   return coins.slice().sort((a, b) => b.change - a.change).slice(0, 10);
+      case "losers":    return coins.slice().sort((a, b) => a.change - b.change).slice(0, 10);
+      default:          return coins.slice(0, 10);
     }
   };
 
@@ -240,31 +278,56 @@ export default function Home({ setTab, isLoggedIn: propIsLoggedIn }) {
         <LanguageSwitcher />
       </div>
 
+      {/* 轮播图 */}
       <Banner banners={banners} bannerIndex={bannerIndex} />
-      <BalanceSection isLoggedIn={isLoggedIn} balance={balance} handleLoginRedirect={handleLoginRedirect} setTab={setTab} pnlToday={pnlToday} />
+
+      {/* 余额 / 登录 */}
+      <BalanceSection
+        isLoggedIn={isLoggedIn}
+        balance={balance}
+        handleLoginRedirect={handleLoginRedirect}
+        setTab={setTab}
+        pnlToday={pnlToday}
+      />
+
+      {/* 快捷功能 */}
       <MarketDataSection setTab={setTab} />
 
+      {/* 行情 Tab */}
       <div className="bg-white rounded-2xl mx-4 mt-4 border border-slate-100 shadow-sm">
         <div className="flex text-sm border-b border-slate-100">
-          {["favorites", "hot", "gainers", "losers"].map(id => (
+          {[
+            { id: "favorites", label: t("home.favorites") },
+            { id: "hot",       label: t("home.hot") },
+            { id: "gainers",   label: t("home.gainers") },
+            { id: "losers",    label: t("home.losers") },
+          ].map((tab) => (
             <button
-              key={id}
-              onClick={() => setActiveTab(id)}
-              className={`flex-1 py-2 text-center font-medium ${activeTab === id ? "text-yellow-600 border-b-2 border-yellow-400" : "text-slate-500"}`}
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex-1 py-2 text-center font-medium ${
+                activeTab === tab.id
+                  ? "text-yellow-600 border-b-2 border-yellow-400"
+                  : "text-slate-500"
+              }`}
             >
-              {t(`home.${id}`)}
+              {tab.label}
             </button>
           ))}
         </div>
+
         <div className="p-3">
           <div className="flex justify-between text-xs text-slate-400 mb-2">
             <span>{t("home.name")}</span>
             <span>{t("home.lastPrice")}</span>
             <span>{t("home.24chg")}</span>
           </div>
+
           <div className="divide-y divide-slate-100">
             {displayed.length === 0 ? (
-              <div className="text-center py-4 text-slate-400 text-sm">Loading...</div>
+              <div className="text-center py-4 text-slate-400 text-sm">
+               {t("loading") ?? "Loading market data..."}
+              </div>
             ) : (
               displayed.map((c, i) => (
                 <div key={i} className="flex justify-between items-center py-2 text-sm">
