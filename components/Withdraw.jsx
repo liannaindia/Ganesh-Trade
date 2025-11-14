@@ -1,8 +1,12 @@
+// components/Withdraw.jsx
 import React, { useState, useEffect } from "react";
 import { ArrowLeft } from "lucide-react";
 import { supabase } from "../supabaseClient";
+import { useLanguage } from "../context/LanguageContext"; // 新增
 
 export default function Withdraw({ setTab, userId, balance, availableBalance }) {
+  const { t } = useLanguage(); // 新增
+
   const [tab, setTabState] = useState("request");
   const [walletAddress, setWalletAddress] = useState("");
   const [newAddress, setNewAddress] = useState("");
@@ -22,14 +26,14 @@ export default function Withdraw({ setTab, userId, balance, availableBalance }) 
 
       if (error) {
         console.error("Failed to fetch wallet:", error);
-        setError("Failed to load wallet address.");
+        setError(t("withdraw.errors.loadAddress"));
       } else if (data?.wallet_address) {
         setWalletAddress(data.wallet_address);
       }
     };
 
     fetchWalletAddress();
-  }, [userId]);
+  }, [userId, t]);
 
   const handleRequestWithdraw = async () => {
     if (loading) return;
@@ -38,25 +42,24 @@ export default function Withdraw({ setTab, userId, balance, availableBalance }) 
 
     try {
       if (!walletAddress) {
-        setError("No wallet address saved. Please set it in 'Receiving Address'.");
+        setError(t("withdraw.errors.noAddress"));
         return;
       }
 
       const isValidTRC20 = walletAddress.startsWith("T") && walletAddress.length === 34;
       if (!isValidTRC20) {
-        setError("Saved wallet address is invalid (must be TRC20).");
+        setError(t("withdraw.errors.invalidSavedAddress"));
         return;
       }
 
       const amount = parseFloat(withdrawAmount);
       if (isNaN(amount) || amount < 100 || amount > 9999) {
-        setError("Amount must be 100–9999 USDT.");
+        setError(t("withdraw.errors.amountRange"));
         return;
       }
 
-      // 确保提款金额不超过有效余额
       if (amount > availableBalance) {
-        setError("Insufficient available balance.");
+        setError(t("withdraw.errors.insufficientBalance"));
         return;
       }
 
@@ -71,14 +74,14 @@ export default function Withdraw({ setTab, userId, balance, availableBalance }) 
 
       if (error) {
         console.error("Withdraw error:", error);
-        setError("Failed to submit request. Please try again.");
+        setError(t("withdraw.errors.submitFailed"));
       } else {
         setWithdrawAmount("");
-        alert("Withdraw request submitted successfully!");
+        alert(t("withdraw.success"));
       }
     } catch (err) {
       console.error("Unexpected error:", err);
-      setError("Network error. Please check your connection.");
+      setError(t("withdraw.errors.networkError"));
     } finally {
       setLoading(false);
     }
@@ -91,14 +94,14 @@ export default function Withdraw({ setTab, userId, balance, availableBalance }) 
 
     const trimmed = newAddress.trim();
     if (!trimmed) {
-      setError("Please enter a wallet address.");
+      setError(t("withdraw.errors.enterAddress"));
       setLoading(false);
       return;
     }
 
     const isValidTRC20 = trimmed.startsWith("T") && trimmed.length === 34;
     if (!isValidTRC20) {
-      setError("Invalid TRC-20 address. Must start with 'T' and be 34 characters.");
+      setError(t("withdraw.errors.invalidTRC20"));
       setLoading(false);
       return;
     }
@@ -111,15 +114,15 @@ export default function Withdraw({ setTab, userId, balance, availableBalance }) 
 
       if (error) {
         console.error("Save address error:", error);
-        setError("Failed to save address. Please try again.");
+        setError(t("withdraw.errors.saveFailed"));
       } else {
         setWalletAddress(trimmed);
         setNewAddress("");
-        alert("Wallet address saved successfully!");
+        alert(t("withdraw.addressSaved"));
       }
     } catch (err) {
       console.error("Unexpected error:", err);
-      setError("An error occurred while saving.");
+      setError(t("withdraw.errors.saveError"));
     } finally {
       setLoading(false);
     }
@@ -138,7 +141,7 @@ export default function Withdraw({ setTab, userId, balance, availableBalance }) 
         overflow: "hidden",
       }}
     >
-      {/* 印度风背景纹饰（内联 SVG） */}
+      {/* 印度风背景纹饰 */}
       <div
         style={{
           position: "absolute",
@@ -147,15 +150,14 @@ export default function Withdraw({ setTab, userId, balance, availableBalance }) 
           right: 0,
           bottom: 0,
           backgroundImage: `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><circle cx="50" cy="50" r="35" fill="none" stroke="%23FFD700" stroke-width="2"/><path d="M50 15 Q65 30, 65 50 Q65 70, 50 85 Q35 70, 35 50 Q35 30, 50 15" fill="none" stroke="%23FF6B35" stroke-width="1.5"/><circle cx="50" cy="50" r="10" fill="%23FFD700" opacity="0.3"/></svg>')`,
-          backgroundSize: "120px",
+          backgroundSize: "100px 100px",
           backgroundRepeat: "repeat",
-          opacity: 0.1,
+          opacity: 0.05,
           pointerEvents: "none",
-          zIndex: -1,
         }}
       />
 
-      {/* 顶部导航 */}
+      {/* Header */}
       <div
         style={{
           display: "flex",
@@ -164,202 +166,142 @@ export default function Withdraw({ setTab, userId, balance, availableBalance }) 
           padding: "16px 0",
           position: "sticky",
           top: 0,
-          background: "rgba(255, 248, 240, 0.8)",
+          background: "rgba(255, 255, 255, 0.9)",
           backdropFilter: "blur(10px)",
           zIndex: 10,
-          borderBottom: "1px solid #FF9933",
+          borderBottom: "1px solid #FED7AA",
         }}
       >
         <ArrowLeft
-          style={{ width: "24px", height: "24px", color: "#FF6B35", cursor: "pointer" }}
-          onClick={() => setTab("home")}
+          style={{ width: "24px", height: "24px", color: "#EA580C", cursor: "pointer" }}
+          onClick={() => setTab("me")}
         />
-        <h2 style={{ fontSize: "20px", fontWeight: "bold", color: "#FF6B35" }}>Withdraw</h2>
+        <h2 style={{ fontSize: "20px", fontWeight: "bold", color: "#7C2D12" }}>
+          {t("withdraw.title")}
+        </h2>
       </div>
 
-      {/* 标签页切换 */}
-      <div
-        style={{
-          display: "flex",
-          borderBottom: "1px solid #FF9933",
-          marginBottom: "16px",
-        }}
-      >
+      {/* Tabs */}
+      <div style={{ display: "flex", margin: "16px 0", borderRadius: "16px", overflow: "hidden", boxShadow: "0 4px 10px rgba(0,0,0,0.1)" }}>
         <button
           onClick={() => setTabState("request")}
           style={{
             flex: 1,
-            padding: "8px",
-            fontSize: "14px",
+            padding: "12px",
+            background: tab === "request" ? "linear-gradient(135deg, #FFD700, #FF6B35)" : "#FFFFFF",
+            color: tab === "request" ? "#1A1A1A" : "#6B7280",
             fontWeight: "bold",
-            borderBottom: tab === "request" ? "3px solid #FF6B35" : "none",
-            color: tab === "request" ? "#FF6B35" : "#6B7280",
-            transition: "color 0.3s",
+            fontSize: "14px",
+            border: "none",
+            cursor: "pointer",
+            transition: "all 0.3s",
           }}
         >
-          Request Withdraw
+          {t("withdraw.tabs.request")}
         </button>
         <button
           onClick={() => setTabState("address")}
           style={{
             flex: 1,
-            padding: "8px",
-            fontSize: "14px",
+            padding: "12px",
+            background: tab === "address" ? "linear-gradient(135deg, #FFD700, #FF6B35)" : "#FFFFFF",
+            color: tab === "address" ? "#1A1A1A" : "#6B7280",
             fontWeight: "bold",
-            borderBottom: tab === "address" ? "3px solid #FF6B35" : "none",
-            color: tab === "address" ? "#FF6B35" : "#6B7280",
-            transition: "color 0.3s",
+            fontSize: "14px",
+            border: "none",
+            cursor: "pointer",
+            transition: "all 0.3s",
           }}
         >
-          Receiving Address
+          {t("withdraw.tabs.address")}
         </button>
       </div>
 
-      {/* 错误提示 */}
+      {/* Error Message */}
       {error && (
         <div
           style={{
-            marginBottom: "16px",
-            padding: "12px",
-            background: "#FEE2E2",
+            margin: "12px 0",
+            backgroundColor: "#FEE2E2",
             border: "1px solid #FCA5A5",
             color: "#DC2626",
+            padding: "12px",
             borderRadius: "12px",
             fontSize: "14px",
-            boxShadow: "0 4px 10px rgba(220, 38, 38, 0.1)",
           }}
         >
           {error}
         </div>
       )}
 
-      {/* Request Withdraw 页面 */}
       {tab === "request" ? (
+        /* Withdraw Request */
         <>
           <div
             style={{
               background: "#FFFFFF",
-              border: "1px solid #FF9933",
               borderRadius: "16px",
               padding: "16px",
               boxShadow: "0 8px 20px rgba(255, 153, 51, 0.15)",
               marginBottom: "16px",
-              transition: "transform 0.3s",
             }}
-            onMouseEnter={(e) => (e.target.style.transform = "translateY(-4px)")}
-            onMouseLeave={(e) => (e.target.style.transform = "translateY(0)")}
           >
-            <div style={{ fontSize: "14px", color: "#6B7280" }}>Total Balance</div>
-            <div style={{ fontSize: "24px", fontWeight: "bold", color: "#FF6B35" }}>
-              {balance} <span style={{ fontSize: "14px", color: "#6B7280" }}>USDT</span>
+            <div style={{ fontSize: "14px", color: "#6B7280", marginBottom: "8px" }}>
+              {t("withdraw.available")}: <strong style={{ color: "#FF6B35" }}>{availableBalance.toFixed(2)} USDT</strong>
+            </div>
+            <input
+              type="number"
+              value={withdrawAmount}
+              onChange={(e) => setWithdrawAmount(e.target.value)}
+              placeholder={t("withdraw.amountPlaceholder")}
+              style={{
+                width: "100%",
+                padding: "12px",
+                border: "2px solid #FF9933",
+                borderRadius: "12px",
+                fontSize: "18px",
+                fontWeight: "bold",
+                color: "#EA580C",
+                outline: "none",
+                transition: "border-color 0.3s",
+              }}
+              min="100"
+              max="9999"
+              step="0.01"
+              onFocus={(e) => (e.target.style.borderColor = "#FFD700")}
+              onBlur={(e) => (e.target.style.borderColor = "#FF9933")}
+            />
+            <div style={{ fontSize: "12px", color: "#6B7280", marginTop: "4px", textAlign: "right" }}>
+              {t("withdraw.amountRange")}
             </div>
           </div>
 
           <div
             style={{
               background: "#FFFFFF",
-              border: "1px solid #FF9933",
               borderRadius: "16px",
               padding: "16px",
               boxShadow: "0 8px 20px rgba(255, 153, 51, 0.15)",
               marginBottom: "16px",
-              transition: "transform 0.3s",
-            }}
-            onMouseEnter={(e) => (e.target.style.transform = "translateY(-4px)")}
-            onMouseLeave={(e) => (e.target.style.transform = "translateY(0)")}
-          >
-            <div style={{ fontSize: "14px", color: "#6B7280" }}>Available Balance</div>
-            <div style={{ fontSize: "24px", fontWeight: "bold", color: "#FF6B35" }}>
-              {availableBalance} <span style={{ fontSize: "14px", color: "#6B7280" }}>USDT</span>
-            </div>
-          </div>
-
-          <div
-            style={{
-              background: "#FFFFFF",
-              border: "1px solid #FF9933",
-              borderRadius: "16px",
-              padding: "16px",
-              boxShadow: "0 8px 20px rgba(255, 153, 51, 0.15)",
-              marginBottom: "16px",
-              display: "flex",
-              flexDirection: "column",
-              gap: "12px",
-              transition: "transform 0.3s",
-            }}
-            onMouseEnter={(e) => (e.target.style.transform = "translateY(-4px)")}
-            onMouseLeave={(e) => (e.target.style.transform = "translateY(0)")}
-          >
-            <div>
-              <div style={{ fontSize: "14px", color: "#6B7280", marginBottom: "8px" }}>Withdraw Account</div>
-              <div
-                style={{
-                  width: "100%",
-                  padding: "8px",
-                  border: "1px solid #FF9933",
-                  borderRadius: "12px",
-                  fontSize: "14px",
-                  color: "#1F2937",
-                  wordBreak: "break-all",
-                }}
-              >
-                {walletAddress || "No wallet address saved"}
-              </div>
-            </div>
-
-            <div>
-              <div style={{ fontSize: "14px", color: "#6B7280", marginBottom: "8px" }}>
-                Withdraw Amount <span style={{ color: "#9CA3AF" }}>100–9999 USDT</span>
-              </div>
-              <input
-                type="number"
-                style={{
-                  width: "100%",
-                  padding: "12px",
-                  border: "2px solid #FF6B35",
-                  borderRadius: "12px",
-                  fontSize: "16px",
-                  outline: "none",
-                  transition: "border-color 0.3s, box-shadow 0.3s",
-                }}
-                placeholder="Enter amount"
-                value={withdrawAmount}
-                onChange={(e) => setWithdrawAmount(e.target.value)}
-                min="100"
-                max="9999"
-                step="0.01"
-                onFocus={(e) => {
-                  e.target.style.borderColor = "#FFD700";
-                  e.target.style.boxShadow = "0 0 0 3px rgba(255, 215, 0, 0.3)";
-                }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = "#FF6B35";
-                  e.target.style.boxShadow = "none";
-                }}
-              />
-            </div>
-
-            <div style={{ fontSize: "12px", color: "#6B7280" }}>
-              Withdraw Fee: <span style={{ fontWeight: "bold", color: "#1F2937" }}>0 USDT</span>
-            </div>
-          </div>
-
-          <div
-            style={{
-              background: "#FFF7ED",
-              border: "1px solid #FF9933",
-              borderRadius: "16px",
-              padding: "12px",
-              fontSize: "12px",
-              color: "#7C2D12",
-              marginBottom: "16px",
-              boxShadow: "0 4px 10px rgba(255, 153, 51, 0.1)",
             }}
           >
-            <strong>Important Reminder:</strong>
-            <br />
-            A withdraw fee will be deducted from the withdraw amount.
-            The final amount depends on network conditions.
+            <div style={{ fontSize: "14px", color: "#6B7280", marginBottom: "8px" }}>
+              {t("withdraw.receivingAddress")}
+            </div>
+            <div
+              style={{
+                width: "100%",
+                padding: "12px",
+                border: "1px solid #FF9933",
+                borderRadius: "12px",
+                fontSize: "14px",
+                color: "#1F2937",
+                wordBreak: "break-all",
+                background: walletAddress ? "#FFFBEB" : "#F3F4F6",
+              }}
+            >
+              {walletAddress || t("withdraw.noAddressSet")}
+            </div>
           </div>
 
           <button
@@ -385,11 +327,11 @@ export default function Withdraw({ setTab, userId, balance, availableBalance }) 
             }}
             onMouseLeave={(e) => (e.target.style.transform = "scale(1)")}
           >
-            {loading ? "Submitting..." : "Continue"}
+            {loading ? t("withdraw.submitting") : t("withdraw.continue")}
           </button>
         </>
       ) : (
-        /* Receiving Address 页面 */
+        /* Receiving Address */
         <div
           style={{
             background: "#FFFFFF",
@@ -406,8 +348,12 @@ export default function Withdraw({ setTab, userId, balance, availableBalance }) 
           onMouseLeave={(e) => (e.target.style.transform = "translateY(0)")}
         >
           <div>
-            <div style={{ fontSize: "14px", color: "#6B7280", marginBottom: "4px" }}>Current Receiving Address</div>
-            <div style={{ fontSize: "14px", fontWeight: "bold", color: "#FF6B35", marginBottom: "8px" }}>USDT (TRC20)</div>
+            <div style={{ fontSize: "14px", color: "#6B7280", marginBottom: "4px" }}>
+              {t("withdraw.currentAddress")}
+            </div>
+            <div style={{ fontSize: "14px", fontWeight: "bold", color: "#FF6B35", marginBottom: "8px" }}>
+              USDT (TRC20)
+            </div>
             <div
               style={{
                 width: "100%",
@@ -419,7 +365,7 @@ export default function Withdraw({ setTab, userId, balance, availableBalance }) 
                 wordBreak: "break-all",
               }}
             >
-              {walletAddress || "No address saved yet"}
+              {walletAddress || t("withdraw.noAddress")}
             </div>
           </div>
 
@@ -437,7 +383,7 @@ export default function Withdraw({ setTab, userId, balance, availableBalance }) 
                 outline: "none",
                 transition: "border-color 0.3s, box-shadow 0.3s",
               }}
-              placeholder="Enter new USDT TRC20 address (starts with T)"
+              placeholder={t("withdraw.newAddressPlaceholder")}
               maxLength="34"
               onFocus={(e) => {
                 e.target.style.borderColor = "#FFD700";
@@ -472,7 +418,7 @@ export default function Withdraw({ setTab, userId, balance, availableBalance }) 
               }}
               onMouseLeave={(e) => (e.target.style.transform = "scale(1)")}
             >
-              {loading ? "Saving..." : "Save Address"}
+              {loading ? t("withdraw.saving") : t("withdraw.saveAddress")}
             </button>
           </div>
         </div>
