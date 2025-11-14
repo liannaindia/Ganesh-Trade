@@ -1,10 +1,11 @@
 // src/context/LanguageContext.jsx
 import React, { createContext, useContext, useState, useEffect } from "react";
-// src/context/LanguageContext.jsx
-import { locales } from "../locales/language";  // 正确！指向 language.js 文件
+import en from "../locales/en.json";
+import hi from "../locales/hi.json";
+
+const locales = { en, hi };
 
 const LanguageContext = createContext();
-
 export const useLanguage = () => useContext(LanguageContext);
 
 export const LanguageProvider = ({ children }) => {
@@ -16,11 +17,30 @@ export const LanguageProvider = ({ children }) => {
     localStorage.setItem("appLanguage", lang);
   }, [lang]);
 
+  // 支持嵌套键：t("invite.stats.totalUsers")
   const t = (key, params = {}) => {
-    let text = locales[lang][key] || locales.en[key] || key;
-    Object.keys(params).forEach((k) => {
-      text = text.replace(`{${k}}`, params[k]);
-    });
+    const keys = key.split(".");
+    let text = locales[lang];
+
+    for (const k of keys) {
+      text = text?.[k];
+      if (text === undefined) break;
+    }
+
+    text = text ?? locales.en;
+    for (const k of keys) {
+      text = text?.[k];
+      if (text === undefined) break;
+    }
+
+    text = text ?? key; // 最终 fallback
+
+    if (params && typeof text === "string") {
+      Object.keys(params).forEach((k) => {
+        text = text.replace(`{${k}}`, params[k]);
+      });
+    }
+
     return text;
   };
 
